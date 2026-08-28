@@ -7,6 +7,10 @@ datasource db {
   provider = "postgresql"
 }
 
+enum UserRole {
+  ADMIN
+  USER
+}
 enum ContactType {
   CONTRACTOR
   TENANT
@@ -45,6 +49,7 @@ enum LineItemPriority {
 
 model Organization {
   id        String   @id @default(cuid())
+  clerkOrgId String @unique
   name      String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -61,9 +66,10 @@ model Organization {
 model User {
   id        String   @id @default(cuid())
   clerkId   String   @unique
-  firstName String
-  lastName  String
-  email     String   @unique
+  role      UserRole @default(USER)
+  firstName String?
+  lastName  String?
+  email     String
   phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -73,6 +79,7 @@ model User {
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+  @@unique([organizationId, email])
 }
 
 model Contact {
@@ -227,7 +234,7 @@ model Area {
 
   areaPreset AreaPreset? @relation(fields: [areaPresetId], references: [id], onDelete: SetNull)
   roomPreset RoomPreset? @relation(fields: [roomPresetId], references: [id], onDelete: SetNull)
-  workOrder  WorkOrder?  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workOrder  WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   lineItems LineItem[]
 
