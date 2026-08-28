@@ -5,7 +5,7 @@ export default async function Home() {
     let error: string | null = null;
 
     try {
-        count = await prisma.ping.count();
+        count = await prisma.organization.count();
     } catch (e) {
         console.error(e);
         error = "Could not reach the database.";
@@ -14,7 +14,7 @@ export default async function Home() {
     return (
         <main className="flex min-h-screen flex-col items-center justify-center gap-2">
             <h1 className="text-4xl font-bold">Work Order Generator</h1>
-            {error ? <p className="text-red-500">{error}</p> : <p className="text-gray-500">{count} rows in Ping</p>}
+            {error ? <p className="text-red-500">{error}</p> : <p className="text-gray-500">{count} organizations</p>}
         </main>
     );
 }

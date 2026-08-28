@@ -1,14 +1,275 @@
 generator client {
   provider = "prisma-client"
-  output = "../src/generated/prisma"
+  output   = "../src/generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
 }
 
-model Ping {
-  id String @id @default(cuid())
-  message String
+enum ContactType {
+  CONTRACTOR
+  TENANT
+}
+
+enum PropertyType {
+  HOUSE
+  DUPLEX
+  TOWNHOUSE
+  CONDO
+  APARTMENT
+  COMMERCIAL
+  LAND
+}
+
+enum WorkOrderStatus {
+  DRAFT
+  SENT
+  IN_PROGRESS
+  COMPLETED
+  CLOSED
+}
+
+enum DeliveryMethod {
+  EMAIL
+  SMS
+  PRINT
+}
+
+enum LineItemPriority {
+  EMERGENCY
+  HIGH
+  MEDIUM
+  LOW
+}
+
+model Organization {
+  id        String   @id @default(cuid())
+  name      String
   createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  users       User[]
+  properties  Property[]
+  contacts    Contact[]
+  tags        Tag[]
+  areaPresets AreaPreset[]
+  roomPresets RoomPreset[]
+  workOrders  WorkOrder[]
+}
+
+model User {
+  id        String   @id @default(cuid())
+  clerkId   String   @unique
+  firstName String
+  lastName  String
+  email     String   @unique
+  phone     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  archived  Boolean  @default(false)
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Contact {
+  id          String      @id @default(cuid())
+  contactType ContactType
+  displayName String
+  firstName   String?
+  lastName    String?
+  company     String?
+  email       String?
+  phone       String?
+  notes       String?
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  favorite    Boolean     @default(false)
+  archived    Boolean     @default(false)
+
+  contractorWorkOrders WorkOrder[] @relation("WorkOrderContractor")
+  tenantWorkOrders     WorkOrder[] @relation("WorkOrderTenant")
+
+  propertyId     String?
+  organizationId String
+  property       Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@index([organizationId])
+}
+
+model Property {
+  id           String       @id @default(cuid())
+  propertyType PropertyType
+  displayName  String
+  addressLine1 String
+  addressLine2 String?
+  city         String
+  state        String
+  zipCode      String
+  notes        String?
+  createdAt    DateTime     @default(now())
+  updatedAt    DateTime     @updatedAt
+  favorite     Boolean      @default(false)
+  archived     Boolean      @default(false)
+
+  contacts   Contact[]
+  workOrders WorkOrder[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model Tag {
+  id        String  @id @default(cuid())
+  name      String
+  color     String?
+  sortOrder Int     @default(0)
+  archived  Boolean @default(false)
+
+  lineItems LineItem[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model AreaPreset {
+  id        String  @id @default(cuid())
+  name      String
+  sortOrder Int     @default(0)
+  archived  Boolean @default(false)
+
+  areas          Area[]
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model RoomPreset {
+  id        String  @id @default(cuid())
+  name      String
+  sortOrder Int     @default(0)
+  archived  Boolean @default(false)
+
+  areas          Area[]
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([organizationId, name])
+  @@index([organizationId])
+}
+
+model WorkOrder {
+  id              String          @id @default(cuid())
+  publicToken     String          @unique @default(cuid())
+  jobNumber       String?
+  status          WorkOrderStatus @default(DRAFT)
+  deliveryMethod  DeliveryMethod?
+  title           String?
+  notes           String?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  archived        Boolean         @default(false)
+  dueDate         DateTime?
+  sentAt          DateTime?
+  completedAt     DateTime?
+  closedAt        DateTime?
+  completionNotes String?
+
+  contractorId    String?
+  contractor      Contact? @relation("WorkOrderContractor", fields: [contractorId], references: [id], onDelete: SetNull)
+  contractorName  String?
+  contractorPhone String?
+  contractorEmail String?
+
+  tenantId    String?
+  tenant      Contact? @relation("WorkOrderTenant", fields: [tenantId], references: [id], onDelete: SetNull)
+  tenantName  String?
+  tenantPhone String?
+  tenantEmail String?
+
+  areas       Area[]
+  attachments Attachment[]
+
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  propertyId String
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
+
+  @@unique([organizationId, jobNumber])
+  @@index([organizationId])
+  @@index([propertyId])
+  @@index([contractorId])
+  @@index([status])
+}
+
+model Area {
+  id           String  @id @default(cuid())
+  areaName     String
+  roomName     String?
+  label        String?
+  sortOrder    Int     @default(0)
+  areaPresetId String?
+  roomPresetId String?
+  workOrderId  String
+
+  areaPreset AreaPreset? @relation(fields: [areaPresetId], references: [id], onDelete: SetNull)
+  roomPreset RoomPreset? @relation(fields: [roomPresetId], references: [id], onDelete: SetNull)
+  workOrder  WorkOrder?  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  lineItems LineItem[]
+
+  @@index([workOrderId])
+  @@index([areaPresetId])
+  @@index([roomPresetId])
+}
+
+model LineItem {
+  id              String           @id @default(cuid())
+  priority        LineItemPriority @default(MEDIUM)
+  description     String
+  completed       Boolean          @default(false)
+  completedAt     DateTime?
+  contractorNotes String?
+  sortOrder       Int              @default(0)
+
+  tags        Tag[]
+  attachments Attachment[]
+
+  areaId String
+  area   Area   @relation(fields: [areaId], references: [id], onDelete: Cascade)
+
+  @@index([areaId])
+}
+
+model Attachment {
+  id               String   @id @default(cuid())
+  storageKey       String
+  fileName         String?
+  mimeType         String?
+  sizeBytes        Int?
+  caption          String?
+  contractorUpload Boolean  @default(false)
+  lineItemId       String?
+  workOrderId      String?
+  createdAt        DateTime @default(now())
+  updatedAt        DateTime @updatedAt
+
+  lineItem  LineItem?  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+
+  @@index([lineItemId])
+  @@index([workOrderId])
 }
