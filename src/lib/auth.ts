@@ -1,5 +1,6 @@
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import type { User, Organization } from "@/generated/prisma/client";
+import { DEFAULT_AREAS, DEFAULT_ROOMS, DEFAULT_TAGS } from "./defaults";
 import prisma from "./prisma";
 
 type AuthResult =
@@ -25,6 +26,31 @@ export async function getCurrentUser(): Promise<AuthResult> {
         const clerkOrg = await client.organizations.getOrganization({ organizationId: orgId });
         organization = await prisma.organization.create({
             data: { clerkOrgId: orgId, name: clerkOrg.name },
+        });
+        const org = organization;
+
+        await prisma.areaPreset.createMany({
+            data: DEFAULT_AREAS.map((name, i) => ({
+                name,
+                sortOrder: i,
+                organizationId: org.id,
+            })),
+        });
+
+        await prisma.roomPreset.createMany({
+            data: DEFAULT_ROOMS.map((name, i) => ({
+                name,
+                sortOrder: i,
+                organizationId: org.id,
+            })),
+        });
+
+        await prisma.tag.createMany({
+            data: DEFAULT_TAGS.map((name, i) => ({
+                name,
+                sortOrder: i,
+                organizationId: org.id,
+            })),
         });
     }
 
