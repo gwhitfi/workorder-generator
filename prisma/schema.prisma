@@ -58,8 +58,7 @@ model Organization {
   properties  Property[]
   contacts    Contact[]
   tags        Tag[]
-  areaPresets AreaPreset[]
-  roomPresets RoomPreset[]
+  spaces Space[]
   workOrders  WorkOrder[]
 }
 
@@ -126,6 +125,7 @@ model Property {
 
   contacts   Contact[]
   workOrders WorkOrder[]
+  spaces Space[]
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -149,32 +149,22 @@ model Tag {
   @@index([organizationId])
 }
 
-model AreaPreset {
-  id        String  @id @default(cuid())
-  name      String
-  sortOrder Int     @default(0)
-  archived  Boolean @default(false)
+model Space {
+  id String @id @default(cuid())
+  name String
+  sortOrder Int @default(0)
+  archived Boolean @default(false)
 
-  areas          Area[]
+  propertyId String?
+  property Property? @relation(fields: [propertyId], references: [id], onDelete:Cascade)
+
   organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete:Cascade)
 
-  @@unique([organizationId, name])
+  areas Area[]
+
   @@index([organizationId])
-}
-
-model RoomPreset {
-  id        String  @id @default(cuid())
-  name      String
-  sortOrder Int     @default(0)
-  archived  Boolean @default(false)
-
-  areas          Area[]
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-
-  @@unique([organizationId, name])
-  @@index([organizationId])
+  @@index([propertyId])
 }
 
 model WorkOrder {
@@ -224,23 +214,19 @@ model WorkOrder {
 
 model Area {
   id           String  @id @default(cuid())
-  areaName     String
-  roomName     String?
-  label        String?
+  name String
   sortOrder    Int     @default(0)
-  areaPresetId String?
-  roomPresetId String?
-  workOrderId  String
 
-  areaPreset AreaPreset? @relation(fields: [areaPresetId], references: [id], onDelete: SetNull)
-  roomPreset RoomPreset? @relation(fields: [roomPresetId], references: [id], onDelete: SetNull)
+  spaceId String?
+  space   Space?  @relation(fields: [spaceId], references: [id], onDelete: SetNull)
+
+  workOrderId  String
   workOrder  WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   lineItems LineItem[]
 
   @@index([workOrderId])
-  @@index([areaPresetId])
-  @@index([roomPresetId])
+  @@index([spaceId])
 }
 
 model LineItem {

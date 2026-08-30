@@ -1,6 +1,6 @@
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import type { User, Organization } from "@/generated/prisma/client";
-import { DEFAULT_AREAS, DEFAULT_ROOMS, DEFAULT_TAGS } from "./defaults";
+import { DEFAULT_SPACES, DEFAULT_TAGS } from "./defaults";
 import prisma from "./prisma";
 
 type AuthResult =
@@ -20,7 +20,8 @@ export async function getCurrentUser(): Promise<AuthResult> {
     let organization = await prisma.organization.findUnique({
         where: { clerkOrgId: orgId },
     });
-
+    console.log("orgId from Clerk:", orgId);
+    console.log("found existing org:", organization?.id ?? "none");
     if (!organization) {
         const client = await clerkClient();
         const clerkOrg = await client.organizations.getOrganization({ organizationId: orgId });
@@ -28,17 +29,9 @@ export async function getCurrentUser(): Promise<AuthResult> {
             data: { clerkOrgId: orgId, name: clerkOrg.name },
         });
         const org = organization;
-
-        await prisma.areaPreset.createMany({
-            data: DEFAULT_AREAS.map((name, i) => ({
-                name,
-                sortOrder: i,
-                organizationId: org.id,
-            })),
-        });
-
-        await prisma.roomPreset.createMany({
-            data: DEFAULT_ROOMS.map((name, i) => ({
+        console.log("CREATED org, seeding into:", org.id);
+        await prisma.space.createMany({
+            data: DEFAULT_SPACES.map((name, i) => ({
                 name,
                 sortOrder: i,
                 organizationId: org.id,

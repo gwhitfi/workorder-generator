@@ -1,5 +1,4 @@
 import { CreateOrganization } from "@clerk/nextjs";
-import { mainModule } from "process";
 
 export default function Page() {
     return (
