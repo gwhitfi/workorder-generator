@@ -58,6 +58,7 @@ model Organization {
   properties  Property[]
   contacts    Contact[]
   tags        Tag[]
+  units Unit[]
   spaces Space[]
   workOrders  WorkOrder[]
 }
@@ -99,12 +100,13 @@ model Contact {
   contractorWorkOrders WorkOrder[] @relation("WorkOrderContractor")
   tenantWorkOrders     WorkOrder[] @relation("WorkOrderTenant")
 
-  propertyId     String?
+  unitId String?
+  unit Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
   organizationId String
-  property       Property?    @relation(fields: [propertyId], references: [id], onDelete: SetNull)
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@index([propertyId])
+  @@index([unitId])
   @@index([organizationId])
 }
 
@@ -123,9 +125,8 @@ model Property {
   favorite     Boolean      @default(false)
   archived     Boolean      @default(false)
 
-  contacts   Contact[]
   workOrders WorkOrder[]
-  spaces Space[]
+  units Unit[]
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -155,8 +156,8 @@ model Space {
   sortOrder Int @default(0)
   archived Boolean @default(false)
 
-  propertyId String?
-  property Property? @relation(fields: [propertyId], references: [id], onDelete:Cascade)
+  unitId String?
+  unit   Unit?  @relation(fields: [unitId], references: [id], onDelete: Cascade)
 
   organizationId String
   organization Organization @relation(fields: [organizationId], references: [id], onDelete:Cascade)
@@ -164,7 +165,28 @@ model Space {
   areas Area[]
 
   @@index([organizationId])
+  @@index([unitId])
+}
+
+model Unit {
+  id String @id @default(cuid())
+  name String
+  isDefault Boolean @default(false)
+  sortOrder Int @default(0)
+  archived Boolean @default(false)
+
+  propertyId String
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  organizationId String
+  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  spaces Space[]
+  workOrders WorkOrder[]
+  contacts Contact[]
+
   @@index([propertyId])
+  @@index([organizationId])
 }
 
 model WorkOrder {
@@ -205,11 +227,15 @@ model WorkOrder {
   propertyId String
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
 
+  unitId String?
+  unit Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+
   @@unique([organizationId, jobNumber])
   @@index([organizationId])
   @@index([propertyId])
   @@index([contractorId])
   @@index([status])
+  @@index([unitId])
 }
 
 model Area {

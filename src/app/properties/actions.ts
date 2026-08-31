@@ -20,6 +20,8 @@ export async function createProperty(formData: FormData) {
     const zipCode = formData.get("zipCode") as string;
     const state = formData.get("state") as string;
     const notes = (formData.get("notes") as string) || null;
+    const spacesJson = formData.get("spaces") as string;
+    const spaceNames: string[] = spacesJson ? JSON.parse(spacesJson) : [];
 
     await prisma.property.create({
         data: {
@@ -32,6 +34,21 @@ export async function createProperty(formData: FormData) {
             zipCode,
             state,
             notes,
+            units: {
+                create: {
+                    name: "Main",
+                    isDefault: true,
+                    sortOrder: 0,
+                    organizationId: result.organization.id,
+                    spaces: {
+                        create: spaceNames.map((name, i) => ({
+                            name,
+                            sortOrder: i,
+                            organizationId: result.organization.id,
+                        })),
+                    },
+                },
+            },
         },
     });
 
