@@ -44,7 +44,9 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     if (!property) {
         notFound();
     }
-    const isSingleUnit = property.units.length === 1 && property.units[0].isDefault;
+    const MULTI_UNIT = ["DUPLEX", "APARTMENT", "CONDO", "TOWNHOUSE", "COMMERCIAL"];
+    const isMultiUnitType = MULTI_UNIT.includes(property.propertyType);
+    const isSingleUnit = !isMultiUnitType && property.units.length === 1 && property.units[0].isDefault;
 
     return (
         <main className="mx-auto max-w-2xl px-4 py-10 text-neutral-100">
