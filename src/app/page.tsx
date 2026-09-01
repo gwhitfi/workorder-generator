@@ -1,6 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { UserButton } from "@clerk/nextjs";
 import Dashboard from "./Dashboard";
 import Landing from "./Landing";
 

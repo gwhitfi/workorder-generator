@@ -14,7 +14,7 @@ export default async function NewProperty() {
         redirect("/setup");
     }
     return (
-        <main className="mx-auto max-w-2xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
             <h1 className="text-2xl font-semibold mb-6">Add a property</h1>
             <PropertyForm />
             <Link href="/properties" className="text-sm text-neutral-400 hover:text-neutral-100">

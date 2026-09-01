@@ -1,10 +1,9 @@
 import Link from "next/link";
-import { UserButton } from "@clerk/nextjs";
 import prisma from "@/lib/prisma";
 import type { User, Organization } from "@/generated/prisma/client";
+import Nav from "@/components/Nav";
 
-export default async function Dashboard({ user, organization }: { user: User; organization: Organization }) {
-    // Queries. Add work order counts here once that feature exists.
+export default async function Dashboard({ organization }: { user: User; organization: Organization }) {
     const propertyCount = await prisma.property.count({
         where: { organizationId: organization.id, archived: false },
     });
@@ -17,36 +16,18 @@ export default async function Dashboard({ user, organization }: { user: User; or
 
     return (
         <div className="text-neutral-100">
-            {/* Top bar — move to layout.tsx later so every page gets it */}
-            <header className="border-b border-neutral-800">
-                <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-                    <span className="font-semibold">Work Order Generator</span>
-                    <nav className="flex items-center gap-6">
-                        <Link href="/properties" className="text-sm text-neutral-400 hover:text-neutral-100">
-                            Properties
-                        </Link>
-                        {/* Work orders, contacts, settings */}
-                        <UserButton />
-                    </nav>
-                </div>
-            </header>
-
+            <Nav />
             <main className="mx-auto max-w-5xl px-4 py-10">
                 {/* Greeting */}
                 <div className="mb-8">
-                    <h1 className="text-2xl font-semibold">
-                        {/* Greeting using user.firstName — remember it's nullable */}
-                    </h1>
+                    <h1 className="text-2xl font-semibold"></h1>
                     <p className="mt-1 text-sm text-neutral-500">{organization.name}</p>
                 </div>
 
-                {/* Stat cards — 4 columns, only one filled for now */}
                 <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
                     <StatCard label="Properties" value={propertyCount} href="/properties" />
-                    {/* Open work orders, In progress, Completed this month */}
                 </div>
 
-                {/* Quick actions */}
                 <div className="mb-10 flex flex-wrap gap-3">
                     <Link
                         href="/properties/new"
@@ -54,10 +35,8 @@ export default async function Dashboard({ user, organization }: { user: User; or
                     >
                         Add property
                     </Link>
-                    {/* New work order, add contact */}
                 </div>
 
-                {/* Recent activity — replace with work orders once they exist */}
                 <section className="border-t border-neutral-800 pt-6">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Recent properties</h2>
@@ -77,7 +56,6 @@ export default async function Dashboard({ user, organization }: { user: User; or
                                         className="block rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 hover:border-neutral-700"
                                     >
                                         <span className="text-sm">{property.displayName}</span>
-                                        {/* Address line, property type */}
                                     </Link>
                                 </li>
                             ))}
