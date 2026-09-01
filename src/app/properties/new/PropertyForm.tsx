@@ -155,6 +155,24 @@ export default function PropertyForm() {
                     >
                         Add Unit
                     </button>
+                    {units.length > 0 && (
+                        <button
+                            type="button"
+                            onClick={() => {
+                                const unit = units[activeUnit];
+                                if (
+                                    unit.spaces.length > 0 &&
+                                    !confirm(`Remove ${unit.name} and its ${unit.spaces.length} spaces?`)
+                                ) {
+                                    return;
+                                }
+                                removeUnit(activeUnit);
+                            }}
+                            className="self-start text-sm text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                        >
+                            Remove {units[activeUnit]?.name}
+                        </button>
+                    )}
                     <div className="flex flex-wrap gap-2">
                         {units.map((unit, i) => (
                             <button

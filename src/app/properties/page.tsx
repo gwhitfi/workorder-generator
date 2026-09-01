@@ -48,6 +48,9 @@ export default async function Properties() {
                                 <td>{property.displayName}</td>
                                 <td>{property.addressLine1}</td>
                                 <td>{property.propertyType}</td>
+                                <td>
+                                    <Link href={`/properties/${property.id}`}>View Detail</Link>
+                                </td>
                             </tr>
                         ))}
                     </tbody>
