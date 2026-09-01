@@ -6,6 +6,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 export async function createProperty(formData: FormData) {
+    type UnitInput = { name: string; spaces: string[] };
     const result = await getCurrentUser();
 
     if (result.state !== "ready") {
@@ -22,6 +23,39 @@ export async function createProperty(formData: FormData) {
     const notes = (formData.get("notes") as string) || null;
     const spacesJson = formData.get("spaces") as string;
     const spaceNames: string[] = spacesJson ? JSON.parse(spacesJson) : [];
+    const unitsJson = formData.get("units") as string;
+    const units: UnitInput[] = unitsJson ? JSON.parse(unitsJson) : [];
+
+    const unitsToCreate =
+        units.length > 0
+            ? units.map((u, i) => ({
+                  name: u.name,
+                  isDefault: false,
+                  sortOrder: i,
+                  organizationId: result.organization.id,
+                  spaces: {
+                      create: u.spaces.map((name, si) => ({
+                          name,
+                          sortOrder: si,
+                          organizationId: result.organization.id,
+                      })),
+                  },
+              }))
+            : [
+                  {
+                      name: "Main",
+                      isDefault: true,
+                      sortOrder: 0,
+                      organizationId: result.organization.id,
+                      spaces: {
+                          create: spaceNames.map((name, i) => ({
+                              name,
+                              sortOrder: i,
+                              organizationId: result.organization.id,
+                          })),
+                      },
+                  },
+              ];
 
     await prisma.property.create({
         data: {
@@ -35,19 +69,7 @@ export async function createProperty(formData: FormData) {
             state,
             notes,
             units: {
-                create: {
-                    name: "Main",
-                    isDefault: true,
-                    sortOrder: 0,
-                    organizationId: result.organization.id,
-                    spaces: {
-                        create: spaceNames.map((name, i) => ({
-                            name,
-                            sortOrder: i,
-                            organizationId: result.organization.id,
-                        })),
-                    },
-                },
+                create: unitsToCreate,
             },
         },
     });
