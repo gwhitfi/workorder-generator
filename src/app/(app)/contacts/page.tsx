@@ -43,39 +43,110 @@ export default async function Contacts() {
                     Add Contact
                 </Link>
             </div>
-            {contacts.length > 0 && (
+            <div>
+                <h2 className="text-xl font-semibold mt-8 mb-3">Contractors</h2>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-neutral-800 text-left text-neutral-400">
                             <th className="px-3 pb-2 font-medium">Display Name</th>
-                            <th className="px-3 pb-2 font-medium">Contact Name</th>
-                            <th className="px-3 pb-2 font-medium">Property Type</th>
-                            <th className="px-3 pb-2 font-medium">Units</th>
-                            <th className="px-3 pb-2 font-medium"></th>
+                            <th className="px-3 pb-2 font-medium">Company</th>
+                            <th className="px-3 pb-2 font-medium">Phone</th>
+                            <th className="px-3 pb-2 font-medium">Email</th>
+                            <th className="px-3 pb-2 font-medium">Details</th>
                         </tr>
                     </thead>
 
                     <tbody>
-                        {contacts.map((contact) => (
-                            <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                <td className="px-3 py-3">{contact.displayName}</td>
-                                <td className="px-3 py-3 text-neutral-400"></td>
-                                <td className="px-3 py-3 text-neutral-400"></td>
-
-                                <td className="px-3 py-3 text-right">
-                                    <Link
-                                        href={`/properties/${contact.id}`}
-                                        className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
-                                    >
-                                        View Detail
-                                    </Link>
-                                </td>
-                            </tr>
-                        ))}
+                        {contacts
+                            .filter((c) => c.contactType === "CONTRACTOR")
+                            .map((contact) => (
+                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
+                                    <td className="px-3 py-3">{contact.displayName}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.company}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
+                                    <td className="px-3 py-3 text-right">
+                                        <Link
+                                            href={`/contacts/${contact.id}`}
+                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
+                                        >
+                                            View Detail
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
                     </tbody>
                 </table>
-            )}
-            <p className="text-gray-500">{result.user.email}</p>
+                <h2 className="text-xl font-semibold mt-8 mb-3">Tenants</h2>
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
+                            <th className="px-3 pb-2 font-medium">Display Name</th>
+                            <th className="px-3 pb-2 font-medium">Unit</th>
+                            <th className="px-3 pb-2 font-medium">Property</th>
+                            <th className="px-3 pb-2 font-medium">Phone</th>
+                            <th className="px-3 pb-2 font-medium">Email</th>
+                            <th className="px-3 pb-2 font-medium">Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {contacts
+                            .filter((c) => c.contactType === "TENANT")
+                            .map((contact) => (
+                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
+                                    <td className="px-3 py-3">{contact.displayName}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.unit?.name}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.unit?.property.displayName}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
+                                    <td className="px-3 py-3 text-right">
+                                        <Link
+                                            href={`/contacts/${contact.id}`}
+                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
+                                        >
+                                            View Detail
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+
+                <h2 className="text-xl font-semibold mt-8 mb-3">Other</h2>
+                <table className="w-full text-sm">
+                    <thead>
+                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
+                            <th className="px-3 pb-2 font-medium">Display Name</th>
+                            <th className="px-3 pb-2 font-medium">Phone</th>
+                            <th className="px-3 pb-2 font-medium">Email</th>
+                            <th className="px-3 pb-2 font-medium">Notes</th>
+                            <th className="px-3 pb-2 font-medium">Details</th>
+                        </tr>
+                    </thead>
+
+                    <tbody>
+                        {contacts
+                            .filter((c) => c.contactType === "OTHER")
+                            .map((contact) => (
+                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
+                                    <td className="px-3 py-3">{contact.displayName}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
+                                    <td className="px-3 py-3 text-neutral-400">{contact.notes}</td>
+                                    <td className="px-3 py-3 text-right">
+                                        <Link
+                                            href={`/contacts/${contact.id}`}
+                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
+                                        >
+                                            View Detail
+                                        </Link>
+                                    </td>
+                                </tr>
+                            ))}
+                    </tbody>
+                </table>
+            </div>
         </main>
     );
 }

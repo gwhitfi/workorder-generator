@@ -14,11 +14,14 @@ export default async function Dashboard({ organization }: { user: User; organiza
         take: 5,
     });
 
+    const contactCount = await prisma.contact.count({
+        where: { organizationId: organization.id, archived: false },
+    });
+
     return (
         <div className="text-neutral-100">
             <Nav />
             <main className="mx-auto max-w-5xl px-4 py-10">
-                {/* Greeting */}
                 <div className="mb-8">
                     <h1 className="text-2xl font-semibold"></h1>
                     <p className="mt-1 text-sm text-neutral-500">{organization.name}</p>
@@ -33,10 +36,21 @@ export default async function Dashboard({ organization }: { user: User; organiza
                         href="/properties/new"
                         className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white"
                     >
-                        Add property
+                        Add Property
                     </Link>
                 </div>
 
+                <div className="mb-10 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
+                    <StatCard label="Contacts" value={contactCount} href="/contacts" />
+                </div>
+                <div className="mb-10 flex flex-wrap gap-3">
+                    <Link
+                        href="/contacts/new"
+                        className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white"
+                    >
+                        Add Contact
+                    </Link>
+                </div>
                 <section className="border-t border-neutral-800 pt-6">
                     <div className="mb-3 flex items-center justify-between">
                         <h2 className="text-lg font-semibold">Recent properties</h2>

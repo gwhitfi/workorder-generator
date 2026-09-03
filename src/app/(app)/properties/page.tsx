@@ -76,7 +76,6 @@ export default async function Properties() {
                     </tbody>
                 </table>
             )}
-            <p className="text-gray-500">{result.user.email}</p>
         </main>
     );
 }
