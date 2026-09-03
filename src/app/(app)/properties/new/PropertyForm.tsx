@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { createProperty } from "../actions";
+import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
 
 export default function PropertyForm() {
     type Unit = {
@@ -16,7 +17,6 @@ export default function PropertyForm() {
     const [activeUnit, setActiveUnit] = useState(0);
     const [unitDraft, setUnitDraft] = useState("");
     const [unitError, setUnitError] = useState<string | null>(null);
-    const MULTI_UNIT = ["DUPLEX", "APARTMENT", "CONDO", "TOWNHOUSE", "COMMERCIAL"];
     const showUnits = MULTI_UNIT.includes(propertyType);
     const activeSpaces = showUnits ? (units[activeUnit]?.spaces ?? []) : spaces;
 
@@ -88,13 +88,11 @@ export default function PropertyForm() {
                     value={propertyType}
                     onChange={(e) => setPropertyType(e.target.value)}
                 >
-                    <option value="HOUSE">House</option>
-                    <option value="DUPLEX">Duplex</option>
-                    <option value="TOWNHOUSE">Townhouse</option>
-                    <option value="CONDO">Condo</option>
-                    <option value="APARTMENT">Apartment</option>
-                    <option value="COMMERCIAL">Commercial</option>
-                    <option value="LAND">Land</option>
+                    {Object.entries(PROPERTY_TYPE_LABELS).map(([value, label]) => (
+                        <option key={value} value={value}>
+                            {label}
+                        </option>
+                    ))}
                 </select>
             </label>
             <label className={labelClass}>

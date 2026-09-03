@@ -61,3 +61,15 @@ export const DEFAULT_TAGS = [
     "Cabinets",
     "Countertops",
 ];
+
+export const PROPERTY_TYPE_LABELS: Record<string, string> = {
+    HOUSE: "House",
+    DUPLEX: "Duplex",
+    TOWNHOUSE: "Townhouse",
+    CONDO: "Condo",
+    APARTMENT: "Apartment",
+    COMMERCIAL: "Commercial",
+    LAND: "Land",
+};
+
+export const MULTI_UNIT = ["DUPLEX", "APARTMENT", "CONDO", "TOWNHOUSE", "COMMERCIAL"];

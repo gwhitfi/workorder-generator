@@ -2,15 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-const PROPERTY_TYPE_LABELS: Record<string, string> = {
-    HOUSE: "House",
-    DUPLEX: "Duplex",
-    TOWNHOUSE: "Townhouse",
-    CONDO: "Condo",
-    APARTMENT: "Apartment",
-    COMMERCIAL: "Commercial",
-    LAND: "Land",
-};
+import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -44,7 +36,6 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     if (!property) {
         notFound();
     }
-    const MULTI_UNIT = ["DUPLEX", "APARTMENT", "CONDO", "TOWNHOUSE", "COMMERCIAL"];
     const isMultiUnitType = MULTI_UNIT.includes(property.propertyType);
     const isSingleUnit = !isMultiUnitType && property.units.length === 1 && property.units[0].isDefault;
 
