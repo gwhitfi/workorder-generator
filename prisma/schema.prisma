@@ -11,9 +11,11 @@ enum UserRole {
   ADMIN
   USER
 }
+
 enum ContactType {
   CONTRACTOR
   TENANT
+  OTHER
 }
 
 enum PropertyType {
@@ -89,6 +91,11 @@ model Contact {
   firstName   String?
   lastName    String?
   company     String?
+  addressLine1 String?
+  addressLine2 String?
+  city         String?
+  state        String?
+  zipCode      String?
   email       String?
   phone       String?
   notes       String?

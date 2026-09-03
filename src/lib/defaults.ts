@@ -73,3 +73,9 @@ export const PROPERTY_TYPE_LABELS: Record<string, string> = {
 };
 
 export const MULTI_UNIT = ["DUPLEX", "APARTMENT", "CONDO", "TOWNHOUSE", "COMMERCIAL"];
+
+export const CONTACT_TYPE_LABELS: Record<string, string> = {
+    CONTRACTOR: "Contractor",
+    TENANT: "Tenant",
+    OTHER: "Other",
+};
