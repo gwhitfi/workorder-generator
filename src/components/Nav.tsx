@@ -9,6 +9,9 @@ export default function Nav() {
                     Work Order Generator
                 </Link>
                 <nav className="flex items-center gap-6">
+                    <Link href="/workorders" className="text-sm text-neutral-400 hover:text-neutral-100">
+                        Work Orders
+                    </Link>
                     <Link href="/contacts" className="text-sm text-neutral-400 hover:text-neutral-100">
                         Contacts
                     </Link>

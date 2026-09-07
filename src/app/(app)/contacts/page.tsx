@@ -44,7 +44,7 @@ export default async function Contacts() {
                 </Link>
             </div>
             <div>
-                <h2 className="text-xl font-semibold mt-8 mb-3">Contractors</h2>
+                <h2 className="text-xl font-semibold mt-4 mb-3">Contractors</h2>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-neutral-800 text-left text-neutral-400">
@@ -77,7 +77,7 @@ export default async function Contacts() {
                             ))}
                     </tbody>
                 </table>
-                <h2 className="text-xl font-semibold mt-8 mb-3">Tenants</h2>
+                <h2 className="text-xl font-semibold mt-4 mb-3">Tenants</h2>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-neutral-800 text-left text-neutral-400">
@@ -113,7 +113,7 @@ export default async function Contacts() {
                     </tbody>
                 </table>
 
-                <h2 className="text-xl font-semibold mt-8 mb-3">Other</h2>
+                <h2 className="text-xl font-semibold mt-4 mb-3">Other</h2>
                 <table className="w-full text-sm">
                     <thead>
                         <tr className="border-b border-neutral-800 text-left text-neutral-400">

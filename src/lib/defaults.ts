@@ -79,3 +79,9 @@ export const CONTACT_TYPE_LABELS: Record<string, string> = {
     TENANT: "Tenant",
     OTHER: "Other",
 };
+
+export const inputClass =
+    "w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 " +
+    "placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
+
+export const labelClass = "block text-sm font-medium text-neutral-300 mb-1";

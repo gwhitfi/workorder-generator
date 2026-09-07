@@ -207,6 +207,7 @@ model WorkOrder {
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
   archived        Boolean         @default(false)
+  notifyTenant    Boolean         @default(false)
   dueDate         DateTime?
   sentAt          DateTime?
   completedAt     DateTime?
