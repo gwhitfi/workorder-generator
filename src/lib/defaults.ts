@@ -85,3 +85,11 @@ export const inputClass =
     "placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
 
 export const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
+
+export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
+    DRAFT: "Draft",
+    SENT: "Sent",
+    IN_PROGRESS: "In progress",
+    COMPLETED: "Completed",
+    CLOSED: "Closed",
+};
