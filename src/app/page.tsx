@@ -14,5 +14,5 @@ export default async function Home() {
         redirect("/setup");
     }
 
-    return <Dashboard user={result.user} organization={result.organization} />;
+    return <Dashboard organization={result.organization} />;
 }

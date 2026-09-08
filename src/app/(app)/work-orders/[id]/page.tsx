@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import BackButton from "@/components/BackButton";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -54,6 +55,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
 
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+            <BackButton />
             <div className="mb-8">
                 <div className="mb-1 flex items-center gap-3">
                     <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">

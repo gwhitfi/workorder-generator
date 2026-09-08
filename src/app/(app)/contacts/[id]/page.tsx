@@ -1,3 +1,4 @@
+import BackButton from "@/components/BackButton";
 import { getCurrentUser } from "@/lib/auth";
 import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
 import prisma from "@/lib/prisma";
@@ -32,6 +33,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
     }
     return (
         <main className="mx-auto max-w-2xl px-4 py-10 text-neutral-100">
+            <BackButton />
             <div className="mb-8">
                 <p className="text-sm text-neutral-500 mb-1">{CONTACT_TYPE_LABELS[contact.contactType]}</p>
                 <h1 className="text-2xl font-semibold mb-2">{contact.displayName}</h1>

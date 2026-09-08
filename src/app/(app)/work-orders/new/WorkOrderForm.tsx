@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createWorkOrder } from "../actions";
 import { inputClass, labelClass } from "@/lib/defaults";
+import BackButton from "@/components/BackButton";
 
 type UnitOption = { id: string; name: string };
 type PropertyOption = {
@@ -38,6 +39,7 @@ export default function WorkOrderForm({
     const [contactTenant, setContactTenant] = useState(false);
     return (
         <form action={createWorkOrder} autoComplete="off" className="flex flex-col gap-4">
+            <BackButton />
             <label className={labelClass}>
                 Work Order Title
                 <input name="title" required className={inputClass} />

@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import BackButton from "@/components/BackButton";
 
 export default async function WorkOrder() {
     const result = await getCurrentUser();
@@ -32,6 +33,7 @@ export default async function WorkOrder() {
 
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+            <BackButton />
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Work Orders</h1>
                 {workOrders.length === 0 && (

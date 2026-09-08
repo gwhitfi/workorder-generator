@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
+import BackButton from "@/components/BackButton";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -41,6 +42,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
 
     return (
         <main className="mx-auto max-w-2xl px-4 py-10 text-neutral-100">
+            <BackButton />
             <div className="mb-8">
                 <p className="text-sm text-neutral-500 mb-1">{PROPERTY_TYPE_LABELS[property.propertyType]}</p>
                 <h1 className="text-2xl font-semibold mb-2">{property.displayName}</h1>

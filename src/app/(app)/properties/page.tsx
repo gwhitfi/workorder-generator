@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
+import BackButton from "@/components/BackButton";
 
 export default async function Properties() {
     const result = await getCurrentUser();
@@ -28,6 +29,7 @@ export default async function Properties() {
     });
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+            <BackButton />
             <div className="mb-6 flex items-center justify-between">
                 <h1 className="text-2xl font-semibold">Properties</h1>
                 {properties.length === 0 && (
