@@ -4,6 +4,7 @@ import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import BackButton from "@/components/BackButton";
+import AreaBuilder from "./AreaBuilder";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -124,21 +125,24 @@ function InfoCard({
     children: React.ReactNode;
 }) {
     return (
-        <div className="relative rounded-lg border border-neutral-800 bg-neutral-900 p-4 hover:border-neutral-600">
-            <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">{label}</p>
+        <>
+            <div className="relative rounded-lg border border-neutral-800 bg-neutral-900 p-4 hover:border-neutral-600">
+                <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">{label}</p>
 
-            {href ? (
-                <Link
-                    href={href}
-                    className="truncate block font-medium text-neutral-100 before:absolute before:inset-0 before:content-['']"
-                >
-                    {title}
-                </Link>
-            ) : (
-                <p className="truncate font-medium text-neutral-100">{title}</p>
-            )}
+                {href ? (
+                    <Link
+                        href={href}
+                        className="truncate block font-medium text-neutral-100 before:absolute before:inset-0 before:content-['']"
+                    >
+                        {title}
+                    </Link>
+                ) : (
+                    <p className="truncate font-medium text-neutral-100">{title}</p>
+                )}
 
-            <div className="relative z-10 mt-1 text-sm text-neutral-400 leading-relaxed">{children}</div>
-        </div>
+                <div className="relative z-10 mt-1 text-sm text-neutral-400 leading-relaxed">{children}</div>
+            </div>
+            <AreaBuilder />
+        </>
     );
 }

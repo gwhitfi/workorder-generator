@@ -84,3 +84,42 @@ export async function createWorkOrder(formData: FormData) {
     revalidatePath("/work-orders");
     redirect(`/work-orders/${workOrder.id}`);
 }
+
+export async function addArea(workOrderId: string, spaceId: string | null, name: string) {
+    const result = await getCurrentUser();
+
+    if (result.state !== "ready") {
+        throw new Error("Not authorized");
+    }
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+
+    if (spaceId) {
+        const space = await prisma.space.findFirst({
+            where: { id: spaceId, organizationId: result.organization.id },
+        });
+
+        if (!space) throw new Error("Invalid space");
+    }
+
+    const last = await prisma.area.findFirst({
+        where: { workOrderId },
+        orderBy: { sortOrder: "desc" },
+    });
+
+    const sortOrder = last ? last.sortOrder + 1 : 0;
+
+    await prisma.area.create({
+        data: {
+            workOrderId,
+            spaceId,
+            name,
+            sortOrder,
+        },
+    });
+    revalidatePath(`/work-orders/${workOrderId}`);
+}
