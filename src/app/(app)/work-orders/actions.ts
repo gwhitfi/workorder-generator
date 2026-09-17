@@ -123,3 +123,57 @@ export async function addArea(workOrderId: string, spaceId: string | null, name:
     });
     revalidatePath(`/work-orders/${workOrderId}`);
 }
+
+export async function removeArea(areaId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const area = await prisma.area.findFirst({
+        where: { id: areaId },
+        include: { workOrder: true },
+    });
+
+    if (!area || area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid area");
+    }
+
+    await prisma.area.delete({ where: { id: areaId } });
+    revalidatePath(`/work-orders/${area.workOrderId}`);
+}
+
+export async function moveArea(areaId: string, direction: "up" | "down") {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const area = await prisma.area.findFirst({
+        where: { id: areaId },
+        include: { workOrder: true },
+    });
+
+    if (!area || area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid area");
+    }
+
+    const neighbour = await prisma.area.findFirst({
+        where: {
+            workOrderId: area.workOrderId,
+            sortOrder: direction === "up" ? { lt: area.sortOrder } : { gt: area.sortOrder },
+        },
+        orderBy: { sortOrder: direction === "up" ? "desc" : "asc" },
+    });
+
+    if (!neighbour) return;
+
+    await prisma.$transaction([
+        prisma.area.update({
+            where: { id: area.id },
+            data: { sortOrder: neighbour.sortOrder },
+        }),
+        prisma.area.update({
+            where: { id: neighbour.id },
+            data: { sortOrder: area.sortOrder },
+        }),
+    ]);
+
+    revalidatePath(`/work-orders/${area.workOrderId}`);
+}

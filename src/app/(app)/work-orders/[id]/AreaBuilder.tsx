@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addArea } from "../actions";
+import { addArea, removeArea, moveArea } from "../actions";
 import { inputClass } from "@/lib/defaults";
 
 type SpaceOption = { id: string; name: string; unitId: string | null };
@@ -20,6 +20,8 @@ export default function AreaBuilder({
     const [name, setName] = useState("");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [busyId, setBusyId] = useState<string | null>(null);
+
     const propertySpaces = spaces.filter((s) => s.unitId !== null);
     const defaultSpaces = spaces.filter((s) => s.unitId === null);
 
@@ -39,7 +41,27 @@ export default function AreaBuilder({
             setPending(false);
         }
     }
+    async function handleMove(areaId: string, direction: "up" | "down") {
+        setBusyId(areaId);
+        try {
+            await moveArea(areaId, direction);
+        } catch {
+            setError("Could not move that space.");
+        } finally {
+            setBusyId(null);
+        }
+    }
 
+    async function handleRemove(areaId: string) {
+        setBusyId(areaId);
+        try {
+            await removeArea(areaId);
+        } catch {
+            setError("Could not remove that space.");
+        } finally {
+            setBusyId(null);
+        }
+    }
     return (
         <div className="border-t border-neutral-800 pt-6">
             <h2 className="text-lg font-semibold text-neutral-100">Spaces</h2>
@@ -97,9 +119,40 @@ export default function AreaBuilder({
                 <p className="mt-4 text-sm text-neutral-500">No spaces added yet. Add one above.</p>
             ) : (
                 <ul className="mt-4 flex flex-col gap-2">
-                    {areas.map((area) => (
-                        <li key={area.id} className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm">
-                            {area.name}
+                    {areas.map((area, i) => (
+                        <li
+                            key={area.id}
+                            className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm"
+                        >
+                            <span>{area.name}</span>
+                            <div className="flex items-center gap-2">
+                                <button
+                                    type="button"
+                                    onClick={() => handleMove(area.id, "up")}
+                                    disabled={i === 0 || busyId === area.id}
+                                    className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
+                                    aria-label={`Move ${area.name} up`}
+                                >
+                                    ↑
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleMove(area.id, "down")}
+                                    disabled={i === areas.length - 1 || busyId === area.id}
+                                    className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
+                                    aria-label={`Move ${area.name} down`}
+                                >
+                                    ↓
+                                </button>
+                                <button
+                                    type="button"
+                                    onClick={() => handleRemove(area.id)}
+                                    disabled={busyId === area.id}
+                                    className="text-xs text-neutral-500 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
+                                >
+                                    Remove
+                                </button>
+                            </div>
                         </li>
                     ))}
                 </ul>
