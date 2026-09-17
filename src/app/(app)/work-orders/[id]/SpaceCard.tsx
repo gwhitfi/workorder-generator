@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addLineItem, removeLineItem } from "../actions";
+import { addLineItem, removeLineItem, moveLineItem } from "../actions";
 import { LineItemPriority } from "@/generated/prisma/enums";
 import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
 import TagModal from "./TagModal";
@@ -43,7 +43,7 @@ export default function SpaceCard({
     const [priority, setPriority] = useState("MEDIUM");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [removingId, setRemovingId] = useState<string | null>(null);
+    const [busyItemId, setBusyItemId] = useState<string | null>(null);
     const [tagModalFor, setTagModalFor] = useState<string | null>(null);
     const modalItem = area.lineItems.find((i) => i.id === tagModalFor);
     async function handleAddItem() {
@@ -63,17 +63,28 @@ export default function SpaceCard({
     }
 
     async function handleRemoveItem(lineItemId: string) {
-        setRemovingId(lineItemId);
+        setBusyItemId(lineItemId);
         try {
             await removeLineItem(lineItemId);
             setError(null);
         } catch {
             setError("Could not remove that item.");
         } finally {
-            setRemovingId(null);
+            setBusyItemId(null);
         }
     }
 
+    async function handleMoveItem(lineItemId: string, direction: "up" | "down") {
+        setBusyItemId(lineItemId);
+        try {
+            await moveLineItem(lineItemId, direction);
+            setError(null);
+        } catch {
+            setError("Could not move that item.");
+        } finally {
+            setBusyItemId(null);
+        }
+    }
     return (
         <li className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3">
             <div className="flex items-center justify-between">
@@ -109,7 +120,7 @@ export default function SpaceCard({
             </div>
             {area.lineItems.length > 0 && (
                 <ul className="mt-2 flex flex-col gap-1 text-base text-neutral-300">
-                    {area.lineItems.map((item) => (
+                    {area.lineItems.map((item, i) => (
                         <li key={item.id} className="group flex items-center gap-2">
                             <span className="text-neutral-200">•</span>
                             <span className="">{item.description}</span>
@@ -130,19 +141,38 @@ export default function SpaceCard({
                             )}
                             <button
                                 type="button"
-                                onClick={() => handleRemoveItem(item.id)}
-                                disabled={removingId === item.id}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
-                                aria-label={`Remove ${item.description}`}
+                                onClick={() => handleMoveItem(item.id, "up")}
+                                disabled={i === 0 || busyItemId === item.id}
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                aria-label={`Move ${item.description} up`}
                             >
-                                Remove
+                                ↑
                             </button>
+                            <button
+                                type="button"
+                                onClick={() => handleMoveItem(item.id, "down")}
+                                disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                aria-label={`Move ${item.description} down`}
+                            >
+                                ↓
+                            </button>
+
                             <button
                                 type="button"
                                 onClick={() => setTagModalFor(item.id)}
                                 className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer"
                             >
                                 Tags
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveItem(item.id)}
+                                disabled={busyItemId === item.id}
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
+                                aria-label={`Remove ${item.description}`}
+                            >
+                                Remove
                             </button>
                         </li>
                     ))}

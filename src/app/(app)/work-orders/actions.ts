@@ -281,3 +281,42 @@ export async function createTag(name: string) {
         },
     });
 }
+
+export async function moveLineItem(lineItemId: string, direction: "up" | "down") {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const lineItem = await prisma.lineItem.findFirst({
+        where: { id: lineItemId },
+        include: {
+            area: { include: { workOrder: true } },
+        },
+    });
+
+    if (!lineItem || lineItem.area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid line item");
+    }
+
+    const neighbour = await prisma.lineItem.findFirst({
+        where: {
+            areaId: lineItem.areaId,
+            sortOrder: direction === "up" ? { lt: lineItem.sortOrder } : { gt: lineItem.sortOrder },
+        },
+        orderBy: { sortOrder: direction === "up" ? "desc" : "asc" },
+    });
+
+    if (!neighbour) return;
+
+    await prisma.$transaction([
+        prisma.lineItem.update({
+            where: { id: lineItem.id },
+            data: { sortOrder: neighbour.sortOrder },
+        }),
+        prisma.lineItem.update({
+            where: { id: neighbour.id },
+            data: { sortOrder: lineItem.sortOrder },
+        }),
+    ]);
+
+    revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
