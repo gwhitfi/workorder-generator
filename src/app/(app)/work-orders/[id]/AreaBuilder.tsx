@@ -3,9 +3,10 @@
 import { useState } from "react";
 import { addArea, removeArea, moveArea } from "../actions";
 import { inputClass } from "@/lib/defaults";
+import SpaceCard from "./SpaceCard";
 
 type SpaceOption = { id: string; name: string; unitId: string | null };
-type AreaRow = { id: string; name: string };
+type AreaRow = { id: string; name: string; lineItems: { id: string; description: string; priority: string }[] };
 
 export default function AreaBuilder({
     workOrderId,
@@ -120,40 +121,15 @@ export default function AreaBuilder({
             ) : (
                 <ul className="mt-4 flex flex-col gap-2">
                     {areas.map((area, i) => (
-                        <li
+                        <SpaceCard
                             key={area.id}
-                            className="flex items-center justify-between rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3 text-sm"
-                        >
-                            <span>{area.name}</span>
-                            <div className="flex items-center gap-2">
-                                <button
-                                    type="button"
-                                    onClick={() => handleMove(area.id, "up")}
-                                    disabled={i === 0 || busyId === area.id}
-                                    className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
-                                    aria-label={`Move ${area.name} up`}
-                                >
-                                    ↑
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleMove(area.id, "down")}
-                                    disabled={i === areas.length - 1 || busyId === area.id}
-                                    className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
-                                    aria-label={`Move ${area.name} down`}
-                                >
-                                    ↓
-                                </button>
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemove(area.id)}
-                                    disabled={busyId === area.id}
-                                    className="text-xs text-neutral-500 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
-                                >
-                                    Remove
-                                </button>
-                            </div>
-                        </li>
+                            area={area}
+                            index={i}
+                            total={areas.length}
+                            onMove={handleMove}
+                            onRemove={handleRemove}
+                            busy={busyId === area.id}
+                        />
                     ))}
                 </ul>
             )}

@@ -4,6 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { LineItemPriority } from "@/generated/prisma/enums";
 
 export async function createWorkOrder(formData: FormData) {
     const result = await getCurrentUser();
@@ -175,5 +176,35 @@ export async function moveArea(areaId: string, direction: "up" | "down") {
         }),
     ]);
 
+    revalidatePath(`/work-orders/${area.workOrderId}`);
+}
+
+export async function addLineItem(areaId: string, description: string, priority: LineItemPriority) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const area = await prisma.area.findFirst({
+        where: { id: areaId },
+        include: { workOrder: true },
+    });
+
+    if (!area || area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid area");
+    }
+
+    const last = await prisma.lineItem.findFirst({
+        where: { areaId },
+        orderBy: { sortOrder: "desc" },
+    });
+    const sortOrder = last ? last.sortOrder + 1 : 0;
+
+    await prisma.lineItem.create({
+        data: {
+            areaId,
+            description,
+            priority,
+            sortOrder,
+        },
+    });
     revalidatePath(`/work-orders/${area.workOrderId}`);
 }
