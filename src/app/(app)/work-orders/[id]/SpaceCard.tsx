@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { addLineItem, removeLineItem, moveLineItem } from "../actions";
+import { addLineItem, removeLineItem, moveLineItem, updateLineItem } from "../actions";
 import { LineItemPriority } from "@/generated/prisma/enums";
 import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
 import TagModal from "./TagModal";
@@ -46,6 +46,9 @@ export default function SpaceCard({
     const [busyItemId, setBusyItemId] = useState<string | null>(null);
     const [tagModalFor, setTagModalFor] = useState<string | null>(null);
     const modalItem = area.lineItems.find((i) => i.id === tagModalFor);
+    const [editingId, setEditingId] = useState<string | null>(null);
+    const [editDraft, setEditDraft] = useState("");
+
     async function handleAddItem() {
         const trimmed = description.trim();
         if (!trimmed) return;
@@ -81,6 +84,26 @@ export default function SpaceCard({
             setError(null);
         } catch {
             setError("Could not move that item.");
+        } finally {
+            setBusyItemId(null);
+        }
+    }
+
+    async function handleSaveEdit(item: LineItemRow) {
+        const trimmed = editDraft.trim();
+
+        if (!trimmed || trimmed === item.description) {
+            setEditingId(null);
+            return;
+        }
+
+        setBusyItemId(item.id);
+        try {
+            await updateLineItem(item.id, trimmed, item.priority as LineItemPriority);
+            setEditingId(null);
+            setError(null);
+        } catch {
+            setError("Could not save that change.");
         } finally {
             setBusyItemId(null);
         }
@@ -123,18 +146,40 @@ export default function SpaceCard({
                     {area.lineItems.map((item, i) => (
                         <li key={item.id} className="group flex items-center gap-2">
                             <span className="text-neutral-200">•</span>
-                            <span className="">{item.description}</span>
+                            {editingId === item.id ? (
+                                <input
+                                    value={editDraft}
+                                    onChange={(e) => setEditDraft(e.target.value)}
+                                    onBlur={() => handleSaveEdit(item)}
+                                    onKeyDown={(e) => {
+                                        if (e.key === "Enter") handleSaveEdit(item);
+                                        if (e.key === "Escape") setEditingId(null);
+                                    }}
+                                    autoFocus
+                                    className="flex-1 rounded border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-base text-neutral-100 focus:outline-none"
+                                />
+                            ) : (
+                                <span
+                                    onClick={() => {
+                                        setEditingId(item.id);
+                                        setEditDraft(item.description);
+                                    }}
+                                    className="cursor-text rounded px-1 hover:bg-neutral-800"
+                                >
+                                    {item.description}
+                                </span>
+                            )}
                             {item.tags.map((tag) => (
                                 <span
                                     key={tag.id}
-                                    className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400"
+                                    className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400 cursor-default"
                                 >
                                     {tag.name}
                                 </span>
                             ))}
                             {PRIORITY_STYLES[item.priority] && (
                                 <span
-                                    className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${PRIORITY_STYLES[item.priority]}`}
+                                    className={`shrink-0 rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
                                 >
                                     {PRIORITY_LABELS[item.priority]}
                                 </span>
@@ -169,7 +214,7 @@ export default function SpaceCard({
                                 type="button"
                                 onClick={() => handleRemoveItem(item.id)}
                                 disabled={busyItemId === item.id}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
                                 aria-label={`Remove ${item.description}`}
                             >
                                 Remove
@@ -188,6 +233,7 @@ export default function SpaceCard({
                     + Add line item
                 </button>
             )}
+
             {adding && (
                 <div className="mt-3 flex flex-col gap-2">
                     <input
@@ -229,6 +275,7 @@ export default function SpaceCard({
                     </div>
                 </div>
             )}
+
             {modalItem && (
                 <TagModal
                     lineItemId={modalItem.id}

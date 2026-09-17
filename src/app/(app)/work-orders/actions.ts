@@ -320,3 +320,26 @@ export async function moveLineItem(lineItemId: string, direction: "up" | "down")
 
     revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
 }
+
+export async function updateLineItem(lineItemId: string, description: string, priority: LineItemPriority) {
+    const reuslt = await getCurrentUser();
+    if (reuslt.state !== "ready") throw new Error("Not authorized");
+
+    const lineItem = await prisma.lineItem.findFirst({
+        where: { id: lineItemId },
+        include: {
+            area: { include: { workOrder: true } },
+        },
+    });
+
+    if (!lineItem || lineItem.area.workOrder.organizationId !== reuslt.organization.id) {
+        throw new Error("Invalid line item");
+    }
+
+    await prisma.lineItem.update({
+        where: { id: lineItemId },
+        data: { description, priority },
+    });
+
+    revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
