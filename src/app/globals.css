@@ -6,6 +6,12 @@
     --foreground: #ededed;
 }
 
+@media print {
+    section {
+        break-inside: avoid;
+    }
+}
+
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);

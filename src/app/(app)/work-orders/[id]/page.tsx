@@ -111,6 +111,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
             )}
 
             <AreaBuilder workOrderId={workOrder.id} areas={workOrder.areas} spaces={spaces} tags={tags} />
+            <Link href={`/work-orders/${workOrder.id}/print`}>Print Preview</Link>
         </main>
     );
 }
