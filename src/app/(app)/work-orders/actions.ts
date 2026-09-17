@@ -208,3 +208,76 @@ export async function addLineItem(areaId: string, description: string, priority:
     });
     revalidatePath(`/work-orders/${area.workOrderId}`);
 }
+
+export async function removeLineItem(lineItemId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const lineItem = await prisma.lineItem.findFirst({
+        where: { id: lineItemId },
+        include: {
+            area: {
+                include: { workOrder: true },
+            },
+        },
+    });
+
+    if (!lineItem || lineItem.area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid line item");
+    }
+
+    await prisma.lineItem.delete({ where: { id: lineItemId } });
+    revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
+
+export async function toggleTag(lineItemId: string, tagId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const lineItem = await prisma.lineItem.findFirst({
+        where: { id: lineItemId },
+        include: {
+            tags: true,
+            area: { include: { workOrder: true } },
+        },
+    });
+
+    if (!lineItem || lineItem.area.workOrder.organizationId !== result.organization.id) {
+        throw new Error("Invalid line item");
+    }
+
+    const tag = await prisma.tag.findFirst({
+        where: { id: tagId, organizationId: result.organization.id },
+    });
+
+    if (!tag) throw new Error("Invalid tag");
+
+    const alreadyTagged = lineItem.tags.some((t) => t.id === tagId);
+
+    await prisma.lineItem.update({
+        where: { id: lineItemId },
+        data: {
+            tags: alreadyTagged ? { disconnect: { id: tagId } } : { connect: { id: tagId } },
+        },
+    });
+
+    revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
+
+export async function createTag(name: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const last = await prisma.tag.findFirst({
+        where: { organizationId: result.organization.id },
+        orderBy: { sortOrder: "desc" },
+    });
+
+    return await prisma.tag.create({
+        data: {
+            name,
+            organizationId: result.organization.id,
+            sortOrder: last ? last.sortOrder + 1 : 0,
+        },
+    });
+}

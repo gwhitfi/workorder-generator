@@ -110,7 +110,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 </div>
             )}
 
-            <AreaBuilder workOrderId={workOrder.id} areas={workOrder.areas} spaces={spaces} />
+            <AreaBuilder workOrderId={workOrder.id} areas={workOrder.areas} spaces={spaces} tags={tags} />
         </main>
     );
 }

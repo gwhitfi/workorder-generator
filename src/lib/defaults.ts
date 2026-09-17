@@ -93,3 +93,15 @@ export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
     COMPLETED: "Completed",
     CLOSED: "Closed",
 };
+
+export const PRIORITY_LABELS: Record<string, string> = {
+    EMERGENCY: "Emergency",
+    HIGH: "High",
+    MEDIUM: "Medium",
+    LOW: "Low",
+};
+
+export const PRIORITY_STYLES: Record<string, string> = {
+    EMERGENCY: "border-red-700 text-red-400",
+    HIGH: "border-amber-700 text-amber-400",
+};

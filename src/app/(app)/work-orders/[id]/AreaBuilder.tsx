@@ -6,16 +6,23 @@ import { inputClass } from "@/lib/defaults";
 import SpaceCard from "./SpaceCard";
 
 type SpaceOption = { id: string; name: string; unitId: string | null };
-type AreaRow = { id: string; name: string; lineItems: { id: string; description: string; priority: string }[] };
+type AreaRow = {
+    id: string;
+    name: string;
+    lineItems: { id: string; description: string; priority: string; tags: TagRow[] }[];
+};
+type TagRow = { id: string; name: string };
 
 export default function AreaBuilder({
     workOrderId,
     areas,
     spaces,
+    tags,
 }: {
     workOrderId: string;
     areas: AreaRow[];
     spaces: SpaceOption[];
+    tags: TagRow[];
 }) {
     const [selectedSpace, setSelectedSpace] = useState("");
     const [name, setName] = useState("");
@@ -124,6 +131,7 @@ export default function AreaBuilder({
                         <SpaceCard
                             key={area.id}
                             area={area}
+                            tags={tags}
                             index={i}
                             total={areas.length}
                             onMove={handleMove}

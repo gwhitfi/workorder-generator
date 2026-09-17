@@ -1,14 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { addLineItem } from "../actions";
+import { addLineItem, removeLineItem } from "../actions";
 import { LineItemPriority } from "@/generated/prisma/enums";
-import { inputClass } from "@/lib/defaults";
+import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
+import TagModal from "./TagModal";
+
+type TagRow = { id: string; name: string };
 
 type LineItemRow = {
     id: string;
     description: string;
     priority: string;
+    tags: TagRow[];
 };
 
 type AreaRow = {
@@ -20,12 +24,14 @@ type AreaRow = {
 export default function SpaceCard({
     area,
     index,
+    tags,
     total,
     onMove,
     onRemove,
     busy,
 }: {
     area: AreaRow;
+    tags: TagRow[];
     index: number;
     total: number;
     onMove: (id: string, direction: "up" | "down") => void;
@@ -37,6 +43,9 @@ export default function SpaceCard({
     const [priority, setPriority] = useState("MEDIUM");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [removingId, setRemovingId] = useState<string | null>(null);
+    const [tagModalFor, setTagModalFor] = useState<string | null>(null);
+    const modalItem = area.lineItems.find((i) => i.id === tagModalFor);
     async function handleAddItem() {
         const trimmed = description.trim();
         if (!trimmed) return;
@@ -52,6 +61,19 @@ export default function SpaceCard({
             setPending(false);
         }
     }
+
+    async function handleRemoveItem(lineItemId: string) {
+        setRemovingId(lineItemId);
+        try {
+            await removeLineItem(lineItemId);
+            setError(null);
+        } catch {
+            setError("Could not remove that item.");
+        } finally {
+            setRemovingId(null);
+        }
+    }
+
     return (
         <li className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3">
             <div className="flex items-center justify-between">
@@ -86,11 +108,42 @@ export default function SpaceCard({
                 </div>
             </div>
             {area.lineItems.length > 0 && (
-                <ul className="mt-2 flex flex-col gap-1 text-sm text-neutral-300">
+                <ul className="mt-2 flex flex-col gap-1 text-base text-neutral-300">
                     {area.lineItems.map((item) => (
-                        <li key={item.id} className="flex gap-2">
-                            <span className="text-neutral-600">*</span>
-                            <span>{item.description}</span>
+                        <li key={item.id} className="group flex items-center gap-2">
+                            <span className="text-neutral-200">•</span>
+                            <span className="">{item.description}</span>
+                            {item.tags.map((tag) => (
+                                <span
+                                    key={tag.id}
+                                    className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400"
+                                >
+                                    {tag.name}
+                                </span>
+                            ))}
+                            {PRIORITY_STYLES[item.priority] && (
+                                <span
+                                    className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${PRIORITY_STYLES[item.priority]}`}
+                                >
+                                    {PRIORITY_LABELS[item.priority]}
+                                </span>
+                            )}
+                            <button
+                                type="button"
+                                onClick={() => handleRemoveItem(item.id)}
+                                disabled={removingId === item.id}
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
+                                aria-label={`Remove ${item.description}`}
+                            >
+                                Remove
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => setTagModalFor(item.id)}
+                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer"
+                            >
+                                Tags
+                            </button>
                         </li>
                     ))}
                 </ul>
@@ -120,10 +173,11 @@ export default function SpaceCard({
                     {error && <p className="text-sm text-red-400">{error}</p>}
                     <div className="flex gap-2">
                         <select value={priority} onChange={(e) => setPriority(e.target.value)} className={inputClass}>
-                            <option value="EMERGENCY">Emergency</option>
-                            <option value="HIGH">High</option>
-                            <option value="MEDIUM">Medium</option>
-                            <option value="LOW">Low</option>
+                            {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
+                                <option key={value} value={value}>
+                                    {label}
+                                </option>
+                            ))}
                         </select>
 
                         <button
@@ -144,6 +198,15 @@ export default function SpaceCard({
                         </button>
                     </div>
                 </div>
+            )}
+            {modalItem && (
+                <TagModal
+                    lineItemId={modalItem.id}
+                    description={modalItem.description}
+                    selectedTags={modalItem.tags}
+                    allTags={tags}
+                    onClose={() => setTagModalFor(null)}
+                />
             )}
         </li>
     );
