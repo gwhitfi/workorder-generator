@@ -13,7 +13,7 @@ export default function BackButton({ fallback = "/" }: { fallback?: string }) {
     }
 
     return (
-        <button onClick={goBack} className="text-sm text-neutral-400 hover:text-neutral-100 hover:cursor-pointer">
+        <button onClick={goBack} className="text-sm my-5 text-neutral-400 hover:text-neutral-100 hover:cursor-pointer">
             ← Back
         </button>
     );

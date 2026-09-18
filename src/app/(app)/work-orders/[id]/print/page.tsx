@@ -39,88 +39,145 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
     if (!workOrder) notFound();
 
     return (
-        <main className="mx-auto max-w-3xl bg-white px-4 py-10 text-neutral-900 print:py-0">
+        <main className="mx-auto max-w-3xl bg-white px-4 py-10 text-neutral-900">
+            <div className="hidden print:block text-xs text-neutral-500 mb-4">
+                Work Order Generator · {workOrder.jobNumber ?? workOrder.id.slice(-6).toUpperCase()}
+            </div>
             <div className="print:hidden">
                 <BackButton />
             </div>
-            <div className="mb-8">
-                <div className="mb-1 flex items-center gap-3">
-                    <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-800">
-                        {WORK_ORDER_STATUS_LABELS[workOrder.status]}
-                    </span>
-                    {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-800">Due by {workOrder.dueDate.toLocaleDateString()}</span>
-                    )}
-                </div>
+            <h1 className="mb-2 flex items-center justify-center gap-3 text-2xl font-semibold">
+                {workOrder.title ?? "Untitled work order"}
+                <span className="rounded-full border border-neutral-400 px-2 py-0.5 text-xs font-normal text-neutral-600">
+                    {WORK_ORDER_STATUS_LABELS[workOrder.status]}
+                </span>
+            </h1>
 
-                <h1 className="text-2xl font-semibold mb-2">{workOrder.title ?? "Untitled work order"}</h1>
-                <div>
-                    {workOrder.propertyId && (
-                        <div>
-                            <span className="font-medium">Address: </span>
-                            {workOrder.property.addressLine1} {workOrder.property.city}, {workOrder.property.state}{" "}
-                            {workOrder.property.zipCode}
-                        </div>
-                    )}
-                </div>
-                <div>
-                    {workOrder.tenantName && (
-                        <div>
-                            <span className="font-medium">Tenant: </span>
-                            {workOrder.tenantName} {workOrder.tenantPhone} {workOrder.tenantEmail}
-                        </div>
-                    )}
-                </div>
-                <div>
-                    {workOrder.contractorName && (
-                        <div>
-                            <span className="font-medium">Contractor: </span>
-                            {workOrder.contractorName} {workOrder.contractorPhone} {workOrder.contractorEmail}
-                        </div>
-                    )}
+            <div className="mb-4 border-y border-neutral-300 py-4 text-sm">
+                <div className="grid gap-6 sm:grid-cols-3">
+                    <div>
+                        <h3 className="mb-1 font-semibold text-neutral-600">Address</h3>
+                        <p>
+                            {workOrder.property.addressLine1}
+                            {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
+                        </p>
+                        <p>
+                            {workOrder.property.city}, {workOrder.property.state} {workOrder.property.zipCode}
+                        </p>
+                    </div>
+
+                    <div>
+                        <h3 className="mb-1 font-semibold text-neutral-600">Contractor</h3>
+                        {workOrder.contractorName ? (
+                            <>
+                                <p>{workOrder.contractorName}</p>
+                                {workOrder.contractorPhone && <p>{workOrder.contractorPhone}</p>}
+                                {workOrder.contractorEmail && <p>{workOrder.contractorEmail}</p>}
+                            </>
+                        ) : (
+                            <p className="text-neutral-400">Not assigned</p>
+                        )}
+                    </div>
+
+                    <div>
+                        <h3 className="mb-1 font-semibold text-neutral-600">Tenant</h3>
+                        {workOrder.tenantName ? (
+                            <>
+                                <p>{workOrder.tenantName}</p>
+                                {workOrder.tenantPhone && <p>{workOrder.tenantPhone}</p>}
+                                {workOrder.tenantEmail && <p>{workOrder.tenantEmail}</p>}
+                            </>
+                        ) : (
+                            <p className="text-neutral-400">No tenant on file</p>
+                        )}
+                    </div>
                 </div>
             </div>
-            {workOrder.notes && (
-                <div className="text-sm text-neutral-800 leading-relaxed">
-                    <p className="text-xs uppercase tracking-wide text-neutral-800">Notes</p>
-                    <p className="mt-1">{workOrder.notes}</p>
+
+            {(workOrder.dueDate || workOrder.notes) && (
+                <div className="mb-8 grid gap-6 text-sm sm:grid-cols-3">
+                    {workOrder.dueDate && (
+                        <div>
+                            <h3 className="mb-1 font-medium text-neutral-500">Complete by</h3>
+                            <p>{workOrder.dueDate.toLocaleDateString()}</p>
+                        </div>
+                    )}
+
+                    {workOrder.notes && (
+                        <div className={workOrder.dueDate ? "sm:col-span-2" : "sm:col-span-3"}>
+                            <h3 className="mb-1 font-medium text-neutral-500">Notes</h3>
+                            <p className="leading-relaxed">{workOrder.notes}</p>
+                        </div>
+                    )}
                 </div>
             )}
             <div>
-                {workOrder.areas.map((area) => (
-                    <section key={area.id} className="mb-6">
-                        <h2 className="mb-2 font-semibold">{area.name}</h2>
-                        {area.lineItems.length === 0 ? (
-                            <p className="text-sm text-neutral-800">No items.</p>
-                        ) : (
-                            <ul className="flex flex-col gap-2">
-                                {area.lineItems.map((item) => (
-                                    <li key={item.id} className="flex items-start gap-2">
-                                        <span>☐</span>
-                                        <span className="flex-1">
-                                            {item.description}
-                                            {item.tags.map((tag) => (
-                                                <span key={tag.id} className="ml-2 text-sm">
-                                                    [{tag.name}]
+                {workOrder.areas.map((area) => {
+                    const urgent = area.lineItems.some((i) => i.priority === "EMERGENCY" || i.priority === "HIGH");
+
+                    return (
+                        <section key={area.id} className="mb-6 break-inside-avoid">
+                            <h2 className="mb-2 flex items-center gap-2 break-after-avoid border-b border-neutral-300 pb-1 text-sm font-semibold uppercase tracking-wide text-neutral-600">
+                                <span>{area.name}</span>
+                                {urgent && <span className="text-sm">⚑</span>}
+                            </h2>
+
+                            {area.lineItems.length === 0 ? (
+                                <p className="text-sm text-neutral-400">No items.</p>
+                            ) : (
+                                <ul>
+                                    {area.lineItems.map((item) => (
+                                        <li
+                                            key={item.id}
+                                            className="flex items-baseline gap-3 border-b border-neutral-200 py-2 last:border-0"
+                                        >
+                                            <span className="text-lg leading-none text-neutral-400">☐</span>
+
+                                            <span className="flex-1">
+                                                {item.description}
+                                                {item.tags.length > 0 && (
+                                                    <span className="ml-2 text-xs text-neutral-500">
+                                                        {item.tags.map((tag) => tag.name).join(" · ")}
+                                                    </span>
+                                                )}
+                                            </span>
+
+                                            {(item.priority === "EMERGENCY" || item.priority === "HIGH") && (
+                                                <span className="shrink-0 text-xs font-medium uppercase tracking-wide text-neutral-600">
+                                                    {PRIORITY_LABELS[item.priority]}
                                                 </span>
-                                            ))}
-                                        </span>
-                                        <span>
-                                            {item.priority === "EMERGENCY" || item.priority === "HIGH"
-                                                ? PRIORITY_LABELS[item.priority]
-                                                : ""}
-                                        </span>
-                                    </li>
-                                ))}
-                            </ul>
-                        )}
-                    </section>
-                ))}
+                                            )}
+                                        </li>
+                                    ))}
+                                </ul>
+                            )}
+                        </section>
+                    );
+                })}
             </div>
-            <div>
-                <h4>Completed date and signature</h4>
-                <p>_____________________________________</p>
-            </div>
+            <section className="mt-10 break-inside-avoid border-t border-neutral-300 pt-6 text-sm">
+                <h2 className="mb-4 text-sm font-semibold uppercase tracking-wide text-neutral-600">Completion</h2>
+
+                <div className="mb-6">
+                    <p className="mb-1 text-xs text-neutral-500">Notes on work performed</p>
+                    <div className="h-6 border-b border-neutral-300" />
+                    <div className="h-6 border-b border-neutral-300" />
+                    <div className="h-6 border-b border-neutral-300" />
+                    <div className="h-6 border-b border-neutral-300" />
+                </div>
+
+                <div className="grid gap-8 sm:grid-cols-3">
+                    <div className="sm:col-span-2">
+                        <div className="h-10 border-b border-neutral-400" />
+                        <p className="mt-1 text-xs text-neutral-500">Contractor signature</p>
+                    </div>
+
+                    <div>
+                        <div className="h-10 border-b border-neutral-400" />
+                        <p className="mt-1 text-xs text-neutral-500">Date completed</p>
+                    </div>
+                </div>
+            </section>
         </main>
     );
 }
