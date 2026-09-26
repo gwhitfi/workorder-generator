@@ -5,11 +5,13 @@ export default function PageHeader({
     subtitle,
     actionHref,
     actionLabel,
+    mobileLabel = "+ Add",
 }: {
     title: string;
     subtitle?: string;
     actionHref: string;
     actionLabel: string;
+    mobileLabel?: string;
 }) {
     return (
         <div className="mb-6 flex items-end justify-between gap-4">
@@ -21,7 +23,7 @@ export default function PageHeader({
                 href={actionHref}
                 className="shrink-0 rounded-md bg-neutral-100 px-3 py-2 text-sm font-medium text-neutral-900 hover:bg-white sm:px-4"
             >
-                <span className="sm:hidden">+ Add</span>
+                <span className="sm:hidden">{mobileLabel}</span>
                 <span className="hidden sm:inline">{actionLabel}</span>
             </Link>
         </div>
