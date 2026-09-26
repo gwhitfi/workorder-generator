@@ -1,6 +1,7 @@
 "use server";
 
 import { getCurrentUser } from "@/lib/auth";
+import { randomBytes } from "node:crypto";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -62,6 +63,7 @@ export async function createWorkOrder(formData: FormData) {
     const workOrder = await prisma.workOrder.create({
         data: {
             organizationId: result.organization.id,
+            publicToken: randomBytes(24).toString("base64url"),
             propertyId,
             unitId,
             title,
