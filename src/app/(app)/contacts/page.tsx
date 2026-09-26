@@ -1,8 +1,12 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
+import type { ReactNode } from "react";
 import prisma from "@/lib/prisma";
-import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/list/PageHeader";
+import EmptyState from "@/components/list/EmptyState";
+import { List, ListHeader, ListRow, Cell, ListLink, Favorite } from "@/components/list/List";
+
+const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.5fr)]";
 
 export default async function Contacts() {
     const result = await getCurrentUser();
@@ -28,127 +32,104 @@ export default async function Contacts() {
         },
     });
 
+    type ContactRow = (typeof contacts)[number];
+
+    // Every section uses the same four columns; only the second one changes.
+    const sections: {
+        type: ContactRow["contactType"];
+        title: string;
+        empty: string;
+        detailLabel: string;
+        detail: (c: ContactRow) => ReactNode;
+    }[] = [
+        {
+            type: "CONTRACTOR",
+            title: "Contractors",
+            empty: "No contractors yet.",
+            detailLabel: "Company",
+            detail: (c) => c.company,
+        },
+        {
+            type: "TENANT",
+            title: "Tenants",
+            empty: "No tenants yet.",
+            detailLabel: "Property",
+            detail: (c) =>
+                c.unit &&
+                `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · Unit ${c.unit.name}`}`,
+        },
+        {
+            type: "OTHER",
+            title: "Other",
+            empty: "No other contacts yet.",
+            detailLabel: "Notes",
+            detail: (c) => c.notes,
+        },
+    ];
+
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
-            <BackButton />
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold">Contacts</h1>
-                {contacts.length === 0 && (
-                    <div>
-                        <h2>No contacts added yet</h2>
-                    </div>
-                )}
-                <Link
-                    href="/contacts/new"
-                    className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white"
-                >
-                    Add Contact
-                </Link>
-            </div>
-            <div>
-                <h2 className="text-xl font-semibold mt-4 mb-3">Contractors</h2>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
-                            <th className="px-3 pb-2 font-medium">Display Name</th>
-                            <th className="px-3 pb-2 font-medium">Company</th>
-                            <th className="px-3 pb-2 font-medium">Phone</th>
-                            <th className="px-3 pb-2 font-medium">Email</th>
-                            <th className="px-3 pb-2 font-medium">Details</th>
-                        </tr>
-                    </thead>
+            <PageHeader
+                title="Contacts"
+                subtitle={`${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`}
+                actionHref="/contacts/new"
+                actionLabel="Add Contact"
+            />
 
-                    <tbody>
-                        {contacts
-                            .filter((c) => c.contactType === "CONTRACTOR")
-                            .map((contact) => (
-                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                    <td className="px-3 py-3">{contact.displayName}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.company}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
-                                    <td className="px-3 py-3 text-right">
-                                        <Link
-                                            href={`/contacts/${contact.id}`}
-                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
-                                        >
-                                            View Detail
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
-                <h2 className="text-xl font-semibold mt-4 mb-3">Tenants</h2>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
-                            <th className="px-3 pb-2 font-medium">Display Name</th>
-                            <th className="px-3 pb-2 font-medium">Unit</th>
-                            <th className="px-3 pb-2 font-medium">Property</th>
-                            <th className="px-3 pb-2 font-medium">Phone</th>
-                            <th className="px-3 pb-2 font-medium">Email</th>
-                            <th className="px-3 pb-2 font-medium">Details</th>
-                        </tr>
-                    </thead>
+            {contacts.length === 0 ? (
+                <EmptyState message="No contacts added yet." actionHref="/contacts/new" actionLabel="Add your first contact" />
+            ) : (
+                <div className="flex flex-col gap-8">
+                    {sections.map((section) => {
+                        const rows = contacts.filter((c) => c.contactType === section.type);
 
-                    <tbody>
-                        {contacts
-                            .filter((c) => c.contactType === "TENANT")
-                            .map((contact) => (
-                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                    <td className="px-3 py-3">{contact.displayName}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.unit?.name}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.unit?.property.displayName}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
-                                    <td className="px-3 py-3 text-right">
-                                        <Link
-                                            href={`/contacts/${contact.id}`}
-                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
-                                        >
-                                            View Detail
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
+                        return (
+                            <section key={section.type}>
+                                <h2 className="mb-3 flex items-baseline gap-2 text-lg font-semibold">
+                                    {section.title}
+                                    <span className="text-sm font-normal text-neutral-500">{rows.length}</span>
+                                </h2>
 
-                <h2 className="text-xl font-semibold mt-4 mb-3">Other</h2>
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
-                            <th className="px-3 pb-2 font-medium">Display Name</th>
-                            <th className="px-3 pb-2 font-medium">Phone</th>
-                            <th className="px-3 pb-2 font-medium">Email</th>
-                            <th className="px-3 pb-2 font-medium">Notes</th>
-                            <th className="px-3 pb-2 font-medium">Details</th>
-                        </tr>
-                    </thead>
-
-                    <tbody>
-                        {contacts
-                            .filter((c) => c.contactType === "OTHER")
-                            .map((contact) => (
-                                <tr key={contact.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                    <td className="px-3 py-3">{contact.displayName}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.phone}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.email}</td>
-                                    <td className="px-3 py-3 text-neutral-400">{contact.notes}</td>
-                                    <td className="px-3 py-3 text-right">
-                                        <Link
-                                            href={`/contacts/${contact.id}`}
-                                            className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
-                                        >
-                                            View Detail
-                                        </Link>
-                                    </td>
-                                </tr>
-                            ))}
-                    </tbody>
-                </table>
-            </div>
+                                {rows.length === 0 ? (
+                                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                                        {section.empty}
+                                    </p>
+                                ) : (
+                                    <List>
+                                        <ListHeader cols={COLS} labels={["Name", section.detailLabel, "Phone", "Email"]} />
+                                        {rows.map((contact) => (
+                                            <ListRow
+                                                key={contact.id}
+                                                href={`/contacts/${contact.id}`}
+                                                label={`View ${contact.displayName}`}
+                                                cols={COLS}
+                                            >
+                                                <Cell className="basis-full truncate font-medium text-neutral-100">
+                                                    {contact.displayName}
+                                                    <Favorite show={contact.favorite} />
+                                                </Cell>
+                                                <Cell className="basis-full truncate text-neutral-400">
+                                                    {section.detail(contact)}
+                                                </Cell>
+                                                <Cell className="text-neutral-400">
+                                                    {contact.phone && (
+                                                        <ListLink href={`tel:${contact.phone}`}>{contact.phone}</ListLink>
+                                                    )}
+                                                </Cell>
+                                                <Cell className="text-neutral-400">
+                                                    {contact.email && (
+                                                        <ListLink href={`mailto:${contact.email}`}>{contact.email}</ListLink>
+                                                    )}
+                                                </Cell>
+                                            </ListRow>
+                                        ))}
+                                    </List>
+                                )}
+                            </section>
+                        );
+                    })}
+                </div>
+            )}
         </main>
     );
 }

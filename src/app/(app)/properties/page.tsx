@@ -1,9 +1,12 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import Link from "next/link";
 import prisma from "@/lib/prisma";
-import BackButton from "@/components/BackButton";
 import { PROPERTY_TYPE_LABELS } from "@/lib/defaults";
+import PageHeader from "@/components/list/PageHeader";
+import EmptyState from "@/components/list/EmptyState";
+import { List, ListHeader, ListRow, Cell, Favorite } from "@/components/list/List";
+
+const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.8fr)]";
 
 export default async function Properties() {
     const result = await getCurrentUser();
@@ -21,63 +24,68 @@ export default async function Properties() {
             organizationId: result.organization.id,
             archived: false,
         },
-        orderBy: { displayName: "asc" },
+        orderBy: [{ favorite: "desc" }, { displayName: "asc" }],
         include: {
             _count: {
-                select: { units: true },
+                select: {
+                    units: { where: { archived: false } },
+                    workOrders: {
+                        where: { archived: false, status: { in: ["DRAFT", "SENT", "IN_PROGRESS"] } },
+                    },
+                },
             },
         },
     });
+
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
-            <BackButton />
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold">Properties</h1>
-                {properties.length === 0 && (
-                    <div>
-                        <h2>No properties added yet</h2>
-                    </div>
-                )}
-                <Link
-                    href="/properties/new"
-                    className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white"
-                >
-                    Add Property
-                </Link>
-            </div>
-            {properties.length > 0 && (
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
-                            <th className="px-3 pb-2 font-medium">Display Name</th>
-                            <th className="px-3 pb-2 font-medium">Address</th>
-                            <th className="px-3 pb-2 font-medium">Property Type</th>
-                            <th className="px-3 pb-2 font-medium">Units</th>
-                            <th className="px-3 pb-2 font-medium"></th>
-                        </tr>
-                    </thead>
+            <PageHeader
+                title="Properties"
+                subtitle={`${properties.length} ${properties.length === 1 ? "property" : "properties"}`}
+                actionHref="/properties/new"
+                actionLabel="Add Property"
+            />
 
-                    <tbody>
-                        {properties.map((property) => (
-                            <tr key={property.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                <td className="px-3 py-3">{property.displayName}</td>
-                                <td className="px-3 py-3 text-neutral-400">{property.addressLine1}</td>
-                                <td className="px-3 py-3 text-neutral-400">{PROPERTY_TYPE_LABELS[property.propertyType]}</td>
-                                <td className="px-3 py-3 text-neutral-400">
-                                    {property._count.units > 1 ? property._count.units : ""}
-                                </td>
-                                <td className="px-3 py-3 text-right">
-                                    <Link
-                                        href={`/properties/${property.id}`}
-                                        className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
-                                    >
-                                        View Detail
-                                    </Link>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+            {properties.length === 0 ? (
+                <EmptyState
+                    message="No properties added yet."
+                    actionHref="/properties/new"
+                    actionLabel="Add your first property"
+                />
+            ) : (
+                <List>
+                    <ListHeader cols={COLS} labels={["Name", "Address", "Type", "Units", "Open work"]} />
+                    {properties.map((property) => (
+                        <ListRow
+                            key={property.id}
+                            href={`/properties/${property.id}`}
+                            label={`View ${property.displayName}`}
+                            cols={COLS}
+                        >
+                            <Cell className="basis-full truncate font-medium text-neutral-100">
+                                {property.displayName}
+                                <Favorite show={property.favorite} />
+                            </Cell>
+                            <Cell className="basis-full text-neutral-400">
+                                <p className="truncate">{property.addressLine1}</p>
+                                <p className="truncate text-xs text-neutral-500">
+                                    {property.city}, {property.state} {property.zipCode}
+                                </p>
+                            </Cell>
+                            <Cell className="text-neutral-400">{PROPERTY_TYPE_LABELS[property.propertyType]}</Cell>
+                            <Cell className="text-neutral-400">
+                                {property._count.units > 1 && `${property._count.units} units`}
+                            </Cell>
+                            <Cell>
+                                {property._count.workOrders > 0 && (
+                                    <span className="rounded-full border border-amber-700 px-2 py-0.5 text-xs text-amber-400">
+                                        {property._count.workOrders} open
+                                    </span>
+                                )}
+                            </Cell>
+                        </ListRow>
+                    ))}
+                </List>
             )}
         </main>
     );

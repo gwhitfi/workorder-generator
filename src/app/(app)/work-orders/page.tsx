@@ -1,9 +1,13 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
-import Link from "next/link";
+import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import prisma from "@/lib/prisma";
-import BackButton from "@/components/BackButton";
+import PageHeader from "@/components/list/PageHeader";
+import EmptyState from "@/components/list/EmptyState";
+import { List, ListHeader, ListRow, Cell } from "@/components/list/List";
+
+const COLS = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)_minmax(0,1.2fr)]";
+const OPEN_STATUSES = ["DRAFT", "SENT", "IN_PROGRESS"];
 
 export default async function WorkOrder() {
     const result = await getCurrentUser();
@@ -25,67 +29,68 @@ export default async function WorkOrder() {
         include: {
             property: true,
             unit: true,
-            _count: {
-                select: { areas: true },
-            },
         },
     });
 
+    const now = new Date();
+
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
-            <BackButton />
-            <div className="mb-6 flex items-center justify-between">
-                <h1 className="text-2xl font-semibold">Work Orders</h1>
-                {workOrders.length === 0 && (
-                    <div>
-                        <h2>No work orders added yet</h2>
-                    </div>
-                )}
-                <Link
-                    href="/work-orders/new"
-                    className="rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white"
-                >
-                    Add Work Order
-                </Link>
-            </div>
-            {workOrders.length > 0 && (
-                <table className="w-full text-sm">
-                    <thead>
-                        <tr className="border-b border-neutral-800 text-left text-neutral-400">
-                            <th className="px-3 pb-2 font-medium">Title</th>
-                            <th className="px-3 pb-2 font-medium">Due Date</th>
-                            <th className="px-3 pb-2 font-medium">Status</th>
-                            <th className="px-3 pb-2 font-medium">Property</th>
-                            <th className="px-3 pb-2 font-medium">Unit</th>
-                            <th className="px-3 pb-2 font-medium">Contractor</th>
+            <PageHeader
+                title="Work Orders"
+                subtitle={`${workOrders.length} ${workOrders.length === 1 ? "work order" : "work orders"}`}
+                actionHref="/work-orders/new"
+                actionLabel="Add Work Order"
+            />
 
-                            <th className="px-3 pb-2 font-medium"></th>
-                        </tr>
-                    </thead>
+            {workOrders.length === 0 ? (
+                <EmptyState
+                    message="No work orders added yet."
+                    actionHref="/work-orders/new"
+                    actionLabel="Create your first work order"
+                />
+            ) : (
+                <List>
+                    <ListHeader cols={COLS} labels={["Title", "Status", "Due", "Property", "Contractor"]} />
+                    {workOrders.map((workOrder) => {
+                        const overdue =
+                            workOrder.dueDate && workOrder.dueDate < now && OPEN_STATUSES.includes(workOrder.status);
 
-                    <tbody>
-                        {workOrders.map((workOrder) => (
-                            <tr key={workOrder.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
-                                <td className="px-3 py-3">{workOrder.title}</td>
-                                <td className="px-3 py-3 text-neutral-400">
-                                    {workOrder.dueDate ? workOrder.dueDate.toLocaleDateString() : "-"}
-                                </td>
-                                <td className="px-3 py-3 text-neutral-400">{WORK_ORDER_STATUS_LABELS[workOrder.status]}</td>
-                                <td className="px-3 py-3 text-neutral-400">{workOrder.property.addressLine1}</td>
-                                <td className="px-3 py-3 text-neutral-400">{workOrder.unit ? workOrder.unit?.name : ""}</td>
-                                <td className="px-3 py-3 text-neutral-400">{workOrder.contractorName}</td>
-                                <td className="px-3 py-3 text-right">
-                                    <Link
-                                        href={`/work-orders/${workOrder.id}`}
-                                        className="rounded-md bg-neutral-100 px-4 py-2 text-xs font-medium text-neutral-900 hover:bg-white"
+                        return (
+                            <ListRow
+                                key={workOrder.id}
+                                href={`/work-orders/${workOrder.id}`}
+                                label={`View ${workOrder.title ?? "untitled work order"}`}
+                                cols={COLS}
+                            >
+                                <Cell className="basis-full truncate font-medium">
+                                    {workOrder.title ?? <span className="italic text-neutral-500">Untitled work order</span>}
+                                </Cell>
+                                <Cell>
+                                    <span
+                                        className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_COLORS[workOrder.status]}`}
                                     >
-                                        View Detail
-                                    </Link>
-                                </td>
-                            </tr>
-                        ))}
-                    </tbody>
-                </table>
+                                        {WORK_ORDER_STATUS_LABELS[workOrder.status]}
+                                    </span>
+                                </Cell>
+                                <Cell className={overdue ? "text-red-400" : "text-neutral-400"}>
+                                    {workOrder.dueDate && (
+                                        <>
+                                            <span className="sm:hidden">Due </span>
+                                            {workOrder.dueDate.toLocaleDateString()}
+                                            {overdue && <span className="sm:hidden"> · Overdue</span>}
+                                        </>
+                                    )}
+                                </Cell>
+                                <Cell className="basis-full truncate text-neutral-400">
+                                    {workOrder.property.addressLine1}
+                                    {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
+                                </Cell>
+                                <Cell className="basis-full truncate text-neutral-400">{workOrder.contractorName}</Cell>
+                            </ListRow>
+                        );
+                    })}
+                </List>
             )}
         </main>
     );
