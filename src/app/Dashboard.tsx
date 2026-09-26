@@ -2,7 +2,7 @@ import Link from "next/link";
 import prisma from "@/lib/prisma";
 import type { Organization } from "@/generated/prisma/client";
 import Nav from "@/components/Nav";
-import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 
 export default async function Dashboard({ organization }: { organization: Organization }) {
     const propertyCount = await prisma.property.count({
@@ -124,7 +124,9 @@ export default async function Dashboard({ organization }: { organization: Organi
                                             <span className="truncate text-sm">
                                                 {workOrder.title ?? "Untitled work order"}
                                             </span>
-                                            <span className="shrink-0 rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
+                                            <span
+                                                className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${STATUS_COLORS[workOrder.status] || STATUS_COLORS.DRAFT}`}
+                                            >
                                                 {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                                             </span>
                                         </Link>

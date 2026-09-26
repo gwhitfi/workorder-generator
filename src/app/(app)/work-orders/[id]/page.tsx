@@ -5,6 +5,7 @@ import Link from "next/link";
 import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import BackButton from "@/components/BackButton";
 import AreaBuilder from "./AreaBuilder";
+import StatusActions from "./StatusActions";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -111,7 +112,16 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
             )}
 
             <AreaBuilder workOrderId={workOrder.id} areas={workOrder.areas} spaces={spaces} tags={tags} />
-            <Link href={`/work-orders/${workOrder.id}/print`}>Print Preview</Link>
+            <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-neutral-800 pt-6">
+                <StatusActions
+                    workOrderId={workOrder.id}
+                    status={workOrder.status}
+                    hasContractor={!!workOrder.contractorId}
+                />
+                <Link href={`/work-orders/${workOrder.id}/print`} className="...">
+                    Print preview
+                </Link>
+            </div>
         </main>
     );
 }

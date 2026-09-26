@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import prisma from "@/lib/prisma";
 import BackButton from "@/components/BackButton";
+import { PROPERTY_TYPE_LABELS } from "@/lib/defaults";
 
 export default async function Properties() {
     const result = await getCurrentUser();
@@ -61,7 +62,7 @@ export default async function Properties() {
                             <tr key={property.id} className="border-b border-neutral-900 hover:bg-neutral-900/50">
                                 <td className="px-3 py-3">{property.displayName}</td>
                                 <td className="px-3 py-3 text-neutral-400">{property.addressLine1}</td>
-                                <td className="px-3 py-3 text-neutral-400">{property.propertyType}</td>
+                                <td className="px-3 py-3 text-neutral-400">{PROPERTY_TYPE_LABELS[property.propertyType]}</td>
                                 <td className="px-3 py-3 text-neutral-400">
                                     {property._count.units > 1 ? property._count.units : ""}
                                 </td>

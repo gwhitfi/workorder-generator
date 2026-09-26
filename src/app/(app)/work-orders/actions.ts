@@ -4,7 +4,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { LineItemPriority } from "@/generated/prisma/enums";
+import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
 
 export async function createWorkOrder(formData: FormData) {
     const result = await getCurrentUser();
@@ -342,4 +342,99 @@ export async function updateLineItem(lineItemId: string, description: string, pr
     });
 
     revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
+
+export async function sendWorkOrder(workOrderId: string, deliveryMethod: DeliveryMethod) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+        include: { contractor: true },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+    if (!workOrder.contractorId) throw new Error("Assign a contractor before sending");
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            status: "SENT",
+            sentAt: new Date(),
+            deliveryMethod,
+            contractorName: workOrder.contractor?.displayName ?? null,
+            contractorPhone: workOrder.contractor?.phone ?? null,
+            contractorEmail: workOrder.contractor?.email ?? null,
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+}
+
+export async function markWorkOrderCompleted(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            status: "COMPLETED",
+            completedAt: new Date(),
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+}
+
+export async function reopenWorkOrder(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            status: workOrder.sentAt ? "SENT" : "DRAFT",
+            closedAt: null,
+            completedAt: null,
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+}
+
+export async function closeWorkOrder(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            status: "CLOSED",
+            closedAt: new Date(),
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
 }

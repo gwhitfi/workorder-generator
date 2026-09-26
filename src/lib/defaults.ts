@@ -94,6 +94,14 @@ export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
     CLOSED: "Closed",
 };
 
+export const STATUS_COLORS: Record<keyof typeof WORK_ORDER_STATUS_LABELS, string> = {
+    DRAFT: "border-neutral-700 text-neutral-400", // Default look
+    SENT: "border-amber-700 text-amber-400", // Amber / Orange-tint
+    IN_PROGRESS: "border-yellow-600 text-yellow-400", // Yellowish
+    COMPLETED: "border-green-700 text-green-400", // Green
+    CLOSED: "border-blue-700 text-blue-400", // Blue
+};
+
 export const PRIORITY_LABELS: Record<string, string> = {
     EMERGENCY: "Emergency",
     HIGH: "High",
