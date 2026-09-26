@@ -18,6 +18,9 @@ export default function Nav() {
                     <Link href="/properties" className="text-sm text-neutral-400 hover:text-neutral-100">
                         Properties
                     </Link>
+                    <Link href="/settings" className="text-sm text-neutral-400 hover:text-neutral-100">
+                        Settings
+                    </Link>
                     <UserButton />
                 </nav>
             </div>
