@@ -2,6 +2,7 @@ import type { Prisma } from "@/generated/prisma/client";
 import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import { isOverdue } from "@/lib/workOrders";
 import { List, ListHeader, ListRow, Cell } from "@/components/list/List";
+import { formatDueDate } from "@/lib/dates";
 
 export type WorkOrderWithPlace = Prisma.WorkOrderGetPayload<{ include: { property: true; unit: true } }>;
 
@@ -39,7 +40,7 @@ export default function WorkOrderRow({ workOrder }: { workOrder: WorkOrderWithPl
                 {workOrder.dueDate && (
                     <>
                         <span className="sm:hidden">Due </span>
-                        {workOrder.dueDate.toLocaleDateString()}
+                        {formatDueDate(workOrder.dueDate)}
                         {overdue && <span className="sm:hidden"> · Overdue</span>}
                     </>
                 )}

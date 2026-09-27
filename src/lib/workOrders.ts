@@ -1,14 +1,10 @@
 import type { Prisma, WorkOrderStatus } from "@/generated/prisma/client";
+import { todayInAppTimeZone } from "@/lib/dates";
 
 export const OPEN_STATUSES: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS"];
 
-export function startOfTodayUtc() {
-    const now = new Date();
-    return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
-}
-
 export function isOverdue(workOrder: { status: WorkOrderStatus; dueDate: Date | null }) {
-    return !!workOrder.dueDate && workOrder.dueDate < startOfTodayUtc() && OPEN_STATUSES.includes(workOrder.status);
+    return !!workOrder.dueDate && workOrder.dueDate < todayInAppTimeZone() && OPEN_STATUSES.includes(workOrder.status);
 }
 
 export const WORK_ORDER_FILTERS = {
@@ -22,7 +18,7 @@ export const WORK_ORDER_FILTERS = {
         label: "Overdue",
         where: (): Prisma.WorkOrderWhereInput => ({
             status: { in: OPEN_STATUSES },
-            dueDate: { lt: startOfTodayUtc() },
+            dueDate: { lt: todayInAppTimeZone() },
         }),
     },
     closed: { label: "Closed", where: (): Prisma.WorkOrderWhereInput => ({ status: "CLOSED" }) },

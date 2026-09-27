@@ -2,6 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { PRIORITY_LABELS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
 export default async function WorkOrderPrint({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -95,7 +96,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                     {workOrder.dueDate && (
                         <div>
                             <h3 className="mb-1 font-medium text-neutral-500">Complete by</h3>
-                            <p>{workOrder.dueDate.toLocaleDateString()}</p>
+                            <p>{formatDueDate(workOrder.dueDate)}</p>
                         </div>
                     )}
 
@@ -185,7 +186,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
 
                     <div>
                         <div className="flex h-10 items-end border-b border-neutral-400 pb-1">
-                            {workOrder.completedAt?.toLocaleDateString()}
+                            {workOrder.completedAt && formatTimestamp(workOrder.completedAt)}
                         </div>
                         <p className="mt-1 text-xs text-neutral-500">Date completed</p>
                     </div>

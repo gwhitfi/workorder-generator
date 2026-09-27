@@ -7,6 +7,7 @@ import InfoCard from "@/components/InfoCard";
 import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
 import ContractorLink from "./ContractorLink";
+import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -70,9 +71,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">
-                            Due by {workOrder.dueDate.toLocaleDateString()}
-                        </span>
+                        <span className="text-sm text-neutral-500">Due by {formatDueDate(workOrder.dueDate)}</span>
                     )}
                     {lineItems.length > 0 && (
                         <span className="text-sm text-neutral-500">
@@ -144,11 +143,11 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Completion</p>
                     <p className="text-sm text-neutral-300">
                         {workOrder.completedAt
-                            ? `Marked complete on ${workOrder.completedAt.toLocaleDateString()}.`
+                            ? `Marked complete on ${formatTimestamp(workOrder.completedAt)}.`
                             : "Marked complete."}
                         {workOrder.status === "CLOSED" &&
                             workOrder.closedAt &&
-                            ` Closed on ${workOrder.closedAt.toLocaleDateString()}.`}
+                            ` Closed on ${formatTimestamp(workOrder.closedAt)}.`}
                     </p>
                     {lineItems.length - doneCount > 0 && (
                         <p className="mt-1 text-sm text-amber-400">

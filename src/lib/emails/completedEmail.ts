@@ -1,4 +1,5 @@
 import { escapeHtml } from "./shared";
+import { formatTimestamp } from "@/lib/dates";
 
 type CompletedEmailInput = {
     organizationName: string;
@@ -18,7 +19,7 @@ type CompletedEmailInput = {
 export function completedEmail(input: CompletedEmailInput) {
     const title = input.title ?? "Work order";
     const who = input.contractorName ?? "The contractor";
-    const date = input.completedAt.toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" });
+    const date = formatTimestamp(input.completedAt);
 
     const items = input.areas.flatMap((area) => area.lineItems.map((item) => ({ area: area.name, ...item })));
     const doneCount = items.filter((i) => i.completed).length;
