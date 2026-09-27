@@ -69,7 +69,9 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">Due by {workOrder.dueDate.toLocaleDateString()}</span>
+                        <span className="text-sm text-neutral-500">
+                            Due by {workOrder.dueDate.toLocaleDateString()}
+                        </span>
                     )}
                     {lineItems.length > 0 && (
                         <span className="text-sm text-neutral-500">

@@ -55,8 +55,7 @@ export default async function Contacts() {
             empty: "No tenants yet.",
             detailLabel: "Property",
             detail: (c) =>
-                c.unit &&
-                `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · Unit ${c.unit.name}`}`,
+                c.unit && `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · Unit ${c.unit.name}`}`,
         },
         {
             type: "OTHER",
@@ -77,7 +76,11 @@ export default async function Contacts() {
             />
 
             {contacts.length === 0 ? (
-                <EmptyState message="No contacts added yet." actionHref="/contacts/new" actionLabel="Add your first contact" />
+                <EmptyState
+                    message="No contacts added yet."
+                    actionHref="/contacts/new"
+                    actionLabel="Add your first contact"
+                />
             ) : (
                 <div className="flex flex-col gap-8">
                     {sections.map((section) => {
@@ -96,7 +99,10 @@ export default async function Contacts() {
                                     </p>
                                 ) : (
                                     <List>
-                                        <ListHeader cols={COLS} labels={["Name", section.detailLabel, "Phone", "Email"]} />
+                                        <ListHeader
+                                            cols={COLS}
+                                            labels={["Name", section.detailLabel, "Phone", "Email"]}
+                                        />
                                         {rows.map((contact) => (
                                             <ListRow
                                                 key={contact.id}
@@ -113,12 +119,16 @@ export default async function Contacts() {
                                                 </Cell>
                                                 <Cell className="text-neutral-400">
                                                     {contact.phone && (
-                                                        <ListLink href={`tel:${contact.phone}`}>{contact.phone}</ListLink>
+                                                        <ListLink href={`tel:${contact.phone}`}>
+                                                            {contact.phone}
+                                                        </ListLink>
                                                     )}
                                                 </Cell>
                                                 <Cell className="text-neutral-400">
                                                     {contact.email && (
-                                                        <ListLink href={`mailto:${contact.email}`}>{contact.email}</ListLink>
+                                                        <ListLink href={`mailto:${contact.email}`}>
+                                                            {contact.email}
+                                                        </ListLink>
                                                     )}
                                                 </Cell>
                                             </ListRow>

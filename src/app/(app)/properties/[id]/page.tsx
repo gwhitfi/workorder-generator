@@ -70,7 +70,6 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
 
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
-
             <div className="mb-8">
                 <span className="mb-2 inline-block rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
                     {PROPERTY_TYPE_LABELS[property.propertyType]}
