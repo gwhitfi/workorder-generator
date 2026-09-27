@@ -110,7 +110,11 @@ export default function ContractorSpaceCard({
                                     </button>
 
                                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
-                                        <span className={item.completed ? "text-neutral-500 line-through" : "text-neutral-200"}>
+                                        <span
+                                            className={
+                                                item.completed ? "text-neutral-500 line-through" : "text-neutral-200"
+                                            }
+                                        >
                                             {item.description}
                                         </span>
                                         {item.tags.map((tag) => (

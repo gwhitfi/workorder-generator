@@ -56,7 +56,9 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">Due by {workOrder.dueDate.toLocaleDateString()}</span>
+                        <span className="text-sm text-neutral-500">
+                            Due by {workOrder.dueDate.toLocaleDateString()}
+                        </span>
                     )}
                 </div>
 

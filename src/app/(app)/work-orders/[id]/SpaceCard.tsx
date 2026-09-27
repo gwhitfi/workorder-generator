@@ -12,6 +12,9 @@ type LineItemRow = {
     id: string;
     description: string;
     priority: string;
+    completed: boolean;
+    completedAt: Date | null;
+    contractorNotes: string | null;
     tags: TagRow[];
 };
 
@@ -29,6 +32,7 @@ export default function SpaceCard({
     onMove,
     onRemove,
     busy,
+    readOnly,
 }: {
     area: AreaRow;
     tags: TagRow[];
@@ -37,6 +41,7 @@ export default function SpaceCard({
     onMove: (id: string, direction: "up" | "down") => void;
     onRemove: (id: string) => void;
     busy: boolean;
+    readOnly: boolean;
 }) {
     const [adding, setAdding] = useState(false);
     const [description, setDescription] = useState("");
@@ -48,6 +53,7 @@ export default function SpaceCard({
     const modalItem = area.lineItems.find((i) => i.id === tagModalFor);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState("");
+    const doneCount = area.lineItems.filter((i) => i.completed).length;
 
     async function handleAddItem() {
         const trimmed = description.trim();
@@ -110,9 +116,16 @@ export default function SpaceCard({
     }
     return (
         <li className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3">
-            <div className="flex items-center justify-between">
-                <h3>{area.name}</h3>
-                <div className="flex items-center gap-2">
+            <div className="flex items-center justify-between gap-3">
+                <h3 className="flex items-baseline gap-2">
+                    {area.name}
+                    {area.lineItems.length > 0 && (
+                        <span className="text-xs text-neutral-500">
+                            {doneCount}/{area.lineItems.length} done
+                        </span>
+                    )}
+                </h3>
+                <div className={`flex items-center gap-2 ${readOnly ? "hidden" : ""}`}>
                     <button
                         type="button"
                         onClick={() => onMove(area.id, "up")}
@@ -144,87 +157,120 @@ export default function SpaceCard({
             {area.lineItems.length > 0 && (
                 <ul className="mt-2 flex flex-col gap-1 text-base text-neutral-300">
                     {area.lineItems.map((item, i) => (
-                        <li key={item.id} className="group flex items-center gap-2">
-                            <span className="text-neutral-200">•</span>
-                            {editingId === item.id ? (
-                                <input
-                                    value={editDraft}
-                                    onChange={(e) => setEditDraft(e.target.value)}
-                                    onBlur={() => handleSaveEdit(item)}
-                                    onKeyDown={(e) => {
-                                        if (e.key === "Enter") handleSaveEdit(item);
-                                        if (e.key === "Escape") setEditingId(null);
-                                    }}
-                                    autoFocus
-                                    className="flex-1 rounded border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-base text-neutral-100 focus:outline-none"
-                                />
-                            ) : (
+                        <li key={item.id} className="group">
+                            <div className="flex items-center gap-2">
                                 <span
-                                    onClick={() => {
-                                        setEditingId(item.id);
-                                        setEditDraft(item.description);
-                                    }}
-                                    className="cursor-text rounded px-1 hover:bg-neutral-800"
+                                    aria-label={item.completed ? "Done" : "Not done"}
+                                    className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs ${
+                                        item.completed
+                                            ? "border-green-700 bg-green-900/40 text-green-400"
+                                            : "border-neutral-700"
+                                    }`}
                                 >
-                                    {item.description}
+                                    {item.completed && "✓"}
                                 </span>
-                            )}
-                            {item.tags.map((tag) => (
-                                <span
-                                    key={tag.id}
-                                    className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400 cursor-default"
-                                >
-                                    {tag.name}
-                                </span>
-                            ))}
-                            {PRIORITY_STYLES[item.priority] && (
-                                <span
-                                    className={`shrink-0 rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
-                                >
-                                    {PRIORITY_LABELS[item.priority]}
-                                </span>
-                            )}
-                            <button
-                                type="button"
-                                onClick={() => handleMoveItem(item.id, "up")}
-                                disabled={i === 0 || busyItemId === item.id}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
-                                aria-label={`Move ${item.description} up`}
-                            >
-                                ↑
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleMoveItem(item.id, "down")}
-                                disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
-                                aria-label={`Move ${item.description} down`}
-                            >
-                                ↓
-                            </button>
+                                {editingId === item.id ? (
+                                    <input
+                                        value={editDraft}
+                                        onChange={(e) => setEditDraft(e.target.value)}
+                                        onBlur={() => handleSaveEdit(item)}
+                                        onKeyDown={(e) => {
+                                            if (e.key === "Enter") handleSaveEdit(item);
+                                            if (e.key === "Escape") setEditingId(null);
+                                        }}
+                                        autoFocus
+                                        className="flex-1 rounded border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-base text-neutral-100 focus:outline-none"
+                                    />
+                                ) : (
+                                    <span
+                                        onClick={
+                                            readOnly
+                                                ? undefined
+                                                : () => {
+                                                      setEditingId(item.id);
+                                                      setEditDraft(item.description);
+                                                  }
+                                        }
+                                        className={`rounded px-1 ${readOnly ? "" : "cursor-text hover:bg-neutral-800"} ${
+                                            item.completed ? "text-neutral-500" : ""
+                                        }`}
+                                    >
+                                        {item.description}
+                                    </span>
+                                )}
+                                {item.tags.map((tag) => (
+                                    <span
+                                        key={tag.id}
+                                        className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400 cursor-default"
+                                    >
+                                        {tag.name}
+                                    </span>
+                                ))}
+                                {PRIORITY_STYLES[item.priority] && (
+                                    <span
+                                        className={`shrink-0 rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
+                                    >
+                                        {PRIORITY_LABELS[item.priority]}
+                                    </span>
+                                )}
+                                {item.completedAt && (
+                                    // Formatted in the viewer's time zone after hydration.
+                                    <span suppressHydrationWarning className="shrink-0 text-xs text-green-500">
+                                        Done {new Date(item.completedAt).toLocaleDateString()}
+                                    </span>
+                                )}
+                                {!readOnly && (
+                                    <>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveItem(item.id, "up")}
+                                            disabled={i === 0 || busyItemId === item.id}
+                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            aria-label={`Move ${item.description} up`}
+                                        >
+                                            ↑
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleMoveItem(item.id, "down")}
+                                            disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
+                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            aria-label={`Move ${item.description} down`}
+                                        >
+                                            ↓
+                                        </button>
 
-                            <button
-                                type="button"
-                                onClick={() => setTagModalFor(item.id)}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer"
-                            >
-                                Tags
-                            </button>
-                            <button
-                                type="button"
-                                onClick={() => handleRemoveItem(item.id)}
-                                disabled={busyItemId === item.id}
-                                className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
-                                aria-label={`Remove ${item.description}`}
-                            >
-                                Remove
-                            </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => setTagModalFor(item.id)}
+                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer"
+                                        >
+                                            Tags
+                                        </button>
+                                        <button
+                                            type="button"
+                                            onClick={() => handleRemoveItem(item.id)}
+                                            disabled={busyItemId === item.id}
+                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            aria-label={`Remove ${item.description}`}
+                                        >
+                                            Remove
+                                        </button>
+                                    </>
+                                )}
+                            </div>
+                            {item.contractorNotes && (
+                                <p className="ml-7 mt-1 whitespace-pre-line border-l-2 border-neutral-700 pl-2 text-sm text-neutral-400">
+                                    <span className="text-neutral-500">Contractor: </span>
+                                    {item.contractorNotes}
+                                </p>
+                            )}
                         </li>
                     ))}
                 </ul>
             )}
 
-            {!adding && (
+            {!readOnly && !adding && (
                 <button
                     type="button"
                     onClick={() => setAdding(true)}
@@ -234,7 +280,7 @@ export default function SpaceCard({
                 </button>
             )}
 
-            {adding && (
+            {!readOnly && adding && (
                 <div className="mt-3 flex flex-col gap-2">
                     <input
                         value={description}

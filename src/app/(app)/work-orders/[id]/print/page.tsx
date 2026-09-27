@@ -127,13 +127,20 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                                             key={item.id}
                                             className="flex items-baseline gap-3 border-b border-neutral-200 py-2 last:border-0"
                                         >
-                                            <span className="text-lg leading-none text-neutral-400">☐</span>
+                                            <span className="text-lg leading-none text-neutral-400">
+                                                {item.completed ? "☑" : "☐"}
+                                            </span>
 
                                             <span className="flex-1">
                                                 {item.description}
                                                 {item.tags.length > 0 && (
                                                     <span className="ml-2 text-xs text-neutral-500">
                                                         {item.tags.map((tag) => tag.name).join(" · ")}
+                                                    </span>
+                                                )}
+                                                {item.contractorNotes && (
+                                                    <span className="mt-0.5 block whitespace-pre-line text-xs italic text-neutral-500">
+                                                        Contractor: {item.contractorNotes}
                                                     </span>
                                                 )}
                                             </span>
@@ -156,10 +163,18 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
 
                 <div className="mb-6">
                     <p className="mb-1 text-xs text-neutral-500">Notes on work performed</p>
-                    <div className="h-6 border-b border-neutral-300" />
-                    <div className="h-6 border-b border-neutral-300" />
-                    <div className="h-6 border-b border-neutral-300" />
-                    <div className="h-6 border-b border-neutral-300" />
+                    {workOrder.completionNotes ? (
+                        <p className="whitespace-pre-line border-b border-neutral-300 pb-2 leading-relaxed">
+                            {workOrder.completionNotes}
+                        </p>
+                    ) : (
+                        <>
+                            <div className="h-6 border-b border-neutral-300" />
+                            <div className="h-6 border-b border-neutral-300" />
+                            <div className="h-6 border-b border-neutral-300" />
+                            <div className="h-6 border-b border-neutral-300" />
+                        </>
+                    )}
                 </div>
 
                 <div className="grid gap-8 sm:grid-cols-3">
@@ -169,7 +184,9 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                     </div>
 
                     <div>
-                        <div className="h-10 border-b border-neutral-400" />
+                        <div className="flex h-10 items-end border-b border-neutral-400 pb-1">
+                            {workOrder.completedAt?.toLocaleDateString()}
+                        </div>
                         <p className="mt-1 text-xs text-neutral-500">Date completed</p>
                     </div>
                 </div>

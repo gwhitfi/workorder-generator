@@ -257,7 +257,9 @@ export default function PropertyForm() {
 
                                         <button
                                             type="button"
-                                            onClick={() => setActiveSpaces(activeSpaces.filter((_, index) => index !== i))}
+                                            onClick={() =>
+                                                setActiveSpaces(activeSpaces.filter((_, index) => index !== i))
+                                            }
                                             className="text-xs text-neutral-500 hover:text-red-400 hover:cursor-pointer"
                                         >
                                             Remove
