@@ -3,7 +3,10 @@ import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
 import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
-import BackButton from "@/components/BackButton";
+import { OPEN_STATUSES } from "@/lib/workOrders";
+import InfoCard from "@/components/InfoCard";
+import { Favorite } from "@/components/list/List";
+import { WorkOrderList } from "@/components/WorkOrderRow";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -16,83 +19,176 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     if (result.state === "needs-org") {
         redirect("/setup");
     }
-    const property = await prisma.property.findFirst({
-        where: {
-            id,
-            organizationId: result.organization.id,
-        },
-        include: {
-            units: {
-                where: { archived: false },
-                orderBy: { sortOrder: "asc" },
-                include: {
-                    spaces: {
-                        where: { archived: false },
-                        orderBy: { sortOrder: "asc" },
+
+    const orgId = result.organization.id;
+    const workOrderWhere = { propertyId: id, organizationId: orgId, archived: false };
+
+    const [property, tenants, workOrders, workOrderCount, openCount] = await Promise.all([
+        prisma.property.findFirst({
+            where: { id, organizationId: orgId },
+            include: {
+                units: {
+                    where: { archived: false },
+                    orderBy: { sortOrder: "asc" },
+                    include: {
+                        spaces: {
+                            where: { archived: false },
+                            orderBy: { sortOrder: "asc" },
+                        },
                     },
                 },
             },
-        },
-    });
+        }),
+        prisma.contact.findMany({
+            where: { organizationId: orgId, archived: false, contactType: "TENANT", unit: { propertyId: id } },
+            orderBy: { displayName: "asc" },
+            include: { unit: true },
+        }),
+        prisma.workOrder.findMany({
+            where: workOrderWhere,
+            orderBy: { createdAt: "desc" },
+            take: 50,
+            include: { property: true, unit: true },
+        }),
+        prisma.workOrder.count({ where: workOrderWhere }),
+        prisma.workOrder.count({ where: { ...workOrderWhere, status: { in: OPEN_STATUSES } } }),
+    ]);
+
     if (!property) {
         notFound();
     }
+
     const isMultiUnitType = MULTI_UNIT.includes(property.propertyType);
     const isSingleUnit = !isMultiUnitType && property.units.length === 1 && property.units[0].isDefault;
 
+    // Open work first, newest first within each group.
+    const isOpen = (status: (typeof workOrders)[number]["status"]) => OPEN_STATUSES.includes(status);
+    const shownWorkOrders = [
+        ...workOrders.filter((wo) => isOpen(wo.status)),
+        ...workOrders.filter((wo) => !isOpen(wo.status)),
+    ].slice(0, 10);
+
     return (
-        <main className="mx-auto max-w-2xl px-4 py-10 text-neutral-100">
-            <BackButton />
+        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+
             <div className="mb-8">
-                <p className="text-sm text-neutral-500 mb-1">{PROPERTY_TYPE_LABELS[property.propertyType]}</p>
-                <h1 className="text-2xl font-semibold mb-2">{property.displayName}</h1>
+                <span className="mb-2 inline-block rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
+                    {PROPERTY_TYPE_LABELS[property.propertyType]}
+                </span>
+                <h1 className="mb-4 text-2xl font-semibold">
+                    {property.displayName}
+                    <Favorite show={property.favorite} />
+                </h1>
 
-                <div className="text-sm text-neutral-400 leading-relaxed">
-                    <p>{property.addressLine1}</p>
-                    {property.addressLine2 && <p>{property.addressLine2}</p>}
-                    <p>
-                        {property.city}, {property.state} {property.zipCode}
-                    </p>
+                <div className="grid gap-4 sm:grid-cols-3">
+                    <InfoCard label="Address" title={property.addressLine1}>
+                        {property.addressLine2 && <p>{property.addressLine2}</p>}
+                        <p>
+                            {property.city}, {property.state} {property.zipCode}
+                        </p>
+                    </InfoCard>
+
+                    <InfoCard
+                        label="Tenants"
+                        title={
+                            tenants.length === 0
+                                ? "No tenants on file"
+                                : `${tenants.length} ${tenants.length === 1 ? "tenant" : "tenants"}`
+                        }
+                    >
+                        {tenants.map((tenant) => (
+                            <Link
+                                key={tenant.id}
+                                href={`/contacts/${tenant.id}`}
+                                className="block truncate hover:text-neutral-100 hover:underline"
+                            >
+                                {tenant.displayName}
+                                {tenant.unit && !tenant.unit.isDefault && (
+                                    <span className="text-neutral-500"> · Unit {tenant.unit.name}</span>
+                                )}
+                            </Link>
+                        ))}
+                    </InfoCard>
+
+                    <InfoCard label="Work orders" title={`${openCount} open`}>
+                        <p>{workOrderCount} total</p>
+                    </InfoCard>
                 </div>
-                {property.notes && <p className="mt-4 text-sm text-neutral-400">{property.notes}</p>}
             </div>
-            <div className="border-t border-neutral-800 pt-6">
-                <h2 className="text-lg font-semibold mb-3">{isSingleUnit ? "Spaces" : "Units"}</h2>
 
-                {property.units.length === 0 && (
-                    <p className="text-sm text-neutral-500">No units yet. Add one to start tracking spaces.</p>
+            {property.notes && (
+                <div className="mb-8 text-sm leading-relaxed text-neutral-400">
+                    <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
+                    <p className="mt-1 whitespace-pre-line">{property.notes}</p>
+                </div>
+            )}
+
+            <section className="mb-8 border-t border-neutral-800 pt-6">
+                <div className="mb-3 flex items-baseline justify-between gap-4">
+                    <h2 className="text-lg font-semibold">Work orders</h2>
+                    <Link
+                        href={`/work-orders/new?propertyId=${property.id}`}
+                        className="shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                    >
+                        + Create work order
+                    </Link>
+                </div>
+                {shownWorkOrders.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                        No work orders for this property yet.
+                    </p>
+                ) : (
+                    <WorkOrderList workOrders={shownWorkOrders} />
                 )}
+            </section>
 
-                {isSingleUnit && <SpaceList spaces={property.units[0].spaces} />}
+            <section className="border-t border-neutral-800 pt-6">
+                <h2 className="mb-3 text-lg font-semibold">{isSingleUnit ? "Spaces" : "Units"}</h2>
 
-                {!isSingleUnit &&
-                    property.units.map((unit) => (
-                        <div key={unit.id} className="mb-6">
-                            <h3 className="text-sm font-medium text-neutral-300 mb-2">{unit.name}</h3>
-                            <SpaceList spaces={unit.spaces} />
-                        </div>
-                    ))}
-            </div>
-
-            <Link href="/properties" className="mt-8 inline-block text-sm text-neutral-400 hover:text-neutral-100">
-                Return
-            </Link>
+                {property.units.length === 0 ? (
+                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                        No units on file.
+                    </p>
+                ) : isSingleUnit ? (
+                    <UnitCard spaces={property.units[0].spaces} />
+                ) : (
+                    <div className="flex flex-col gap-3">
+                        {property.units.map((unit) => (
+                            <UnitCard key={unit.id} name={unit.name} spaces={unit.spaces} />
+                        ))}
+                    </div>
+                )}
+            </section>
         </main>
     );
 }
 
-function SpaceList({ spaces }: { spaces: { id: string; name: string }[] }) {
-    if (spaces.length === 0) {
-        return <p className="text-sm text-neutral-500">No spaces added.</p>;
-    }
-
+function UnitCard({ name, spaces }: { name?: string; spaces: { id: string; name: string }[] }) {
     return (
-        <ul className="flex flex-col gap-1">
-            {spaces.map((space) => (
-                <li key={space.id} className="rounded-md border border-neutral-800 bg-neutral-900 px-3 py-2 text-sm">
-                    {space.name}
-                </li>
-            ))}
-        </ul>
+        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+            {name && (
+                <div className="mb-3 flex items-baseline justify-between gap-4">
+                    <h3 className="font-medium">{name}</h3>
+                    <span className="text-xs text-neutral-500">
+                        {spaces.length} {spaces.length === 1 ? "space" : "spaces"}
+                    </span>
+                </div>
+            )}
+
+            {spaces.length === 0 ? (
+                <p className="text-sm text-neutral-500">No spaces added.</p>
+            ) : (
+                <ul className="flex flex-wrap gap-2">
+                    {spaces.map((space) => (
+                        <li
+                            key={space.id}
+                            className="rounded-full border border-neutral-700 px-2.5 py-0.5 text-xs text-neutral-300"
+                        >
+                            {space.name}
+                        </li>
+                    ))}
+                </ul>
+            )}
+        </div>
     );
 }

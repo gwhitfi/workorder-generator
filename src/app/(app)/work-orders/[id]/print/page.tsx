@@ -2,7 +2,6 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { PRIORITY_LABELS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
-import BackButton from "@/components/BackButton";
 
 export default async function WorkOrderPrint({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -42,9 +41,6 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
         <main className="mx-auto max-w-3xl bg-white px-4 py-10 text-neutral-900">
             <div className="hidden print:block text-xs text-neutral-500 mb-4">
                 Work Order Generator · {workOrder.jobNumber ?? workOrder.id.slice(-6).toUpperCase()}
-            </div>
-            <div className="print:hidden">
-                <BackButton />
             </div>
             <h1 className="mb-2 flex items-center justify-center gap-3 text-2xl font-semibold">
                 {workOrder.title ?? "Untitled work order"}

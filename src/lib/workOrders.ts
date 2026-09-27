@@ -2,7 +2,6 @@ import type { Prisma, WorkOrderStatus } from "@/generated/prisma/client";
 
 export const OPEN_STATUSES: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS"];
 
-// Due dates are stored at UTC midnight (from <input type="date">), so compare against today in UTC.
 export function startOfTodayUtc() {
     const now = new Date();
     return new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), now.getUTCDate()));
@@ -12,7 +11,6 @@ export function isOverdue(workOrder: { status: WorkOrderStatus; dueDate: Date | 
     return !!workOrder.dueDate && workOrder.dueDate < startOfTodayUtc() && OPEN_STATUSES.includes(workOrder.status);
 }
 
-// Shared by the dashboard cards and the /work-orders?status= filter so the counts always match the lists.
 export const WORK_ORDER_FILTERS = {
     draft: { label: "Drafts", where: (): Prisma.WorkOrderWhereInput => ({ status: "DRAFT" }) },
     active: {

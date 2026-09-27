@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { createProperty } from "../actions";
 import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
-import BackButton from "@/components/BackButton";
 
 export default function PropertyForm() {
     type Unit = {
@@ -76,7 +75,6 @@ export default function PropertyForm() {
     }
     return (
         <form action={createProperty} autoComplete="off" className="flex flex-col gap-4">
-            <BackButton />
             <label className={labelClass}>
                 Display Name
                 <input name="displayName" required className={inputClass} />

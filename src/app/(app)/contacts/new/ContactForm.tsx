@@ -2,7 +2,6 @@
 import { useState } from "react";
 import { createContact } from "../actions";
 import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
-import BackButton from "@/components/BackButton";
 
 type UnitOption = { id: string; name: string };
 type PropertyOption = {
@@ -23,7 +22,6 @@ export default function ContactForm({ properties }: { properties: PropertyOption
 
     return (
         <form action={createContact} autoComplete="off" className="flex flex-col gap-4">
-            <BackButton />
             <label className={labelClass}>
                 Display Name
                 <input name="displayName" required className={inputClass} />

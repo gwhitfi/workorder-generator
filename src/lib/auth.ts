@@ -20,8 +20,6 @@ export async function getCurrentUser(): Promise<AuthResult> {
     let organization = await prisma.organization.findUnique({
         where: { clerkOrgId: orgId },
     });
-    console.log("orgId from Clerk:", orgId);
-    console.log("found existing org:", organization?.id ?? "none");
     if (!organization) {
         const client = await clerkClient();
         const clerkOrg = await client.organizations.getOrganization({ organizationId: orgId });
@@ -29,7 +27,6 @@ export async function getCurrentUser(): Promise<AuthResult> {
             data: { clerkOrgId: orgId, name: clerkOrg.name },
         });
         const org = organization;
-        console.log("CREATED org, seeding into:", org.id);
         await prisma.space.createMany({
             data: DEFAULT_SPACES.map((name, i) => ({
                 name,
