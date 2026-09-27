@@ -440,3 +440,23 @@ export async function closeWorkOrder(workOrderId: string) {
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath("/work-orders");
 }
+
+export async function regeneratePublicToken(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+
+    // The old link stops working as soon as the token changes.
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: { publicToken: randomBytes(24).toString("base64url") },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+}

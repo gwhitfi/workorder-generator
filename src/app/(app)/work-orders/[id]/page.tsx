@@ -6,6 +6,7 @@ import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import InfoCard from "@/components/InfoCard";
 import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
+import ContractorLink from "./ContractorLink";
 
 export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -103,6 +104,12 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     </InfoCard>
                 </div>
             </div>
+
+            <section className="mb-8">
+                <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
+                <ContractorLink workOrderId={workOrder.id} token={workOrder.publicToken} status={workOrder.status} />
+            </section>
+
             {workOrder.notes && (
                 <div className="text-sm text-neutral-400 leading-relaxed">
                     <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
@@ -117,7 +124,10 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     status={workOrder.status}
                     hasContractor={!!workOrder.contractorId}
                 />
-                <Link href={`/work-orders/${workOrder.id}/print`} className="...">
+                <Link
+                    href={`/work-orders/${workOrder.id}/print`}
+                    className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800"
+                >
                     Print preview
                 </Link>
             </div>
