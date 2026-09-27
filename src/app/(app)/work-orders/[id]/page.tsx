@@ -56,6 +56,11 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
         orderBy: { sortOrder: "asc" },
     });
 
+    const lineItems = workOrder.areas.flatMap((area) => area.lineItems);
+    const doneCount = lineItems.filter((item) => item.completed).length;
+    const readOnly = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
+    const contractorWorking = workOrder.status === "SENT" || workOrder.status === "IN_PROGRESS";
+
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
             <div className="mb-8">
@@ -66,9 +71,29 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     {workOrder.dueDate && (
                         <span className="text-sm text-neutral-500">Due by {workOrder.dueDate.toLocaleDateString()}</span>
                     )}
+                    {lineItems.length > 0 && (
+                        <span className="text-sm text-neutral-500">
+                            {doneCount} of {lineItems.length} items done
+                        </span>
+                    )}
                 </div>
 
                 <h1 className="text-2xl font-semibold mb-2">{workOrder.title ?? "Untitled work order"}</h1>
+                {lineItems.length > 0 && (
+                    <div
+                        role="progressbar"
+                        aria-label="Items done"
+                        aria-valuemin={0}
+                        aria-valuemax={lineItems.length}
+                        aria-valuenow={doneCount}
+                        className="mb-6 h-1 overflow-hidden rounded-full bg-neutral-800"
+                    >
+                        <div
+                            className="h-full rounded-full bg-green-600"
+                            style={{ width: `${(doneCount / lineItems.length) * 100}%` }}
+                        />
+                    </div>
+                )}
 
                 <div className="mb-8 grid gap-4 sm:grid-cols-3">
                     <InfoCard
@@ -105,6 +130,36 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 </div>
             </div>
 
+            {readOnly && (
+                <section
+                    className={`mb-8 rounded-lg border p-4 ${
+                        workOrder.status === "CLOSED"
+                            ? "border-blue-800 bg-blue-950/30"
+                            : "border-green-800 bg-green-950/30"
+                    }`}
+                >
+                    <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Completion</p>
+                    <p className="text-sm text-neutral-300">
+                        {workOrder.completedAt
+                            ? `Marked complete on ${workOrder.completedAt.toLocaleDateString()}.`
+                            : "Marked complete."}
+                        {workOrder.status === "CLOSED" &&
+                            workOrder.closedAt &&
+                            ` Closed on ${workOrder.closedAt.toLocaleDateString()}.`}
+                    </p>
+                    {lineItems.length - doneCount > 0 && (
+                        <p className="mt-1 text-sm text-amber-400">
+                            {lineItems.length - doneCount}{" "}
+                            {lineItems.length - doneCount === 1 ? "item was" : "items were"} not checked off.
+                        </p>
+                    )}
+                    <p className="mt-3 text-xs uppercase tracking-wide text-neutral-500">Completion notes</p>
+                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-300">
+                        {workOrder.completionNotes ?? <span className="text-neutral-500">No completion notes.</span>}
+                    </p>
+                </section>
+            )}
+
             <section className="mb-8">
                 <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
                 <ContractorLink workOrderId={workOrder.id} token={workOrder.publicToken} status={workOrder.status} />
@@ -117,7 +172,14 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 </div>
             )}
 
-            <AreaBuilder workOrderId={workOrder.id} areas={workOrder.areas} spaces={spaces} tags={tags} />
+            <AreaBuilder
+                workOrderId={workOrder.id}
+                areas={workOrder.areas}
+                spaces={spaces}
+                tags={tags}
+                readOnly={readOnly}
+                notice={contractorWorking ? "The contractor can see changes immediately." : undefined}
+            />
             <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-neutral-800 pt-6">
                 <StatusActions
                     workOrderId={workOrder.id}
