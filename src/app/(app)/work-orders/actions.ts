@@ -6,6 +6,8 @@ import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
+import { getAppUrl, sendEmail } from "@/lib/email";
+import { workOrderEmail } from "@/lib/emails/workOrderEmail";
 
 export async function createWorkOrder(formData: FormData) {
     const result = await getCurrentUser();
@@ -372,6 +374,72 @@ export async function sendWorkOrder(workOrderId: string, deliveryMethod: Deliver
 
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath("/work-orders");
+}
+
+type EmailResult = { ok: true; to: string } | { ok: false; error: string };
+
+// Returns a result instead of throwing so the message reaches the UI (thrown errors are hidden in production).
+export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+        include: {
+            contractor: true,
+            property: true,
+            unit: true,
+        },
+    });
+
+    if (!workOrder) return { ok: false, error: "Work order not found" };
+    if (!["DRAFT", "SENT", "IN_PROGRESS"].includes(workOrder.status)) {
+        return { ok: false, error: "Only open work orders can be emailed" };
+    }
+    if (!workOrder.contractor) return { ok: false, error: "Assign a contractor before sending" };
+
+    const to = workOrder.contractor.email?.trim();
+    if (!to) return { ok: false, error: `${workOrder.contractor.displayName} has no email address` };
+
+    const itemCount = await prisma.lineItem.count({ where: { area: { workOrderId } } });
+    const { property, unit } = workOrder;
+    const address =
+        `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
+        `${property.city}, ${property.state} ${property.zipCode}`;
+
+    try {
+        const email = workOrderEmail({
+            organization: result.organization,
+            title: workOrder.title,
+            address,
+            dueDate: workOrder.dueDate,
+            notes: workOrder.notes,
+            itemCount,
+            url: `${getAppUrl()}/wo/${workOrder.publicToken}`,
+            isResend: workOrder.status !== "DRAFT",
+        });
+
+        await sendEmail({ to, ...email, replyTo: result.organization.email });
+    } catch (error) {
+        console.error("emailWorkOrder failed", error);
+        return { ok: false, error: error instanceof Error ? error.message : "Email failed to send" };
+    }
+
+    // Only record the send once the email actually went out.
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            deliveryMethod: "EMAIL",
+            contractorName: workOrder.contractor.displayName,
+            contractorPhone: workOrder.contractor.phone,
+            contractorEmail: workOrder.contractor.email,
+            ...(workOrder.status === "DRAFT" ? { status: "SENT", sentAt: new Date() } : {}),
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+    return { ok: true, to };
 }
 
 export async function markWorkOrderCompleted(workOrderId: string) {

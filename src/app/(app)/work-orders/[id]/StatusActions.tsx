@@ -1,20 +1,86 @@
 "use client";
 
 import { useState } from "react";
-import { sendWorkOrder, markWorkOrderCompleted, reopenWorkOrder, closeWorkOrder } from "../actions";
+import Link from "next/link";
+import { sendWorkOrder, emailWorkOrder, markWorkOrderCompleted, reopenWorkOrder, closeWorkOrder } from "../actions";
 import { DeliveryMethod } from "@/generated/prisma/enums";
 
 export default function StatusActions({
     workOrderId,
     status,
     hasContractor,
+    contractor,
 }: {
     workOrderId: string;
     status: string;
     hasContractor: boolean;
+    contractor: { id: string; name: string; email: string | null } | null;
 }) {
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [confirmingEmail, setConfirmingEmail] = useState(false);
+    const [sentTo, setSentTo] = useState<string | null>(null);
+
+    async function handleEmail() {
+        setPending(true);
+        setError(null);
+        setSentTo(null);
+        try {
+            const res = await emailWorkOrder(workOrderId);
+            if (res.ok) setSentTo(res.to);
+            else setError(res.error);
+        } catch {
+            setError("Something went wrong. Try again.");
+        } finally {
+            setPending(false);
+            setConfirmingEmail(false);
+        }
+    }
+
+    const canEmail = !!contractor?.email;
+    const emailControls = confirmingEmail ? (
+        <>
+            <span className="text-sm text-neutral-300">Email this work order to {contractor?.email}?</span>
+            <button
+                className="shrink-0 rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white hover:cursor-pointer disabled:opacity-40"
+                onClick={handleEmail}
+                disabled={pending}
+            >
+                {pending ? "Sending..." : "Send"}
+            </button>
+            <button
+                className="shrink-0 px-2 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                onClick={() => setConfirmingEmail(false)}
+                disabled={pending}
+            >
+                Cancel
+            </button>
+        </>
+    ) : (
+        <button
+            className={
+                status === "DRAFT"
+                    ? "shrink-0 rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                    : "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+            }
+            onClick={() => {
+                setSentTo(null);
+                setConfirmingEmail(true);
+            }}
+            disabled={pending || !canEmail}
+        >
+            {status === "DRAFT" ? "Send by email" : "Resend email"}
+        </button>
+    );
+
+    const missingEmailHint = contractor && !contractor.email && (
+        <span className="text-sm text-neutral-500">
+            <Link href={`/contacts/${contractor.id}`} className="underline hover:text-neutral-100">
+                Add an email to {contractor.name}
+            </Link>{" "}
+            to send by email.
+        </span>
+    );
 
     async function run(fn: () => Promise<void>) {
         setPending(true);
@@ -32,6 +98,7 @@ export default function StatusActions({
         <div className="flex flex-wrap items-center gap-2">
             {status === "DRAFT" && (
                 <>
+                    {hasContractor && emailControls}
                     <button
                         className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => sendWorkOrder(workOrderId, "PRINT" as DeliveryMethod))}
@@ -40,10 +107,12 @@ export default function StatusActions({
                         Mark as sent
                     </button>
                     {!hasContractor && <span className="text-sm text-neutral-500">Assign a contractor to send.</span>}
+                    {missingEmailHint}
                 </>
             )}
             {(status === "SENT" || status === "IN_PROGRESS") && (
                 <>
+                    {emailControls}
                     <button
                         className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => markWorkOrderCompleted(workOrderId))}
@@ -87,6 +156,8 @@ export default function StatusActions({
                     Reopen
                 </button>
             )}
+            {(status === "SENT" || status === "IN_PROGRESS") && missingEmailHint}
+            {sentTo && <p className="w-full text-sm text-green-400">Sent to {sentTo}.</p>}
             {error && <p className="w-full text-sm text-red-400">{error}</p>}
         </div>
     );

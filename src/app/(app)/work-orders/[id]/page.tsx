@@ -28,6 +28,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
         include: {
             property: true,
             unit: true,
+            contractor: { select: { id: true, displayName: true, email: true } },
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
@@ -187,6 +188,13 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     workOrderId={workOrder.id}
                     status={workOrder.status}
                     hasContractor={!!workOrder.contractorId}
+                    contractor={
+                        workOrder.contractor && {
+                            id: workOrder.contractor.id,
+                            name: workOrder.contractor.displayName,
+                            email: workOrder.contractor.email,
+                        }
+                    }
                 />
                 <Link
                     href={`/work-orders/${workOrder.id}/print`}
