@@ -25,7 +25,9 @@ async function getOpenLineItem(token: string, lineItemId: string) {
     });
 
     if (!lineItem) throw new Error("Invalid line item");
-    if (!isOpen(lineItem.area.workOrder.status)) throw new Error("Work order is not open");
+    if (lineItem.area.workOrder.archived || !isOpen(lineItem.area.workOrder.status)) {
+        throw new Error("Work order is not open");
+    }
 
     return lineItem;
 }
@@ -86,7 +88,7 @@ export async function completeWorkOrder(token: string, completionNotes: string) 
     const workOrder = await loadForCompletion(token);
 
     if (!workOrder) throw new Error("Invalid work order");
-    if (!isOpen(workOrder.status)) throw new Error("Work order is not open");
+    if (workOrder.archived || !isOpen(workOrder.status)) throw new Error("Work order is not open");
 
     const completedAt = new Date();
     const notes = cleanNote(completionNotes);

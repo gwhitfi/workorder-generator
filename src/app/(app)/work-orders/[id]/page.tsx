@@ -7,10 +7,18 @@ import InfoCard from "@/components/InfoCard";
 import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
 import ContractorLink from "./ContractorLink";
+import ArchiveControls from "./ArchiveControls";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
-export default async function WorkOrderDetail({ params }: { params: Promise<{ id: string }> }) {
+export default async function WorkOrderDetail({
+    params,
+    searchParams,
+}: {
+    params: Promise<{ id: string }>;
+    searchParams: Promise<{ contractorChanged?: string }>;
+}) {
     const { id } = await params;
+    const { contractorChanged } = await searchParams;
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -60,11 +68,22 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
 
     const lineItems = workOrder.areas.flatMap((area) => area.lineItems);
     const doneCount = lineItems.filter((item) => item.completed).length;
-    const readOnly = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
-    const contractorWorking = workOrder.status === "SENT" || workOrder.status === "IN_PROGRESS";
+    const finished = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
+    const readOnly = finished || workOrder.archived;
+    const contractorWorking =
+        !workOrder.archived && (workOrder.status === "SENT" || workOrder.status === "IN_PROGRESS");
+    const canEdit = !readOnly;
 
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+            {workOrder.archived && (
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3">
+                    <p className="text-sm text-neutral-300">
+                        This work order is archived. It&apos;s hidden from lists and the contractor link is disabled.
+                    </p>
+                    <ArchiveControls workOrderId={workOrder.id} archived />
+                </div>
+            )}
             <div className="mb-8">
                 <div className="mb-1 flex items-center gap-3">
                     <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
@@ -80,7 +99,17 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                     )}
                 </div>
 
-                <h1 className="text-2xl font-semibold mb-2">{workOrder.title ?? "Untitled work order"}</h1>
+                <div className="mb-2 flex items-start justify-between gap-4">
+                    <h1 className="text-2xl font-semibold">{workOrder.title ?? "Untitled work order"}</h1>
+                    {canEdit && (
+                        <Link
+                            href={`/work-orders/${workOrder.id}/edit`}
+                            className="mt-1 shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                        >
+                            Edit
+                        </Link>
+                    )}
+                </div>
                 {lineItems.length > 0 && (
                     <div
                         role="progressbar"
@@ -132,7 +161,7 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 </div>
             </div>
 
-            {readOnly && (
+            {finished && (
                 <section
                     className={`mb-8 rounded-lg border p-4 ${
                         workOrder.status === "CLOSED"
@@ -162,10 +191,16 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 </section>
             )}
 
-            <section className="mb-8">
-                <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
-                <ContractorLink workOrderId={workOrder.id} token={workOrder.publicToken} status={workOrder.status} />
-            </section>
+            {!workOrder.archived && (
+                <section className="mb-8">
+                    <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
+                    <ContractorLink
+                        workOrderId={workOrder.id}
+                        token={workOrder.publicToken}
+                        status={workOrder.status}
+                    />
+                </section>
+            )}
 
             {workOrder.notes && (
                 <div className="text-sm text-neutral-400 leading-relaxed">
@@ -183,24 +218,37 @@ export default async function WorkOrderDetail({ params }: { params: Promise<{ id
                 notice={contractorWorking ? "The contractor can see changes immediately." : undefined}
             />
             <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-neutral-800 pt-6">
-                <StatusActions
-                    workOrderId={workOrder.id}
-                    status={workOrder.status}
-                    hasContractor={!!workOrder.contractorId}
-                    contractor={
-                        workOrder.contractor && {
-                            id: workOrder.contractor.id,
-                            name: workOrder.contractor.displayName,
-                            email: workOrder.contractor.email,
+                {contractorChanged && contractorWorking && workOrder.contractorName && (
+                    <p className="w-full rounded-md border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-300">
+                        Contractor changed — a new link was created and the old one no longer works. Email the work
+                        order to {workOrder.contractorName}.
+                    </p>
+                )}
+                {!workOrder.archived && (
+                    <StatusActions
+                        workOrderId={workOrder.id}
+                        status={workOrder.status}
+                        hasContractor={!!workOrder.contractorId}
+                        contractor={
+                            workOrder.contractor && {
+                                id: workOrder.contractor.id,
+                                name: workOrder.contractor.displayName,
+                                email: workOrder.contractor.email,
+                            }
                         }
-                    }
-                />
+                    />
+                )}
                 <Link
                     href={`/work-orders/${workOrder.id}/print`}
                     className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800"
                 >
                     Print preview
                 </Link>
+                {!workOrder.archived && (
+                    <div className="ml-auto">
+                        <ArchiveControls workOrderId={workOrder.id} archived={false} />
+                    </div>
+                )}
             </div>
         </main>
     );
