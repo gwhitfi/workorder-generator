@@ -1,3 +1,6 @@
+import { escapeHtml } from "./shared";
+import { formatDueDate } from "@/lib/dates";
+
 type WorkOrderEmailInput = {
     organization: { name: string; phone: string | null; email: string | null };
     title: string | null;
@@ -9,30 +12,10 @@ type WorkOrderEmailInput = {
     isResend: boolean;
 };
 
-function escapeHtml(value: string) {
-    return value
-        .replace(/&/g, "&amp;")
-        .replace(/</g, "&lt;")
-        .replace(/>/g, "&gt;")
-        .replace(/"/g, "&quot;")
-        .replace(/'/g, "&#39;");
-}
-
-// Due dates are stored at UTC midnight, so format in UTC to avoid showing the day before.
-function formatDueDate(date: Date) {
-    return date.toLocaleDateString("en-US", {
-        timeZone: "UTC",
-        weekday: "short",
-        month: "short",
-        day: "numeric",
-        year: "numeric",
-    });
-}
-
 export function workOrderEmail(input: WorkOrderEmailInput) {
     const title = input.title ?? "Work order";
     const org = input.organization;
-    const due = input.dueDate ? formatDueDate(input.dueDate) : null;
+    const due = input.dueDate ? formatDueDate(input.dueDate, { weekday: true }) : null;
     const items = `${input.itemCount} ${input.itemCount === 1 ? "item" : "items"}`;
     const contact = [org.phone, org.email].filter(Boolean) as string[];
 

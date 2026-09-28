@@ -5,6 +5,7 @@ import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import InfoCard from "@/components/InfoCard";
 import ContractorSpaceCard from "./ContractorSpaceCard";
 import CompleteWorkOrder from "./CompleteWorkOrder";
+import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
 // The token is the only thing protecting this page, so keep it out of search engines and referrer headers.
 export const metadata: Metadata = {
@@ -34,8 +35,10 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
         },
     });
 
-    // Drafts haven't been sent yet, so the link shouldn't work until they are.
-    if (!workOrder || workOrder.archived || workOrder.status === "DRAFT") notFound();
+    // Drafts haven't been sent yet and cancelled work is off, so the link only works for live work orders.
+    if (!workOrder || workOrder.archived || workOrder.status === "DRAFT" || workOrder.status === "CANCELLED") {
+        notFound();
+    }
 
     const readOnly = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
     const itemCount = workOrder.areas.reduce((sum, area) => sum + area.lineItems.length, 0);
@@ -56,9 +59,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">
-                            Due by {workOrder.dueDate.toLocaleDateString()}
-                        </span>
+                        <span className="text-sm text-neutral-500">Due by {formatDueDate(workOrder.dueDate)}</span>
                     )}
                 </div>
 
@@ -66,7 +67,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
 
                 {workOrder.status === "COMPLETED" && (
                     <p className="mb-4 rounded-md border border-green-800 bg-green-950/40 px-3 py-2 text-sm text-green-300">
-                        Marked complete{workOrder.completedAt && ` on ${workOrder.completedAt.toLocaleDateString()}`}.
+                        Marked complete{workOrder.completedAt && ` on ${formatTimestamp(workOrder.completedAt)}`}.
                         Contact the office if anything needs to change.
                     </p>
                 )}

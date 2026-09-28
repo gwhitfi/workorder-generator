@@ -8,6 +8,65 @@ import { redirect } from "next/navigation";
 import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
+import { formatWorkOrderAddress } from "@/lib/workOrders";
+
+// Reads and validates the fields shared by the create and edit forms. The property is passed in
+// separately because it can't be changed once a work order exists.
+async function readWorkOrderForm(formData: FormData, organizationId: string, propertyId: string) {
+    const unitId = (formData.get("unitId") as string) || null;
+    const contractorId = (formData.get("contractorId") as string) || null;
+    const dueDateRaw = (formData.get("dueDate") as string) || null;
+
+    if (unitId) {
+        const unit = await prisma.unit.findFirst({ where: { id: unitId, propertyId, organizationId } });
+        if (!unit) throw new Error("Invalid unit");
+    }
+
+    const contractor = contractorId
+        ? await prisma.contact.findFirst({
+              where: { id: contractorId, organizationId, contactType: { in: ["CONTRACTOR", "OTHER"] } },
+          })
+        : null;
+    if (contractorId && !contractor) throw new Error("Invalid contractor");
+
+    return {
+        title: (formData.get("title") as string) || null,
+        notes: (formData.get("notes") as string) || null,
+        notifyTenant: formData.get("tenant") === "on",
+        dueDate: dueDateRaw ? new Date(dueDateRaw) : null,
+        unitId,
+        contractor,
+    };
+}
+
+function findTenant(unitId: string | null, organizationId: string) {
+    if (!unitId) return null;
+    return prisma.contact.findFirst({
+        where: { unitId, contactType: "TENANT", organizationId, archived: false },
+    });
+}
+
+function contractorSnapshot(
+    contractor: { id: string; displayName: string; phone: string | null; email: string | null } | null,
+) {
+    return {
+        contractorId: contractor?.id ?? null,
+        contractorName: contractor?.displayName ?? null,
+        contractorPhone: contractor?.phone ?? null,
+        contractorEmail: contractor?.email ?? null,
+    };
+}
+
+function tenantSnapshot(
+    tenant: { id: string; displayName: string; phone: string | null; email: string | null } | null,
+) {
+    return {
+        tenantId: tenant?.id ?? null,
+        tenantName: tenant?.displayName ?? null,
+        tenantPhone: tenant?.phone ?? null,
+        tenantEmail: tenant?.email ?? null,
+    };
+}
 
 export async function createWorkOrder(formData: FormData) {
     const result = await getCurrentUser();
@@ -16,78 +75,107 @@ export async function createWorkOrder(formData: FormData) {
         throw new Error("Not authorized");
     }
 
-    const title = (formData.get("title") as string) || null;
+    const organizationId = result.organization.id;
     const propertyId = formData.get("propertyId") as string;
-    const unitId = (formData.get("unitId") as string) || null;
-    const contractorId = (formData.get("contractorId") as string) || null;
-    const notes = (formData.get("notes") as string) || null;
-    const notifyTenant = formData.get("tenant") === "on";
-    const dueDateRaw = (formData.get("dueDate") as string) || null;
-    const dueDate = dueDateRaw ? new Date(dueDateRaw) : null;
 
     const property = await prisma.property.findFirst({
-        where: { id: propertyId, organizationId: result.organization.id },
+        where: { id: propertyId, organizationId },
     });
 
     if (!property) throw new Error("Invalid property");
 
-    if (unitId) {
-        const unit = await prisma.unit.findFirst({
-            where: { id: unitId, organizationId: result.organization.id },
-        });
-        if (!unit) throw new Error("Invalid unit");
-    }
-
-    let contractor = null;
-
-    if (contractorId) {
-        contractor = await prisma.contact.findFirst({
-            where: {
-                id: contractorId,
-                organizationId: result.organization.id,
-                contactType: { in: ["CONTRACTOR", "OTHER"] },
-            },
-        });
-        if (!contractor) throw new Error("Invalid contractor");
-    }
-
-    const tenant = unitId
-        ? await prisma.contact.findFirst({
-              where: {
-                  unitId,
-                  contactType: "TENANT",
-                  organizationId: result.organization.id,
-                  archived: false,
-              },
-          })
-        : null;
+    const { contractor, ...fields } = await readWorkOrderForm(formData, organizationId, propertyId);
+    const tenant = await findTenant(fields.unitId, organizationId);
 
     const workOrder = await prisma.workOrder.create({
         data: {
-            organizationId: result.organization.id,
+            organizationId,
             publicToken: randomBytes(24).toString("base64url"),
             propertyId,
-            unitId,
-            title,
-            notes,
-            dueDate,
-            notifyTenant,
+            ...fields,
             status: "DRAFT",
-
-            contractorId,
-            contractorName: contractor?.displayName ?? null,
-            contractorPhone: contractor?.phone ?? null,
-            contractorEmail: contractor?.email ?? null,
-
-            tenantId: tenant?.id ?? null,
-            tenantName: tenant?.displayName ?? null,
-            tenantPhone: tenant?.phone ?? null,
-            tenantEmail: tenant?.email ?? null,
+            ...contractorSnapshot(contractor),
+            ...tenantSnapshot(tenant),
         },
     });
 
     revalidatePath("/work-orders");
     redirect(`/work-orders/${workOrder.id}`);
+}
+
+export async function updateWorkOrder(workOrderId: string, formData: FormData) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const organizationId = result.organization.id;
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId, archived: false },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+    if (!["DRAFT", "SENT", "IN_PROGRESS"].includes(workOrder.status)) {
+        throw new Error("Only open work orders can be edited");
+    }
+
+    const { contractor, ...fields } = await readWorkOrderForm(formData, organizationId, workOrder.propertyId);
+    const contractorChanged = (contractor?.id ?? null) !== workOrder.contractorId;
+    const unitChanged = fields.unitId !== workOrder.unitId;
+    // Once sent, the old contractor still has the link, so a new contractor gets a new one.
+    const newLink = contractorChanged && workOrder.status !== "DRAFT";
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: {
+            ...fields,
+            ...(contractorChanged ? contractorSnapshot(contractor) : {}),
+            ...(unitChanged ? tenantSnapshot(await findTenant(fields.unitId, organizationId)) : {}),
+            // The new contractor hasn't been sent anything yet, so their first email isn't a "reminder".
+            ...(newLink ? { publicToken: randomBytes(24).toString("base64url"), deliveryMethod: null } : {}),
+        },
+    });
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+    if (newLink) revalidatePath(`/wo/${workOrder.publicToken}`);
+    redirect(`/work-orders/${workOrderId}${newLink && contractor ? "?contractorChanged=1" : ""}`);
+}
+
+export async function archiveWorkOrder(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+    });
+    if (!workOrder) throw new Error("Invalid work order");
+
+    await prisma.workOrder.update({ where: { id: workOrderId }, data: { archived: true } });
+
+    revalidatePath("/work-orders");
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+    redirect("/work-orders");
+}
+
+export async function restoreWorkOrder(workOrderId: string): Promise<{ ok: true } | { ok: false; error: string }> {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+        include: { property: { select: { archived: true } } },
+    });
+    if (!workOrder) return { ok: false, error: "Work order not found" };
+    if (workOrder.property.archived) {
+        return { ok: false, error: "This work order's property is archived. Restore the property first." };
+    }
+
+    await prisma.workOrder.update({ where: { id: workOrderId }, data: { archived: false } });
+
+    revalidatePath("/work-orders");
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+    return { ok: true };
 }
 
 export async function addArea(workOrderId: string, spaceId: string | null, name: string) {
@@ -393,6 +481,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
     });
 
     if (!workOrder) return { ok: false, error: "Work order not found" };
+    if (workOrder.archived) return { ok: false, error: "Archived work orders can't be emailed" };
     if (!["DRAFT", "SENT", "IN_PROGRESS"].includes(workOrder.status)) {
         return { ok: false, error: "Only open work orders can be emailed" };
     }
@@ -402,10 +491,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
     if (!to) return { ok: false, error: `${workOrder.contractor.displayName} has no email address` };
 
     const itemCount = await prisma.lineItem.count({ where: { area: { workOrderId } } });
-    const { property, unit } = workOrder;
-    const address =
-        `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
-        `${property.city}, ${property.state} ${property.zipCode}`;
+    const address = formatWorkOrderAddress(workOrder.property, workOrder.unit);
 
     try {
         const email = workOrderEmail({
@@ -416,7 +502,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
             notes: workOrder.notes,
             itemCount,
             url: `${getAppUrl()}/wo/${workOrder.publicToken}`,
-            isResend: workOrder.status !== "DRAFT",
+            isResend: workOrder.deliveryMethod === "EMAIL",
         });
 
         await sendEmail({ to, ...email, replyTo: result.organization.email });
@@ -480,6 +566,8 @@ export async function reopenWorkOrder(workOrderId: string) {
             status: workOrder.sentAt ? "SENT" : "DRAFT",
             closedAt: null,
             completedAt: null,
+            cancelledAt: null,
+            cancelReason: null,
         },
     });
 

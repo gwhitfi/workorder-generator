@@ -147,7 +147,7 @@ export default function StatusActions({
                     </button>
                 </>
             )}
-            {status === "CLOSED" && (
+            {(status === "CLOSED" || status === "CANCELLED") && (
                 <button
                     className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                     onClick={() => run(() => reopenWorkOrder(workOrderId))}

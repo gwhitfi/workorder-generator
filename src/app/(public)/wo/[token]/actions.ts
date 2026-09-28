@@ -2,6 +2,10 @@
 
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { after } from "next/server";
+import { getAppUrl, sendEmail } from "@/lib/email";
+import { completedEmail } from "@/lib/emails/completedEmail";
+import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 const MAX_NOTE_LENGTH = 2000;
 const OPEN_STATUSES = ["SENT", "IN_PROGRESS"] as const;
@@ -22,7 +26,9 @@ async function getOpenLineItem(token: string, lineItemId: string) {
     });
 
     if (!lineItem) throw new Error("Invalid line item");
-    if (!isOpen(lineItem.area.workOrder.status)) throw new Error("Work order is not open");
+    if (lineItem.area.workOrder.archived || !isOpen(lineItem.area.workOrder.status)) {
+        throw new Error("Work order is not open");
+    }
 
     return lineItem;
 }
@@ -62,20 +68,66 @@ export async function saveLineItemNote(token: string, lineItemId: string, note: 
     revalidate(token, lineItem.area.workOrderId);
 }
 
+function loadForCompletion(token: string) {
+    return prisma.workOrder.findUnique({
+        where: { publicToken: token },
+        include: {
+            organization: { select: { name: true, email: true } },
+            property: true,
+            unit: true,
+            areas: {
+                orderBy: { sortOrder: "asc" },
+                include: { lineItems: { orderBy: { sortOrder: "asc" } } },
+            },
+        },
+    });
+}
+
+type CompletionWorkOrder = NonNullable<Awaited<ReturnType<typeof loadForCompletion>>>;
+
 export async function completeWorkOrder(token: string, completionNotes: string) {
-    const workOrder = await prisma.workOrder.findUnique({ where: { publicToken: token } });
+    const workOrder = await loadForCompletion(token);
 
     if (!workOrder) throw new Error("Invalid work order");
-    if (!isOpen(workOrder.status)) throw new Error("Work order is not open");
+    if (workOrder.archived || !isOpen(workOrder.status)) throw new Error("Work order is not open");
+
+    const completedAt = new Date();
+    const notes = cleanNote(completionNotes);
 
     await prisma.workOrder.update({
         where: { id: workOrder.id },
-        data: {
-            status: "COMPLETED",
-            completedAt: new Date(),
-            completionNotes: cleanNote(completionNotes),
-        },
+        data: { status: "COMPLETED", completedAt, completionNotes: notes },
     });
 
     revalidate(token, workOrder.id);
+
+    // Runs after the response is sent, so an email problem never blocks or slows the contractor.
+    after(() => notifyOffice({ ...workOrder, completedAt, completionNotes: notes }));
+}
+
+// Not exported: only exported functions in a "use server" file become callable actions.
+async function notifyOffice(workOrder: CompletionWorkOrder) {
+    const to = workOrder.organization.email;
+    if (!to) {
+        console.info(`No office email set; skipped completion notice for work order ${workOrder.id}`);
+        return;
+    }
+
+    try {
+        const email = completedEmail({
+            organizationName: workOrder.organization.name,
+            contractorName: workOrder.contractorName,
+            contractorEmail: workOrder.contractorEmail,
+            title: workOrder.title,
+            address: formatWorkOrderAddress(workOrder.property, workOrder.unit),
+            completedAt: workOrder.completedAt ?? new Date(),
+            completionNotes: workOrder.completionNotes,
+            areas: workOrder.areas,
+            url: `${getAppUrl()}/work-orders/${workOrder.id}`,
+        });
+
+        await sendEmail({ to, ...email, replyTo: workOrder.contractorEmail });
+    } catch (error) {
+        console.error(`Completion notice failed for work order ${workOrder.id}`, error);
+    }
 }
