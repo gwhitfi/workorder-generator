@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import prisma from "@/lib/prisma";
 import { PROPERTY_TYPE_LABELS } from "@/lib/defaults";
 import PageHeader from "@/components/list/PageHeader";
@@ -8,7 +9,7 @@ import { List, ListHeader, ListRow, Cell, Favorite } from "@/components/list/Lis
 
 const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.8fr)]";
 
-export default async function Properties() {
+export default async function Properties({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -19,10 +20,12 @@ export default async function Properties() {
         redirect("/setup");
     }
 
+    const showArchived = (await searchParams).archived === "1";
+
     const properties = await prisma.property.findMany({
         where: {
             organizationId: result.organization.id,
-            archived: false,
+            archived: showArchived,
         },
         orderBy: [{ favorite: "desc" }, { displayName: "asc" }],
         include: {
@@ -41,12 +44,25 @@ export default async function Properties() {
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
             <PageHeader
                 title="Properties"
-                subtitle={`${properties.length} ${properties.length === 1 ? "property" : "properties"}`}
+                subtitle={`${properties.length} ${showArchived ? "archived " : ""}${properties.length === 1 ? "property" : "properties"}`}
                 actionHref="/properties/new"
                 actionLabel="Add Property"
             />
 
-            {properties.length === 0 ? (
+            <div className="-mt-4 mb-4 flex justify-end">
+                <Link
+                    href={showArchived ? "/properties" : "/properties?archived=1"}
+                    className="text-sm text-neutral-500 hover:text-neutral-100"
+                >
+                    {showArchived ? "← Show active" : "Show archived"}
+                </Link>
+            </div>
+
+            {properties.length === 0 && showArchived ? (
+                <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                    No archived properties.
+                </p>
+            ) : properties.length === 0 ? (
                 <EmptyState
                     message="No properties added yet."
                     actionHref="/properties/new"

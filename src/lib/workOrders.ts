@@ -31,3 +31,13 @@ export type WorkOrderFilter = keyof typeof WORK_ORDER_FILTERS;
 export function isWorkOrderFilter(value: unknown): value is WorkOrderFilter {
     return typeof value === "string" && value in WORK_ORDER_FILTERS;
 }
+
+type AddressProperty = { addressLine1: string; city: string; state: string; zipCode: string };
+type AddressUnit = { name: string; isDefault: boolean } | null;
+
+export function formatWorkOrderAddress(property: AddressProperty, unit: AddressUnit) {
+    return (
+        `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
+        `${property.city}, ${property.state} ${property.zipCode}`
+    );
+}

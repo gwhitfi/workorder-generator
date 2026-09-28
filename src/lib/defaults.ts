@@ -92,6 +92,7 @@ export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
     IN_PROGRESS: "In progress",
     COMPLETED: "Completed",
     CLOSED: "Closed",
+    CANCELLED: "Cancelled",
 };
 
 export const STATUS_COLORS: Record<keyof typeof WORK_ORDER_STATUS_LABELS, string> = {
@@ -100,6 +101,7 @@ export const STATUS_COLORS: Record<keyof typeof WORK_ORDER_STATUS_LABELS, string
     IN_PROGRESS: "border-yellow-600 text-yellow-400", // Yellowish
     COMPLETED: "border-green-700 text-green-400", // Green
     CLOSED: "border-blue-700 text-blue-400", // Blue
+    CANCELLED: "border-neutral-700 text-neutral-500 line-through", // Dim: work stopped
 };
 
 export const PRIORITY_LABELS: Record<string, string> = {

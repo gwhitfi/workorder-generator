@@ -69,7 +69,8 @@ export default async function WorkOrderDetail({
     const lineItems = workOrder.areas.flatMap((area) => area.lineItems);
     const doneCount = lineItems.filter((item) => item.completed).length;
     const finished = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
-    const readOnly = finished || workOrder.archived;
+    const cancelled = workOrder.status === "CANCELLED";
+    const readOnly = finished || cancelled || workOrder.archived;
     const contractorWorking =
         !workOrder.archived && (workOrder.status === "SENT" || workOrder.status === "IN_PROGRESS");
     const canEdit = !readOnly;
@@ -161,6 +162,16 @@ export default async function WorkOrderDetail({
                 </div>
             </div>
 
+            {cancelled && (
+                <section className="mb-8 rounded-lg border border-neutral-700 bg-neutral-900 p-4">
+                    <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Cancelled</p>
+                    <p className="text-sm text-neutral-300">
+                        {workOrder.cancelledAt ? `Cancelled on ${formatTimestamp(workOrder.cancelledAt)}` : "Cancelled"}
+                        {workOrder.cancelReason ? ` — ${workOrder.cancelReason}.` : "."}
+                    </p>
+                </section>
+            )}
+
             {finished && (
                 <section
                     className={`mb-8 rounded-lg border p-4 ${
@@ -191,7 +202,7 @@ export default async function WorkOrderDetail({
                 </section>
             )}
 
-            {!workOrder.archived && (
+            {!workOrder.archived && !cancelled && (
                 <section className="mb-8">
                     <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
                     <ContractorLink

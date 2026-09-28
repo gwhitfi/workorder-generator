@@ -34,6 +34,7 @@ enum WorkOrderStatus {
   IN_PROGRESS
   COMPLETED
   CLOSED
+  CANCELLED
 }
 
 enum DeliveryMethod {
@@ -214,6 +215,8 @@ model WorkOrder {
   sentAt          DateTime?
   completedAt     DateTime?
   closedAt        DateTime?
+  cancelledAt     DateTime?
+  cancelReason    String?
   completionNotes String?
 
   contractorId    String?

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 import { after } from "next/server";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { completedEmail } from "@/lib/emails/completedEmail";
+import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 const MAX_NOTE_LENGTH = 2000;
 const OPEN_STATUSES = ["SENT", "IN_PROGRESS"] as const;
@@ -113,15 +114,12 @@ async function notifyOffice(workOrder: CompletionWorkOrder) {
     }
 
     try {
-        const { property, unit } = workOrder;
         const email = completedEmail({
             organizationName: workOrder.organization.name,
             contractorName: workOrder.contractorName,
             contractorEmail: workOrder.contractorEmail,
             title: workOrder.title,
-            address:
-                `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
-                `${property.city}, ${property.state} ${property.zipCode}`,
+            address: formatWorkOrderAddress(workOrder.property, workOrder.unit),
             completedAt: workOrder.completedAt ?? new Date(),
             completionNotes: workOrder.completionNotes,
             areas: workOrder.areas,

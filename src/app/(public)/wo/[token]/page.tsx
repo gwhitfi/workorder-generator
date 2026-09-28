@@ -35,8 +35,10 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
         },
     });
 
-    // Drafts haven't been sent yet, so the link shouldn't work until they are.
-    if (!workOrder || workOrder.archived || workOrder.status === "DRAFT") notFound();
+    // Drafts haven't been sent yet and cancelled work is off, so the link only works for live work orders.
+    if (!workOrder || workOrder.archived || workOrder.status === "DRAFT" || workOrder.status === "CANCELLED") {
+        notFound();
+    }
 
     const readOnly = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
     const itemCount = workOrder.areas.reduce((sum, area) => sum + area.lineItems.length, 0);

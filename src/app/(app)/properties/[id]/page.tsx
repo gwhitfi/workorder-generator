@@ -7,6 +7,8 @@ import { OPEN_STATUSES } from "@/lib/workOrders";
 import InfoCard from "@/components/InfoCard";
 import { Favorite } from "@/components/list/List";
 import { WorkOrderList } from "@/components/WorkOrderRow";
+import { ArchivePropertyButton, RestorePropertyButton } from "./ArchiveProperty";
+import UnitManager from "./UnitManager";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -23,36 +25,46 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     const orgId = result.organization.id;
     const workOrderWhere = { propertyId: id, organizationId: orgId, archived: false };
 
-    const [property, tenants, workOrders, workOrderCount, openCount] = await Promise.all([
-        prisma.property.findFirst({
-            where: { id, organizationId: orgId },
-            include: {
-                units: {
-                    where: { archived: false },
-                    orderBy: { sortOrder: "asc" },
-                    include: {
-                        spaces: {
-                            where: { archived: false },
-                            orderBy: { sortOrder: "asc" },
+    const [property, tenants, allWorkOrders, workOrderCount, openCount, completedCount, openByUnit] = await Promise.all(
+        [
+            prisma.property.findFirst({
+                where: { id, organizationId: orgId },
+                include: {
+                    units: {
+                        where: { archived: false },
+                        orderBy: { sortOrder: "asc" },
+                        include: {
+                            spaces: {
+                                where: { archived: false },
+                                orderBy: { sortOrder: "asc" },
+                            },
                         },
                     },
                 },
-            },
-        }),
-        prisma.contact.findMany({
-            where: { organizationId: orgId, archived: false, contactType: "TENANT", unit: { propertyId: id } },
-            orderBy: { displayName: "asc" },
-            include: { unit: true },
-        }),
-        prisma.workOrder.findMany({
-            where: workOrderWhere,
-            orderBy: { createdAt: "desc" },
-            take: 50,
-            include: { property: true, unit: true },
-        }),
-        prisma.workOrder.count({ where: workOrderWhere }),
-        prisma.workOrder.count({ where: { ...workOrderWhere, status: { in: OPEN_STATUSES } } }),
-    ]);
+            }),
+            prisma.contact.findMany({
+                where: { organizationId: orgId, archived: false, contactType: "TENANT", unit: { propertyId: id } },
+                orderBy: { displayName: "asc" },
+                include: { unit: true },
+            }),
+            // Includes archived ones so an archived property still shows its (cancelled/closed) history.
+            prisma.workOrder.findMany({
+                where: { propertyId: id, organizationId: orgId },
+                orderBy: { createdAt: "desc" },
+                take: 50,
+                include: { property: true, unit: true },
+            }),
+            prisma.workOrder.count({ where: workOrderWhere }),
+            prisma.workOrder.count({ where: { ...workOrderWhere, status: { in: OPEN_STATUSES } } }),
+            prisma.workOrder.count({ where: { ...workOrderWhere, status: "COMPLETED" } }),
+            // Open work orders per unit, so units with active work can't be archived.
+            prisma.workOrder.groupBy({
+                by: ["unitId"],
+                where: { ...workOrderWhere, status: { in: OPEN_STATUSES } },
+                _count: { _all: true },
+            }),
+        ],
+    );
 
     if (!property) {
         notFound();
@@ -60,6 +72,8 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
 
     const isMultiUnitType = MULTI_UNIT.includes(property.propertyType);
     const isSingleUnit = !isMultiUnitType && property.units.length === 1 && property.units[0].isDefault;
+
+    const workOrders = property.archived ? allWorkOrders : allWorkOrders.filter((wo) => !wo.archived);
 
     // Open work first, newest first within each group.
     const isOpen = (status: (typeof workOrders)[number]["status"]) => OPEN_STATUSES.includes(status);
@@ -70,14 +84,32 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
 
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+            {property.archived && (
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3">
+                    <p className="text-sm text-neutral-300">
+                        This property is archived. Restoring it won&apos;t reopen its cancelled work orders.
+                    </p>
+                    <RestorePropertyButton propertyId={property.id} />
+                </div>
+            )}
             <div className="mb-8">
                 <span className="mb-2 inline-block rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
                     {PROPERTY_TYPE_LABELS[property.propertyType]}
                 </span>
-                <h1 className="mb-4 text-2xl font-semibold">
-                    {property.displayName}
-                    <Favorite show={property.favorite} />
-                </h1>
+                <div className="mb-4 flex items-start justify-between gap-4">
+                    <h1 className="text-2xl font-semibold">
+                        {property.displayName}
+                        <Favorite show={property.favorite} />
+                    </h1>
+                    {!property.archived && (
+                        <Link
+                            href={`/properties/${property.id}/edit`}
+                            className="mt-1 shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                        >
+                            Edit
+                        </Link>
+                    )}
+                </div>
 
                 <div className="grid gap-4 sm:grid-cols-3">
                     <InfoCard label="Address" title={property.addressLine1}>
@@ -125,12 +157,14 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
             <section className="mb-8 border-t border-neutral-800 pt-6">
                 <div className="mb-3 flex items-baseline justify-between gap-4">
                     <h2 className="text-lg font-semibold">Work orders</h2>
-                    <Link
-                        href={`/work-orders/new?propertyId=${property.id}`}
-                        className="shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
-                    >
-                        + Create work order
-                    </Link>
+                    {!property.archived && (
+                        <Link
+                            href={`/work-orders/new?propertyId=${property.id}`}
+                            className="shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                        >
+                            + Create work order
+                        </Link>
+                    )}
                 </div>
                 {shownWorkOrders.length === 0 ? (
                     <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
@@ -148,6 +182,18 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                     <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
                         No units on file.
                     </p>
+                ) : !property.archived ? (
+                    <UnitManager
+                        propertyId={property.id}
+                        manageUnits={!isSingleUnit}
+                        units={property.units.map((unit) => ({
+                            id: unit.id,
+                            name: unit.name,
+                            spaces: unit.spaces,
+                            openCount: openByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
+                            tenantCount: tenants.filter((t) => t.unitId === unit.id).length,
+                        }))}
+                    />
                 ) : isSingleUnit ? (
                     <UnitCard spaces={property.units[0].spaces} />
                 ) : (
@@ -158,6 +204,16 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                     </div>
                 )}
             </section>
+            {!property.archived && (
+                <div className="mt-8 flex justify-end border-t border-neutral-800 pt-6">
+                    <ArchivePropertyButton
+                        propertyId={property.id}
+                        propertyName={property.displayName}
+                        openCount={openCount}
+                        completedCount={completedCount}
+                    />
+                </div>
+            )}
         </main>
     );
 }

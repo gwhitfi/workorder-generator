@@ -29,7 +29,12 @@ export default function ArchiveControls({ workOrderId, archived }: { workOrderId
             <>
                 <button
                     className={buttonClass}
-                    onClick={() => run(() => restoreWorkOrder(workOrderId))}
+                    onClick={() =>
+                        run(async () => {
+                            const res = await restoreWorkOrder(workOrderId);
+                            if (!res.ok) setError(res.error);
+                        })
+                    }
                     disabled={pending}
                 >
                     {pending ? "Restoring..." : "Restore"}

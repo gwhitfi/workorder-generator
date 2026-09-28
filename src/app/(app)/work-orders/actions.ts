@@ -8,6 +8,7 @@ import { redirect } from "next/navigation";
 import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
+import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 // Reads and validates the fields shared by the create and edit forms. The property is passed in
 // separately because it can't be changed once a work order exists.
@@ -156,20 +157,25 @@ export async function archiveWorkOrder(workOrderId: string) {
     redirect("/work-orders");
 }
 
-export async function restoreWorkOrder(workOrderId: string) {
+export async function restoreWorkOrder(workOrderId: string): Promise<{ ok: true } | { ok: false; error: string }> {
     const result = await getCurrentUser();
-    if (result.state !== "ready") throw new Error("Not authorized");
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
 
     const workOrder = await prisma.workOrder.findFirst({
         where: { id: workOrderId, organizationId: result.organization.id },
+        include: { property: { select: { archived: true } } },
     });
-    if (!workOrder) throw new Error("Invalid work order");
+    if (!workOrder) return { ok: false, error: "Work order not found" };
+    if (workOrder.property.archived) {
+        return { ok: false, error: "This work order's property is archived. Restore the property first." };
+    }
 
     await prisma.workOrder.update({ where: { id: workOrderId }, data: { archived: false } });
 
     revalidatePath("/work-orders");
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath(`/wo/${workOrder.publicToken}`);
+    return { ok: true };
 }
 
 export async function addArea(workOrderId: string, spaceId: string | null, name: string) {
@@ -485,10 +491,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
     if (!to) return { ok: false, error: `${workOrder.contractor.displayName} has no email address` };
 
     const itemCount = await prisma.lineItem.count({ where: { area: { workOrderId } } });
-    const { property, unit } = workOrder;
-    const address =
-        `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
-        `${property.city}, ${property.state} ${property.zipCode}`;
+    const address = formatWorkOrderAddress(workOrder.property, workOrder.unit);
 
     try {
         const email = workOrderEmail({
@@ -563,6 +566,8 @@ export async function reopenWorkOrder(workOrderId: string) {
             status: workOrder.sentAt ? "SENT" : "DRAFT",
             closedAt: null,
             completedAt: null,
+            cancelledAt: null,
+            cancelReason: null,
         },
     });
 
