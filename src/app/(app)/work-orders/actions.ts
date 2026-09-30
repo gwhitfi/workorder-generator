@@ -31,7 +31,7 @@ async function readWorkOrderForm(formData: FormData, organizationId: string, pro
     if (contractorId && !contractor) throw new Error("Invalid contractor");
 
     return {
-        title: (formData.get("title") as string) || null,
+        title: formData.get("title") as string,
         notes: (formData.get("notes") as string) || null,
         notifyTenant: formData.get("tenant") === "on",
         dueDate: dueDateRaw ? new Date(dueDateRaw) : null,

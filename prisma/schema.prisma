@@ -51,23 +51,23 @@ enum LineItemPriority {
 }
 
 model Organization {
-  id        String   @id @default(cuid())
-  clerkOrgId String @unique
-  name      String
-  phone     String?
-  email     String?
+  id            String   @id @default(cuid())
+  clerkOrgId    String   @unique
+  name          String
+  phone         String?
+  email         String?
   jobNumberYear Int?
-  lastJobNumber Int @default(1000)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  lastJobNumber Int      @default(1000)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
 
   users       User[]
   properties  Property[]
   contacts    Contact[]
   tags        Tag[]
-  units Unit[]
-  spaces Space[]
+  units       Unit[]
   workOrders  WorkOrder[]
+  attachments Attachment[]
 }
 
 model User {
@@ -77,43 +77,42 @@ model User {
   firstName String?
   lastName  String?
   email     String
-  phone     String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  archived  Boolean  @default(false)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@index([organizationId])
   @@unique([organizationId, email])
+  @@index([organizationId])
 }
 
 model Contact {
-  id          String      @id @default(cuid())
-  contactType ContactType
-  displayName String
-  firstName   String?
-  lastName    String?
-  company     String?
+  id           String      @id @default(cuid())
+  contactType  ContactType
+  displayName  String
+  firstName    String?
+  lastName     String?
+  company      String?
   addressLine1 String?
   addressLine2 String?
   city         String?
   state        String?
   zipCode      String?
-  email       String?
-  phone       String?
-  notes       String?
-  createdAt   DateTime    @default(now())
-  updatedAt   DateTime    @updatedAt
-  favorite    Boolean     @default(false)
-  archived    Boolean     @default(false)
+  email        String?
+  phone        String?
+  notes        String?
+  createdAt    DateTime    @default(now())
+  updatedAt    DateTime    @updatedAt
+  favorite     Boolean     @default(false)
+  archived     Boolean     @default(false)
 
-  contractorWorkOrders WorkOrder[] @relation("WorkOrderContractor")
-  tenantWorkOrders     WorkOrder[] @relation("WorkOrderTenant")
+  contractorWorkOrders WorkOrder[]  @relation("WorkOrderContractor")
+  tenantWorkOrders     WorkOrder[]  @relation("WorkOrderTenant")
+  attachments          Attachment[]
 
   unitId String?
-  unit Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -137,8 +136,9 @@ model Property {
   favorite     Boolean      @default(false)
   archived     Boolean      @default(false)
 
-  workOrders WorkOrder[]
-  units Unit[]
+  workOrders  WorkOrder[]
+  units       Unit[]
+  attachments Attachment[]
 
   organizationId String
   organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
@@ -162,40 +162,21 @@ model Tag {
   @@index([organizationId])
 }
 
-model Space {
-  id String @id @default(cuid())
-  name String
-  sortOrder Int @default(0)
-  archived Boolean @default(false)
-
-  unitId String?
-  unit   Unit?  @relation(fields: [unitId], references: [id], onDelete: Cascade)
-
-  organizationId String
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete:Cascade)
-
-  areas Area[]
-
-  @@index([organizationId])
-  @@index([unitId])
-}
-
 model Unit {
-  id String @id @default(cuid())
-  name String
+  id        String  @id @default(cuid())
+  name      String
   isDefault Boolean @default(false)
-  sortOrder Int @default(0)
-  archived Boolean @default(false)
+  sortOrder Int     @default(0)
+  archived  Boolean @default(false)
 
   propertyId String
-  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  property   Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
 
   organizationId String
-  organization Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  spaces Space[]
   workOrders WorkOrder[]
-  contacts Contact[]
+  contacts   Contact[]
 
   @@index([propertyId])
   @@index([organizationId])
@@ -207,7 +188,7 @@ model WorkOrder {
   jobNumber       String
   status          WorkOrderStatus @default(DRAFT)
   deliveryMethod  DeliveryMethod?
-  title           String?
+  title           String
   notes           String?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
@@ -243,31 +224,28 @@ model WorkOrder {
   property   Property @relation(fields: [propertyId], references: [id], onDelete: Restrict)
 
   unitId String?
-  unit Unit? @relation(fields: [unitId], references: [id], onDelete: SetNull)
+  unit   Unit?   @relation(fields: [unitId], references: [id], onDelete: SetNull)
 
   @@unique([organizationId, jobNumber])
   @@index([organizationId])
   @@index([propertyId])
   @@index([contractorId])
+  @@index([tenantId])
   @@index([status])
   @@index([unitId])
 }
 
 model Area {
-  id           String  @id @default(cuid())
-  name String
-  sortOrder    Int     @default(0)
+  id        String @id @default(cuid())
+  name      String
+  sortOrder Int    @default(0)
 
-  spaceId String?
-  space   Space?  @relation(fields: [spaceId], references: [id], onDelete: SetNull)
-
-  workOrderId  String
-  workOrder  WorkOrder  @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  workOrderId String
+  workOrder   WorkOrder @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
 
   lineItems LineItem[]
 
   @@index([workOrderId])
-  @@index([spaceId])
 }
 
 model LineItem {
@@ -294,16 +272,29 @@ model Attachment {
   fileName         String?
   mimeType         String?
   sizeBytes        Int?
-  caption          String?
+  notes            String?
+  sortOrder        Int      @default(0)
   contractorUpload Boolean  @default(false)
-  lineItemId       String?
-  workOrderId      String?
   createdAt        DateTime @default(now())
   updatedAt        DateTime @updatedAt
 
-  lineItem  LineItem?  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
-  workOrder WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  // At most one owner is set (enforced by a CHECK constraint in the migration). None set means it
+  // belongs to the organization itself (its logo). The first by sortOrder is the main photo or logo.
+  propertyId  String?
+  property    Property?  @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  workOrderId String?
+  workOrder   WorkOrder? @relation(fields: [workOrderId], references: [id], onDelete: Cascade)
+  lineItemId  String?
+  lineItem    LineItem?  @relation(fields: [lineItemId], references: [id], onDelete: Cascade)
+  contactId   String?
+  contact     Contact?   @relation(fields: [contactId], references: [id], onDelete: Cascade)
 
-  @@index([lineItemId])
+  organizationId String
+  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
   @@index([workOrderId])
+  @@index([lineItemId])
+  @@index([contactId])
+  @@index([organizationId])
 }

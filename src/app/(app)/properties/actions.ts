@@ -162,7 +162,7 @@ export async function deleteProperty(propertyId: string, confirmation: string): 
         include: { unit: true },
     });
 
-    // Work orders block the property delete (onDelete: Restrict), so they go first. Units and spaces cascade.
+    // Work orders block the property delete (onDelete: Restrict), so they go first. Units cascade.
     await prisma.$transaction([
         prisma.contact.updateMany({ where: { unit: { propertyId } }, data: { unitId: null } }),
         prisma.workOrder.deleteMany({ where: { propertyId } }),
@@ -317,7 +317,7 @@ export async function deleteUnit(unitId: string, confirmation: string): Promise<
         where: { unitId, archived: false, status: { in: ["SENT", "IN_PROGRESS"] } },
     });
 
-    // Spaces cascade; work orders would only lose their unit, so they're deleted outright.
+    // Work orders would only lose their unit, so they're deleted outright.
     await prisma.$transaction([
         prisma.contact.updateMany({ where: { unitId }, data: { unitId: null } }),
         prisma.workOrder.deleteMany({ where: { unitId } }),
