@@ -1,12 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { addLineItem, removeLineItem, moveLineItem, updateLineItem } from "../actions";
 import { LineItemPriority } from "@/generated/prisma/enums";
 import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
-import TagModal from "./TagModal";
-
-type TagRow = { id: string; name: string };
 
 type LineItemRow = {
     id: string;
@@ -15,7 +12,6 @@ type LineItemRow = {
     completed: boolean;
     completedAt: Date | null;
     contractorNotes: string | null;
-    tags: TagRow[];
 };
 
 type AreaRow = {
@@ -27,7 +23,6 @@ type AreaRow = {
 export default function SpaceCard({
     area,
     index,
-    tags,
     total,
     onMove,
     onRemove,
@@ -35,7 +30,6 @@ export default function SpaceCard({
     readOnly,
 }: {
     area: AreaRow;
-    tags: TagRow[];
     index: number;
     total: number;
     onMove: (id: string, direction: "up" | "down") => void;
@@ -45,12 +39,11 @@ export default function SpaceCard({
 }) {
     const [adding, setAdding] = useState(false);
     const [description, setDescription] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
     const [priority, setPriority] = useState("MEDIUM");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [busyItemId, setBusyItemId] = useState<string | null>(null);
-    const [tagModalFor, setTagModalFor] = useState<string | null>(null);
-    const modalItem = area.lineItems.find((i) => i.id === tagModalFor);
     const [editingId, setEditingId] = useState<string | null>(null);
     const [editDraft, setEditDraft] = useState("");
     const doneCount = area.lineItems.filter((i) => i.completed).length;
@@ -68,6 +61,7 @@ export default function SpaceCard({
             setError("Could not add that item. Try again.");
         } finally {
             setPending(false);
+            inputRef.current?.focus();
         }
     }
 
@@ -198,14 +192,6 @@ export default function SpaceCard({
                                         {item.description}
                                     </span>
                                 )}
-                                {item.tags.map((tag) => (
-                                    <span
-                                        key={tag.id}
-                                        className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400 cursor-default"
-                                    >
-                                        {tag.name}
-                                    </span>
-                                ))}
                                 {PRIORITY_STYLES[item.priority] && (
                                     <span
                                         className={`shrink-0 rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
@@ -241,13 +227,6 @@ export default function SpaceCard({
 
                                         <button
                                             type="button"
-                                            onClick={() => setTagModalFor(item.id)}
-                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer"
-                                        >
-                                            Tags
-                                        </button>
-                                        <button
-                                            type="button"
                                             onClick={() => handleRemoveItem(item.id)}
                                             disabled={busyItemId === item.id}
                                             className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
@@ -280,8 +259,14 @@ export default function SpaceCard({
             )}
 
             {!readOnly && adding && (
-                <div className="mt-3 flex flex-col gap-2">
+                <div
+                    className="mt-3 flex flex-col gap-2"
+                    onBlur={(e) => {
+                        if (!description.trim() && !e.currentTarget.contains(e.relatedTarget)) setAdding(false);
+                    }}
+                >
                     <input
+                        ref={inputRef}
                         value={description}
                         onChange={(e) => setDescription(e.target.value)}
                         onKeyDown={(e) => {
@@ -319,16 +304,6 @@ export default function SpaceCard({
                         </button>
                     </div>
                 </div>
-            )}
-
-            {modalItem && (
-                <TagModal
-                    lineItemId={modalItem.id}
-                    description={modalItem.description}
-                    selectedTags={modalItem.tags}
-                    allTags={tags}
-                    onClose={() => setTagModalFor(null)}
-                />
             )}
         </li>
     );

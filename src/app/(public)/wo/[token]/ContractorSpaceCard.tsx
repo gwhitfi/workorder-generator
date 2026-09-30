@@ -4,15 +4,12 @@ import { useState } from "react";
 import { toggleLineItem, saveLineItemNote } from "./actions";
 import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
 
-type TagRow = { id: string; name: string };
-
 type LineItemRow = {
     id: string;
     description: string;
     priority: string;
     completed: boolean;
     contractorNotes: string | null;
-    tags: TagRow[];
 };
 
 type AreaRow = {
@@ -117,14 +114,6 @@ export default function ContractorSpaceCard({
                                         >
                                             {item.description}
                                         </span>
-                                        {item.tags.map((tag) => (
-                                            <span
-                                                key={tag.id}
-                                                className="shrink-0 rounded border border-neutral-700 px-1.5 py-0.5 text-xs text-neutral-400"
-                                            >
-                                                {tag.name}
-                                            </span>
-                                        ))}
                                         {PRIORITY_STYLES[item.priority] && (
                                             <span
                                                 className={`shrink-0 rounded-full border px-2 py-0.5 text-xs ${PRIORITY_STYLES[item.priority]}`}

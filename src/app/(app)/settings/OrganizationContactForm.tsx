@@ -1,19 +1,27 @@
 "use client";
 
 import { useState } from "react";
-import { updateOrganizationContact } from "./actions";
+import { updateOrganization } from "./actions";
 import { inputClass } from "@/lib/defaults";
 
 const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
 
-export default function OrganizationContactForm({ phone, email }: { phone: string | null; email: string | null }) {
+export default function OrganizationContactForm({
+    name,
+    phone,
+    email,
+}: {
+    name: string;
+    phone: string | null;
+    email: string | null;
+}) {
     const [pending, setPending] = useState(false);
     const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
 
     async function handleSubmit(formData: FormData) {
         setPending(true);
         try {
-            await updateOrganizationContact(formData);
+            await updateOrganization(formData);
             setMessage({ ok: true, text: "Saved." });
         } catch {
             setMessage({ ok: false, text: "Could not save. Try again." });
@@ -24,6 +32,10 @@ export default function OrganizationContactForm({ phone, email }: { phone: strin
 
     return (
         <form action={handleSubmit} className="flex flex-col gap-4">
+            <label className={labelClass}>
+                Organization Name
+                <input name="name" defaultValue={name} required className={inputClass} />
+            </label>
             <div className="grid gap-3 sm:grid-cols-2">
                 <label className={labelClass}>
                     Office Phone

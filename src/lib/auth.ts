@@ -1,6 +1,5 @@
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
 import { Prisma, type User, type Organization } from "@/generated/prisma/client";
-import { DEFAULT_SPACES, DEFAULT_TAGS } from "./defaults";
 import prisma from "./prisma";
 
 type AuthResult =
@@ -25,12 +24,7 @@ export async function getCurrentUser(): Promise<AuthResult> {
         const clerkOrg = await client.organizations.getOrganization({ organizationId: orgId });
         try {
             organization = await prisma.organization.create({
-                data: {
-                    clerkOrgId: orgId,
-                    name: clerkOrg.name,
-                    spaces: { createMany: { data: DEFAULT_SPACES.map((name, i) => ({ name, sortOrder: i })) } },
-                    tags: { createMany: { data: DEFAULT_TAGS.map((name, i) => ({ name, sortOrder: i })) } },
-                },
+                data: { clerkOrgId: orgId, name: clerkOrg.name },
             });
         } catch (error) {
             if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;

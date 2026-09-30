@@ -9,7 +9,7 @@ import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 export async function createProperty(formData: FormData) {
-    type UnitInput = { name: string; spaces: string[] };
+    type UnitInput = { name: string };
     const result = await getCurrentUser();
 
     if (result.state !== "ready") {
@@ -24,8 +24,6 @@ export async function createProperty(formData: FormData) {
     const zipCode = formData.get("zipCode") as string;
     const state = formData.get("state") as string;
     const notes = (formData.get("notes") as string) || null;
-    const spacesJson = formData.get("spaces") as string;
-    const spaceNames: string[] = spacesJson ? JSON.parse(spacesJson) : [];
     const unitsJson = formData.get("units") as string;
     const units: UnitInput[] = unitsJson ? JSON.parse(unitsJson) : [];
 
@@ -36,29 +34,8 @@ export async function createProperty(formData: FormData) {
                   isDefault: false,
                   sortOrder: i,
                   organizationId: result.organization.id,
-                  spaces: {
-                      create: u.spaces.map((name, si) => ({
-                          name,
-                          sortOrder: si,
-                          organizationId: result.organization.id,
-                      })),
-                  },
               }))
-            : [
-                  {
-                      name: "Main",
-                      isDefault: true,
-                      sortOrder: 0,
-                      organizationId: result.organization.id,
-                      spaces: {
-                          create: spaceNames.map((name, i) => ({
-                              name,
-                              sortOrder: i,
-                              organizationId: result.organization.id,
-                          })),
-                      },
-                  },
-              ];
+            : [{ name: "Main", isDefault: true, sortOrder: 0, organizationId: result.organization.id }];
 
     await prisma.property.create({
         data: {
@@ -356,91 +333,5 @@ export async function deleteUnit(unitId: string, confirmation: string): Promise<
     revalidatePath("/work-orders");
     revalidatePath("/contacts");
     revalidatePath("/");
-    return { ok: true };
-}
-
-export async function addSpace(unitId: string, rawName: string): Promise<ActionResult> {
-    const orgId = await currentOrgId();
-    if (!orgId) return { ok: false, error: "Not authorized" };
-
-    const name = cleanName(rawName);
-    if (!name) return { ok: false, error: "Enter a space name." };
-
-    const unit = await findOpenUnit(unitId, orgId);
-    if (!unit) return { ok: false, error: "Unit not found." };
-
-    const spaces = await prisma.space.findMany({ where: { unitId, archived: false }, select: { name: true } });
-    if (
-        isDuplicate(
-            spaces.map((s) => s.name),
-            name,
-        )
-    ) {
-        return { ok: false, error: `${name} is already in this unit.` };
-    }
-
-    const last = await prisma.space.aggregate({ where: { unitId }, _max: { sortOrder: true } });
-    await prisma.space.create({
-        data: { name, unitId, organizationId: orgId, sortOrder: (last._max.sortOrder ?? -1) + 1 },
-    });
-
-    revalidateProperty(unit.propertyId);
-    return { ok: true };
-}
-
-async function findOpenSpace(spaceId: string, orgId: string) {
-    return prisma.space.findFirst({
-        where: {
-            id: spaceId,
-            organizationId: orgId,
-            archived: false,
-            unit: { archived: false, property: { archived: false } },
-        },
-        include: { unit: { select: { propertyId: true } } },
-    });
-}
-
-export async function renameSpace(spaceId: string, rawName: string): Promise<ActionResult> {
-    const orgId = await currentOrgId();
-    if (!orgId) return { ok: false, error: "Not authorized" };
-
-    const name = cleanName(rawName);
-    if (!name) return { ok: false, error: "Enter a space name." };
-
-    const space = await findOpenSpace(spaceId, orgId);
-    if (!space?.unit) return { ok: false, error: "Space not found." };
-
-    const siblings = await prisma.space.findMany({
-        where: { unitId: space.unitId, archived: false, NOT: { id: spaceId } },
-        select: { name: true },
-    });
-    if (
-        isDuplicate(
-            siblings.map((s) => s.name),
-            name,
-        )
-    ) {
-        return { ok: false, error: `${name} is already in this unit.` };
-    }
-
-    await prisma.space.update({ where: { id: spaceId }, data: { name } });
-
-    revalidateProperty(space.unit.propertyId);
-    return { ok: true };
-}
-
-// Work order areas keep their own name, so deleting a space only unlinks them.
-export async function deleteSpace(spaceId: string, confirmation: string): Promise<ActionResult> {
-    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
-
-    const orgId = await currentOrgId();
-    if (!orgId) return { ok: false, error: "Not authorized" };
-
-    const space = await findOpenSpace(spaceId, orgId);
-    if (!space?.unit) return { ok: false, error: "Space not found." };
-
-    await prisma.space.delete({ where: { id: spaceId } });
-
-    revalidateProperty(space.unit.propertyId);
     return { ok: true };
 }

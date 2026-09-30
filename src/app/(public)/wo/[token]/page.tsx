@@ -25,10 +25,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
-                    lineItems: {
-                        orderBy: { sortOrder: "asc" },
-                        include: { tags: true },
-                    },
+                    lineItems: { orderBy: { sortOrder: "asc" } },
                 },
             },
         },

@@ -33,16 +33,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
             prisma.property.findFirst({
                 where: { id, organizationId: orgId },
                 include: {
-                    units: {
-                        where: { archived: false },
-                        orderBy: { sortOrder: "asc" },
-                        include: {
-                            spaces: {
-                                where: { archived: false },
-                                orderBy: { sortOrder: "asc" },
-                            },
-                        },
-                    },
+                    units: { where: { archived: false }, orderBy: { sortOrder: "asc" } },
                 },
             }),
             prisma.contact.findMany({
@@ -192,36 +183,39 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                 )}
             </section>
 
-            <section className="border-t border-neutral-800 pt-6">
-                <h2 className="mb-3 text-lg font-semibold">{isSingleUnit ? "Spaces" : "Units"}</h2>
+            {!isSingleUnit && (
+                <section className="border-t border-neutral-800 pt-6">
+                    <h2 className="mb-3 text-lg font-semibold">Units</h2>
 
-                {property.units.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
-                        No units on file.
-                    </p>
-                ) : !property.archived ? (
-                    <UnitManager
-                        propertyId={property.id}
-                        manageUnits={!isSingleUnit}
-                        units={property.units.map((unit) => ({
-                            id: unit.id,
-                            name: unit.name,
-                            spaces: unit.spaces,
-                            openCount: openByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
-                            workOrderCount: allByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
-                            tenantCount: tenants.filter((t) => t.unitId === unit.id).length,
-                        }))}
-                    />
-                ) : isSingleUnit ? (
-                    <UnitCard spaces={property.units[0].spaces} />
-                ) : (
-                    <div className="flex flex-col gap-3">
-                        {property.units.map((unit) => (
-                            <UnitCard key={unit.id} name={unit.name} spaces={unit.spaces} />
-                        ))}
-                    </div>
-                )}
-            </section>
+                    {property.units.length === 0 ? (
+                        <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                            No units on file.
+                        </p>
+                    ) : !property.archived ? (
+                        <UnitManager
+                            propertyId={property.id}
+                            units={property.units.map((unit) => ({
+                                id: unit.id,
+                                name: unit.name,
+                                openCount: openByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
+                                workOrderCount: allByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
+                                tenantCount: tenants.filter((t) => t.unitId === unit.id).length,
+                            }))}
+                        />
+                    ) : (
+                        <ul className="flex flex-col gap-2">
+                            {property.units.map((unit) => (
+                                <li
+                                    key={unit.id}
+                                    className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 font-medium"
+                                >
+                                    {unit.name}
+                                </li>
+                            ))}
+                        </ul>
+                    )}
+                </section>
+            )}
             <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-6">
                 <DeleteButton itemName={property.displayName} onDelete={deleteProperty.bind(null, property.id)}>
                     {deletedWorkOrderCount > 0 && (
@@ -235,7 +229,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                                 ` ${openCount} ${openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
                         </p>
                     )}
-                    <p>All units and spaces will be deleted.</p>
+                    {!isSingleUnit && <p>All units will be deleted.</p>}
                     {tenants.length > 0 && (
                         <p>
                             {tenants.length} {tenants.length === 1 ? "tenant" : "tenants"} will be unlinked but stay in
@@ -258,35 +252,5 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                 )}
             </div>
         </main>
-    );
-}
-
-function UnitCard({ name, spaces }: { name?: string; spaces: { id: string; name: string }[] }) {
-    return (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-            {name && (
-                <div className="mb-3 flex items-baseline justify-between gap-4">
-                    <h3 className="font-medium">{name}</h3>
-                    <span className="text-xs text-neutral-500">
-                        {spaces.length} {spaces.length === 1 ? "space" : "spaces"}
-                    </span>
-                </div>
-            )}
-
-            {spaces.length === 0 ? (
-                <p className="text-sm text-neutral-500">No spaces added.</p>
-            ) : (
-                <ul className="flex flex-wrap gap-2">
-                    {spaces.map((space) => (
-                        <li
-                            key={space.id}
-                            className="rounded-full border border-neutral-700 px-2.5 py-0.5 text-xs text-neutral-300"
-                        >
-                            {space.name}
-                        </li>
-                    ))}
-                </ul>
-            )}
-        </div>
     );
 }

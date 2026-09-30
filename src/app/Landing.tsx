@@ -7,7 +7,7 @@ const FEATURES = [
     },
     {
         title: "Organized room by room",
-        body: "Group line items by area, tag them, and keep property and unit details in one place.",
+        body: "Group line items by area, set priorities, and keep property and unit details in one place.",
     },
     {
         title: "Know when the work is done",

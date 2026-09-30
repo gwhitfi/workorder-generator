@@ -27,7 +27,7 @@ export default async function EditProperty({ params }: { params: Promise<{ id: s
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
             <h1 className="text-2xl font-semibold mb-2">Edit Property</h1>
-            <p className="mb-6 text-sm text-neutral-500">Units and spaces are managed on the property page.</p>
+            <p className="mb-6 text-sm text-neutral-500">Units are managed on the property page.</p>
             <PropertyForm
                 initial={{
                     displayName: property.displayName,

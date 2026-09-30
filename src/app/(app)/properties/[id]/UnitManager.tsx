@@ -1,15 +1,13 @@
 "use client";
 
 import { useState } from "react";
-import { addUnit, renameUnit, archiveUnit, deleteUnit, addSpace, renameSpace, deleteSpace } from "../actions";
+import { addUnit, renameUnit, archiveUnit, deleteUnit } from "../actions";
 import { inputClass } from "@/lib/defaults";
 import DeleteButton from "@/components/DeleteButton";
 
-type SpaceRow = { id: string; name: string };
 type UnitRow = {
     id: string;
     name: string;
-    spaces: SpaceRow[];
     openCount: number;
     workOrderCount: number;
     tenantCount: number;
@@ -21,32 +19,22 @@ const smallButton =
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-export default function UnitManager({
-    propertyId,
-    units,
-    manageUnits,
-}: {
-    propertyId: string;
-    units: UnitRow[];
-    manageUnits: boolean;
-}) {
+export default function UnitManager({ propertyId, units }: { propertyId: string; units: UnitRow[] }) {
     return (
         <div className="flex flex-col gap-3">
             {units.map((unit) => (
-                <UnitCard key={unit.id} unit={unit} manageUnits={manageUnits} canArchive={units.length > 1} />
+                <UnitCard key={unit.id} unit={unit} canArchive={units.length > 1} />
             ))}
-            {manageUnits && (
-                <AddInput
-                    placeholder="Unit name (Unit C, Apt 102…)"
-                    buttonLabel="+ Add unit"
-                    onAdd={(name) => addUnit(propertyId, name)}
-                />
-            )}
+            <AddInput
+                placeholder="Unit name (Unit C, Apt 102…)"
+                buttonLabel="+ Add unit"
+                onAdd={(name) => addUnit(propertyId, name)}
+            />
         </div>
     );
 }
 
-function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnits: boolean; canArchive: boolean }) {
+function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) {
     const [confirming, setConfirming] = useState(false);
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -63,38 +51,17 @@ function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnit
 
     return (
         <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
-            {manageUnits && (
-                <div className="mb-3 flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1">
-                    <InlineName
-                        value={unit.name}
-                        onSave={(name) => renameUnit(unit.id, name)}
-                        className="font-medium"
-                        label="unit name"
-                    />
-                    <span className="text-xs text-neutral-500">{plural(unit.spaces.length, "space", "spaces")}</span>
-                </div>
-            )}
-
-            {unit.spaces.length === 0 ? (
-                <p className="text-sm text-neutral-500">No spaces added.</p>
-            ) : (
-                <ul className="flex flex-wrap gap-2">
-                    {unit.spaces.map((space) => (
-                        <SpaceChip key={space.id} space={space} />
-                    ))}
-                </ul>
-            )}
-
-            <div className="mt-3">
-                <AddInput
-                    placeholder="Add a space (Kitchen, Back Porch…)"
-                    buttonLabel="Add"
-                    onAdd={(name) => addSpace(unit.id, name)}
+            <div className={canArchive ? "mb-3" : undefined}>
+                <InlineName
+                    value={unit.name}
+                    onSave={(name) => renameUnit(unit.id, name)}
+                    className="font-medium"
+                    label="unit name"
                 />
             </div>
 
-            {manageUnits && canArchive && (
-                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-neutral-800 pt-3 text-sm">
+            {canArchive && (
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     {unit.openCount > 0 ? (
                         <p className="text-neutral-500">
                             Can&apos;t archive: {plural(unit.openCount, "open work order", "open work orders")}. Close
@@ -160,9 +127,6 @@ function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnit
                                         ` ${unit.openCount} ${unit.openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
                                 </p>
                             )}
-                            {unit.spaces.length > 0 && (
-                                <p>Its {plural(unit.spaces.length, "space", "spaces")} will be deleted.</p>
-                            )}
                             {unit.tenantCount > 0 && (
                                 <p>
                                     {plural(unit.tenantCount, "tenant", "tenants")} will be unlinked but stay in
@@ -175,84 +139,6 @@ function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnit
                 </div>
             )}
         </div>
-    );
-}
-
-function SpaceChip({ space }: { space: SpaceRow }) {
-    const [editing, setEditing] = useState(false);
-    const [draft, setDraft] = useState(space.name);
-    const [pending, setPending] = useState(false);
-    const [error, setError] = useState<string | null>(null);
-
-    async function save() {
-        const name = draft.trim();
-        if (!name || name === space.name) {
-            setEditing(false);
-            setDraft(space.name);
-            return;
-        }
-        setPending(true);
-        const res = await renameSpace(space.id, name);
-        setPending(false);
-        if (res.ok) {
-            setEditing(false);
-            setError(null);
-        } else {
-            setError(res.error);
-        }
-    }
-
-    if (editing) {
-        return (
-            <li className="flex flex-col gap-1">
-                <input
-                    value={draft}
-                    onChange={(e) => setDraft(e.target.value)}
-                    onBlur={save}
-                    onKeyDown={(e) => {
-                        if (e.key === "Enter") save();
-                        if (e.key === "Escape") {
-                            setEditing(false);
-                            setDraft(space.name);
-                            setError(null);
-                        }
-                    }}
-                    disabled={pending}
-                    autoFocus
-                    aria-label={`Rename ${space.name}`}
-                    className="w-40 rounded-full border border-neutral-500 bg-neutral-800 px-2.5 py-0.5 text-xs text-neutral-100 focus:outline-none"
-                />
-                {error && <span className="text-xs text-red-400">{error}</span>}
-            </li>
-        );
-    }
-
-    return (
-        <li
-            className={`flex items-center rounded-full border border-neutral-700 text-xs text-neutral-300 ${pending ? "opacity-40" : ""}`}
-        >
-            <button
-                type="button"
-                onClick={() => {
-                    setDraft(space.name);
-                    setEditing(true);
-                }}
-                disabled={pending}
-                className="rounded-l-full py-0.5 pl-2.5 pr-1 hover:text-neutral-100 hover:cursor-text"
-                aria-label={`Rename ${space.name}`}
-            >
-                {space.name}
-            </button>
-            <DeleteButton
-                itemName={space.name}
-                label="×"
-                onDelete={(confirmation) => deleteSpace(space.id, confirmation)}
-                triggerClassName="rounded-r-full py-0.5 pl-1 pr-2 text-neutral-500 hover:text-red-400 hover:cursor-pointer"
-            >
-                <p>Existing work orders keep &ldquo;{space.name}&rdquo; as an area name.</p>
-            </DeleteButton>
-            {error && <span className="pr-2 text-red-400">{error}</span>}
-        </li>
     );
 }
 

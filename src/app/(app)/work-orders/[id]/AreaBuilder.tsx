@@ -5,7 +5,6 @@ import { addArea, removeArea, moveArea } from "../actions";
 import { inputClass } from "@/lib/defaults";
 import SpaceCard from "./SpaceCard";
 
-type SpaceOption = { id: string; name: string; unitId: string | null };
 type AreaRow = {
     id: string;
     name: string;
@@ -16,34 +15,24 @@ type AreaRow = {
         completed: boolean;
         completedAt: Date | null;
         contractorNotes: string | null;
-        tags: TagRow[];
     }[];
 };
-type TagRow = { id: string; name: string };
 
 export default function AreaBuilder({
     workOrderId,
     areas,
-    spaces,
-    tags,
     readOnly = false,
     notice,
 }: {
     workOrderId: string;
     areas: AreaRow[];
-    spaces: SpaceOption[];
-    tags: TagRow[];
     readOnly?: boolean;
     notice?: string;
 }) {
-    const [selectedSpace, setSelectedSpace] = useState("");
     const [name, setName] = useState("");
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [busyId, setBusyId] = useState<string | null>(null);
-
-    const propertySpaces = spaces.filter((s) => s.unitId !== null);
-    const defaultSpaces = spaces.filter((s) => s.unitId === null);
 
     async function handleAdd() {
         const trimmed = name.trim();
@@ -51,12 +40,11 @@ export default function AreaBuilder({
 
         setPending(true);
         try {
-            await addArea(workOrderId, selectedSpace || null, trimmed);
+            await addArea(workOrderId, trimmed);
             setName("");
-            setSelectedSpace("");
             setError(null);
         } catch {
-            setError("Could not add that space. Try again.");
+            setError("Could not add that area. Try again.");
         } finally {
             setPending(false);
         }
@@ -66,7 +54,7 @@ export default function AreaBuilder({
         try {
             await moveArea(areaId, direction);
         } catch {
-            setError("Could not move that space.");
+            setError("Could not move that area.");
         } finally {
             setBusyId(null);
         }
@@ -77,14 +65,14 @@ export default function AreaBuilder({
         try {
             await removeArea(areaId);
         } catch {
-            setError("Could not remove that space.");
+            setError("Could not remove that area.");
         } finally {
             setBusyId(null);
         }
     }
     return (
         <div className="border-t border-neutral-800 pt-6">
-            <h2 className="text-lg font-semibold text-neutral-100">Spaces</h2>
+            <h2 className="text-lg font-semibold text-neutral-100">Areas</h2>
             {notice && (
                 <p className="mt-2 rounded-md border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-300">
                     {notice}
@@ -93,44 +81,16 @@ export default function AreaBuilder({
             {!readOnly && (
                 <>
                     <p className="mt-1 mb-4 text-sm text-neutral-500">
-                        Which spaces in the property does this work order cover?
+                        Group the work by area: a room, the roof, the yard…
                     </p>
                     <div className="flex flex-col gap-2 sm:flex-row">
-                        <select
-                            value={selectedSpace}
-                            onChange={(e) => {
-                                setSelectedSpace(e.target.value);
-                                const space = spaces.find((s) => s.id === e.target.value);
-                                setName(space?.name ?? "");
-                            }}
-                            className={inputClass}
-                        >
-                            <option value="">Choose a space</option>
-                            {propertySpaces.length > 0 && (
-                                <optgroup label="This property">
-                                    {propertySpaces.map((space) => (
-                                        <option key={space.id} value={space.id}>
-                                            {space.name}
-                                        </option>
-                                    ))}
-                                </optgroup>
-                            )}
-                            <optgroup label="Common spaces">
-                                {defaultSpaces.map((space) => (
-                                    <option key={space.id} value={space.id}>
-                                        {space.name}
-                                    </option>
-                                ))}
-                            </optgroup>
-                        </select>
-
                         <input
                             value={name}
                             onChange={(e) => setName(e.target.value)}
                             onKeyDown={(e) => {
                                 if (e.key === "Enter") handleAdd();
                             }}
-                            placeholder="Space name"
+                            placeholder="Area name (Kitchen, Roof, Back yard…)"
                             className={inputClass}
                         />
                         <button
@@ -139,7 +99,7 @@ export default function AreaBuilder({
                             disabled={pending || !name.trim()}
                             className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         >
-                            {pending ? "Adding..." : "Add space"}
+                            {pending ? "Adding..." : "Add area"}
                         </button>
                     </div>
                 </>
@@ -148,7 +108,7 @@ export default function AreaBuilder({
             {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
             {areas.length === 0 ? (
                 <p className="mt-4 text-sm text-neutral-500">
-                    {readOnly ? "No spaces on this work order." : "No spaces added yet. Add one above."}
+                    {readOnly ? "No areas on this work order." : "No areas added yet. Add one above."}
                 </p>
             ) : (
                 <ul className="mt-4 flex flex-col gap-2">
@@ -156,7 +116,6 @@ export default function AreaBuilder({
                         <SpaceCard
                             key={area.id}
                             area={area}
-                            tags={tags}
                             index={i}
                             total={areas.length}
                             onMove={handleMove}

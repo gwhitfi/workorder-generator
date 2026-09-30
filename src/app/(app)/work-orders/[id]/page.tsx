@@ -43,30 +43,13 @@ export default async function WorkOrderDetail({
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
-                    lineItems: {
-                        orderBy: { sortOrder: "asc" },
-                        include: { tags: true },
-                    },
+                    lineItems: { orderBy: { sortOrder: "asc" } },
                 },
             },
         },
     });
 
     if (!workOrder) notFound();
-
-    const spaces = await prisma.space.findMany({
-        where: {
-            organizationId: result.organization.id,
-            archived: false,
-            OR: [{ unitId: null }, { unitId: workOrder.unitId }],
-        },
-        orderBy: { sortOrder: "asc" },
-    });
-
-    const tags = await prisma.tag.findMany({
-        where: { organizationId: result.organization.id, archived: false },
-        orderBy: { sortOrder: "asc" },
-    });
 
     const lineItems = workOrder.areas.flatMap((area) => area.lineItems);
     const doneCount = lineItems.filter((item) => item.completed).length;
@@ -226,8 +209,6 @@ export default async function WorkOrderDetail({
             <AreaBuilder
                 workOrderId={workOrder.id}
                 areas={workOrder.areas}
-                spaces={spaces}
-                tags={tags}
                 readOnly={readOnly}
                 notice={contractorWorking ? "The contractor can see changes immediately." : undefined}
             />

@@ -28,10 +28,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
-                    lineItems: {
-                        orderBy: { sortOrder: "asc" },
-                        include: { tags: true },
-                    },
+                    lineItems: { orderBy: { sortOrder: "asc" } },
                 },
             },
         },
@@ -138,11 +135,6 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
 
                                             <span className="flex-1">
                                                 {item.description}
-                                                {item.tags.length > 0 && (
-                                                    <span className="ml-2 text-xs text-neutral-500">
-                                                        {item.tags.map((tag) => tag.name).join(" · ")}
-                                                    </span>
-                                                )}
                                                 {item.contractorNotes && (
                                                     <span className="mt-0.5 block whitespace-pre-line text-xs italic text-neutral-500">
                                                         Contractor: {item.contractorNotes}

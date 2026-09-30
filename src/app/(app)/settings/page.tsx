@@ -20,11 +20,15 @@ export default async function Settings() {
             <h1 className="mb-8 text-2xl font-semibold">Settings</h1>
 
             <section>
-                <h2 className="text-lg font-semibold text-neutral-100">Office contact</h2>
+                <h2 className="text-lg font-semibold text-neutral-100">Organization</h2>
                 <p className="mt-1 mb-4 text-sm text-neutral-500">
-                    Shown to contractors on the work orders you send them so they can reach {organization.name}.
+                    Your name, phone and email are shown to contractors on the work orders and emails you send them.
                 </p>
-                <OrganizationContactForm phone={organization.phone} email={organization.email} />
+                <OrganizationContactForm
+                    name={organization.name}
+                    phone={organization.phone}
+                    email={organization.email}
+                />
             </section>
         </main>
     );
