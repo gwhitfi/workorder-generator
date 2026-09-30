@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { PRIORITY_LABELS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
+import PrintButton from "@/components/PrintButton";
 
 export default async function WorkOrderPrint({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -40,6 +41,9 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
 
     return (
         <main className="mx-auto max-w-3xl bg-white px-4 py-10 text-neutral-900">
+            <div className="mb-4 flex justify-end print:hidden">
+                <PrintButton />
+            </div>
             <div className="hidden print:block text-xs text-neutral-500 mb-4">
                 Work Order Generator · {workOrder.jobNumber ?? workOrder.id.slice(-6).toUpperCase()}
             </div>
