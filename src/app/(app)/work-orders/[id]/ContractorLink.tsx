@@ -4,7 +4,6 @@ import { useRef, useState, useSyncExternalStore } from "react";
 import { regeneratePublicToken } from "../actions";
 import { inputClass } from "@/lib/defaults";
 
-// window isn't available during server rendering, so the origin is "" there and filled in on the client.
 const noopSubscribe = () => () => {};
 const getOrigin = () => window.location.origin;
 const getServerOrigin = () => "";
@@ -45,7 +44,6 @@ export default function ContractorLink({
             setCopied(true);
             setTimeout(() => setCopied(false), 2000);
         } catch {
-            // Clipboard access can be blocked (e.g. non-HTTPS); select the text so it can be copied by hand.
             inputRef.current?.select();
         }
     }

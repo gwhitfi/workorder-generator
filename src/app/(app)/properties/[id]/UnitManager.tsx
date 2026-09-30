@@ -13,7 +13,6 @@ const smallButton =
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
-// Units are managed for multi-unit properties; a single-unit property shows one "Spaces" card with no unit controls.
 export default function UnitManager({
     propertyId,
     units,
@@ -163,7 +162,6 @@ function SpaceChip({ space }: { space: SpaceRow }) {
     async function remove() {
         setPending(true);
         const res = await archiveSpace(space.id);
-        // On success the chip disappears with the refreshed page.
         if (!res.ok) {
             setPending(false);
             setError(res.error);

@@ -22,7 +22,6 @@ export const WORK_ORDER_FILTERS = {
         }),
     },
     closed: { label: "Closed", where: (): Prisma.WorkOrderWhereInput => ({ status: "CLOSED" }) },
-    // Lists hide archived work orders by default; this filter overrides that.
     archived: { label: "Archived", where: (): Prisma.WorkOrderWhereInput => ({ archived: true }) },
 } as const;
 

@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import Link from "next/link";
 import type { ReactNode } from "react";
 import prisma from "@/lib/prisma";
 import PageHeader from "@/components/list/PageHeader";
@@ -8,7 +9,7 @@ import { List, ListHeader, ListRow, Cell, ListLink, Favorite } from "@/component
 
 const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.5fr)]";
 
-export default async function Contacts() {
+export default async function Contacts({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -19,10 +20,12 @@ export default async function Contacts() {
         redirect("/setup");
     }
 
+    const showArchived = (await searchParams).archived === "1";
+
     const contacts = await prisma.contact.findMany({
         where: {
             organizationId: result.organization.id,
-            archived: false,
+            archived: showArchived,
         },
         orderBy: [{ favorite: "desc" }, { displayName: "asc" }],
         include: {
@@ -34,7 +37,6 @@ export default async function Contacts() {
 
     type ContactRow = (typeof contacts)[number];
 
-    // Every section uses the same four columns; only the second one changes.
     const sections: {
         type: ContactRow["contactType"];
         title: string;
@@ -70,12 +72,25 @@ export default async function Contacts() {
         <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
             <PageHeader
                 title="Contacts"
-                subtitle={`${contacts.length} ${contacts.length === 1 ? "contact" : "contacts"}`}
+                subtitle={`${contacts.length} ${showArchived ? "archived " : ""}${contacts.length === 1 ? "contact" : "contacts"}`}
                 actionHref="/contacts/new"
                 actionLabel="Add Contact"
             />
 
-            {contacts.length === 0 ? (
+            <div className="-mt-4 mb-4 flex justify-end">
+                <Link
+                    href={showArchived ? "/contacts" : "/contacts?archived=1"}
+                    className="text-sm text-neutral-500 hover:text-neutral-100"
+                >
+                    {showArchived ? "← Show active" : "Show archived"}
+                </Link>
+            </div>
+
+            {contacts.length === 0 && showArchived ? (
+                <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                    No archived contacts.
+                </p>
+            ) : contacts.length === 0 ? (
                 <EmptyState
                     message="No contacts added yet."
                     actionHref="/contacts/new"

@@ -39,7 +39,6 @@ export default async function Dashboard({ organization }: { organization: Organi
             take: 10,
             include,
         }),
-        // Fetch extra so there are still 5 left after removing the ones already under "Needs attention".
         prisma.workOrder.findMany({ where: base, orderBy: { updatedAt: "desc" }, take: 25, include }),
         prisma.property.count({ where: base }),
         prisma.contact.count({ where: { ...base, contactType: "CONTRACTOR" } }),

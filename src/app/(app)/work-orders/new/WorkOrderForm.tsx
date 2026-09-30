@@ -37,7 +37,7 @@ export default function WorkOrderForm({
     defaultPropertyId,
     initial,
     action = createWorkOrder,
-    submitLabel = "Save Work Order",
+    submitLabel = "Save and Continue",
     lockProperty = false,
 }: {
     properties: PropertyOption[];

@@ -17,6 +17,5 @@ export async function updateOrganizationContact(formData: FormData) {
     });
 
     revalidatePath("/settings");
-    // Public work order pages read these live, so refresh them too.
     revalidatePath("/wo/[token]", "page");
 }

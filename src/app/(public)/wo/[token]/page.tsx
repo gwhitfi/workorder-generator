@@ -7,7 +7,6 @@ import ContractorSpaceCard from "./ContractorSpaceCard";
 import CompleteWorkOrder from "./CompleteWorkOrder";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
-// The token is the only thing protecting this page, so keep it out of search engines and referrer headers.
 export const metadata: Metadata = {
     title: "Work Order",
     robots: { index: false, follow: false },
@@ -35,7 +34,6 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
         },
     });
 
-    // Drafts haven't been sent yet and cancelled work is off, so the link only works for live work orders.
     if (!workOrder || workOrder.archived || workOrder.status === "DRAFT" || workOrder.status === "CANCELLED") {
         notFound();
     }

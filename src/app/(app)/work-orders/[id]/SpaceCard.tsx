@@ -214,7 +214,6 @@ export default function SpaceCard({
                                     </span>
                                 )}
                                 {item.completedAt && (
-                                    // Formatted in the viewer's time zone after hydration.
                                     <span suppressHydrationWarning className="shrink-0 text-xs text-green-500">
                                         Done {new Date(item.completedAt).toLocaleDateString()}
                                     </span>
