@@ -8,6 +8,8 @@ import { redirect } from "next/navigation";
 import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
+import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
+import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 async function readWorkOrderForm(formData: FormData, organizationId: string, propertyId: string) {
@@ -172,6 +174,37 @@ export async function restoreWorkOrder(workOrderId: string): Promise<{ ok: true 
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath(`/wo/${workOrder.publicToken}`);
     return { ok: true };
+}
+
+export async function deleteWorkOrder(
+    workOrderId: string,
+    confirmation: string,
+): Promise<{ ok: true } | { ok: false; error: string }> {
+    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
+
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+        include: { property: true, unit: true },
+    });
+    if (!workOrder) return { ok: false, error: "Work order not found" };
+
+    // Areas, line items and attachments cascade.
+    await prisma.workOrder.delete({ where: { id: workOrderId } });
+
+    if (!workOrder.archived && ["SENT", "IN_PROGRESS"].includes(workOrder.status)) {
+        notifyContractorsCancelled(result.organization, [
+            { ...workOrder, address: formatWorkOrderAddress(workOrder.property, workOrder.unit) },
+        ]);
+    }
+
+    revalidatePath("/work-orders");
+    revalidatePath(`/properties/${workOrder.propertyId}`);
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+    revalidatePath("/");
+    redirect("/work-orders");
 }
 
 export async function addArea(workOrderId: string, spaceId: string | null, name: string) {

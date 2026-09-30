@@ -10,7 +10,8 @@ import { WorkOrderList } from "@/components/WorkOrderRow";
 import { ArchivePropertyButton, RestorePropertyButton } from "./ArchiveProperty";
 import UnitManager from "./UnitManager";
 import FavoriteToggle from "@/components/FavoriteToggle";
-import { togglePropertyFavorite } from "../actions";
+import DeleteButton from "@/components/DeleteButton";
+import { deleteProperty, togglePropertyFavorite } from "../actions";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -27,8 +28,8 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     const orgId = result.organization.id;
     const workOrderWhere = { propertyId: id, organizationId: orgId, archived: false };
 
-    const [property, tenants, allWorkOrders, workOrderCount, openCount, completedCount, openByUnit] = await Promise.all(
-        [
+    const [property, tenants, allWorkOrders, workOrderCount, openCount, completedCount, openByUnit, allByUnit] =
+        await Promise.all([
             prisma.property.findFirst({
                 where: { id, organizationId: orgId },
                 include: {
@@ -65,8 +66,15 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                 where: { ...workOrderWhere, status: { in: OPEN_STATUSES } },
                 _count: { _all: true },
             }),
-        ],
-    );
+            // Every work order per unit, archived included: deleting wipes all of them.
+            prisma.workOrder.groupBy({
+                by: ["unitId"],
+                where: { propertyId: id, organizationId: orgId },
+                _count: { _all: true },
+            }),
+        ]);
+
+    const deletedWorkOrderCount = allByUnit.reduce((sum, g) => sum + g._count._all, 0);
 
     if (!property) {
         notFound();
@@ -200,6 +208,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                             name: unit.name,
                             spaces: unit.spaces,
                             openCount: openByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
+                            workOrderCount: allByUnit.find((g) => g.unitId === unit.id)?._count._all ?? 0,
                             tenantCount: tenants.filter((t) => t.unitId === unit.id).length,
                         }))}
                     />
@@ -213,16 +222,41 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                     </div>
                 )}
             </section>
-            {!property.archived && (
-                <div className="mt-8 flex justify-end border-t border-neutral-800 pt-6">
+            <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-6">
+                <DeleteButton itemName={property.displayName} onDelete={deleteProperty.bind(null, property.id)}>
+                    {deletedWorkOrderCount > 0 && (
+                        <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                            This also permanently deletes{" "}
+                            <strong>
+                                {deletedWorkOrderCount} {deletedWorkOrderCount === 1 ? "work order" : "work orders"}
+                            </strong>{" "}
+                            for this property, <strong>including archived ones</strong>.
+                            {openCount > 0 &&
+                                ` ${openCount} ${openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
+                        </p>
+                    )}
+                    <p>All units and spaces will be deleted.</p>
+                    {tenants.length > 0 && (
+                        <p>
+                            {tenants.length} {tenants.length === 1 ? "tenant" : "tenants"} will be unlinked but stay in
+                            Contacts.
+                        </p>
+                    )}
+                    {!property.archived && (
+                        <p className="text-neutral-400">
+                            To keep the history, go back and use <strong>Archive property</strong> instead.
+                        </p>
+                    )}
+                </DeleteButton>
+                {!property.archived && (
                     <ArchivePropertyButton
                         propertyId={property.id}
                         propertyName={property.displayName}
                         openCount={openCount}
                         completedCount={completedCount}
                     />
-                </div>
-            )}
+                )}
+            </div>
         </main>
     );
 }

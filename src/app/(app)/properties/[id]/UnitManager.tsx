@@ -1,11 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { addUnit, renameUnit, archiveUnit, addSpace, renameSpace, archiveSpace } from "../actions";
+import { addUnit, renameUnit, archiveUnit, deleteUnit, addSpace, renameSpace, deleteSpace } from "../actions";
 import { inputClass } from "@/lib/defaults";
+import DeleteButton from "@/components/DeleteButton";
 
 type SpaceRow = { id: string; name: string };
-type UnitRow = { id: string; name: string; spaces: SpaceRow[]; openCount: number; tenantCount: number };
+type UnitRow = {
+    id: string;
+    name: string;
+    spaces: SpaceRow[];
+    openCount: number;
+    workOrderCount: number;
+    tenantCount: number;
+};
 type Result = { ok: true } | { ok: false; error: string };
 
 const smallButton =
@@ -86,7 +94,7 @@ function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnit
             </div>
 
             {manageUnits && canArchive && (
-                <div className="mt-3 border-t border-neutral-800 pt-3 text-sm">
+                <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-neutral-800 pt-3 text-sm">
                     {unit.openCount > 0 ? (
                         <p className="text-neutral-500">
                             Can&apos;t archive: {plural(unit.openCount, "open work order", "open work orders")}. Close
@@ -128,7 +136,42 @@ function UnitCard({ unit, manageUnits, canArchive }: { unit: UnitRow; manageUnit
                             Archive unit
                         </button>
                     )}
-                    {error && <p className="mt-1 text-red-400">{error}</p>}
+                    {!confirming && (
+                        <DeleteButton
+                            itemName={unit.name}
+                            label="Delete unit"
+                            onDelete={(confirmation) => deleteUnit(unit.id, confirmation)}
+                            archiveInstead={
+                                unit.openCount === 0
+                                    ? () => {
+                                          setError(null);
+                                          setConfirming(true);
+                                      }
+                                    : undefined
+                            }
+                            triggerClassName="text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                        >
+                            {unit.workOrderCount > 0 && (
+                                <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                                    This also permanently deletes{" "}
+                                    <strong>{plural(unit.workOrderCount, "work order", "work orders")}</strong> for this
+                                    unit, <strong>including archived ones</strong>.
+                                    {unit.openCount > 0 &&
+                                        ` ${unit.openCount} ${unit.openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
+                                </p>
+                            )}
+                            {unit.spaces.length > 0 && (
+                                <p>Its {plural(unit.spaces.length, "space", "spaces")} will be deleted.</p>
+                            )}
+                            {unit.tenantCount > 0 && (
+                                <p>
+                                    {plural(unit.tenantCount, "tenant", "tenants")} will be unlinked but stay in
+                                    Contacts.
+                                </p>
+                            )}
+                        </DeleteButton>
+                    )}
+                    {error && <p className="basis-full text-red-400">{error}</p>}
                 </div>
             )}
         </div>
@@ -155,15 +198,6 @@ function SpaceChip({ space }: { space: SpaceRow }) {
             setEditing(false);
             setError(null);
         } else {
-            setError(res.error);
-        }
-    }
-
-    async function remove() {
-        setPending(true);
-        const res = await archiveSpace(space.id);
-        if (!res.ok) {
-            setPending(false);
             setError(res.error);
         }
     }
@@ -209,15 +243,14 @@ function SpaceChip({ space }: { space: SpaceRow }) {
             >
                 {space.name}
             </button>
-            <button
-                type="button"
-                onClick={remove}
-                disabled={pending}
-                className="rounded-r-full py-0.5 pl-1 pr-2 text-neutral-500 hover:text-red-400 hover:cursor-pointer"
-                aria-label={`Remove ${space.name}`}
+            <DeleteButton
+                itemName={space.name}
+                label="×"
+                onDelete={(confirmation) => deleteSpace(space.id, confirmation)}
+                triggerClassName="rounded-r-full py-0.5 pl-1 pr-2 text-neutral-500 hover:text-red-400 hover:cursor-pointer"
             >
-                ×
-            </button>
+                <p>Existing work orders keep &ldquo;{space.name}&rdquo; as an area name.</p>
+            </DeleteButton>
             {error && <span className="pr-2 text-red-400">{error}</span>}
         </li>
     );

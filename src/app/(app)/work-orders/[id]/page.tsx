@@ -8,6 +8,8 @@ import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
 import ContractorLink from "./ContractorLink";
 import ArchiveControls from "./ArchiveControls";
+import DeleteButton from "@/components/DeleteButton";
+import { deleteWorkOrder } from "../actions";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
 
 export default async function WorkOrderDetail({
@@ -255,11 +257,26 @@ export default async function WorkOrderDetail({
                 >
                     Print preview
                 </Link>
-                {!workOrder.archived && (
-                    <div className="ml-auto">
-                        <ArchiveControls workOrderId={workOrder.id} archived={false} />
-                    </div>
-                )}
+                <div className="ml-auto flex flex-wrap items-center gap-2">
+                    <DeleteButton
+                        itemName={workOrder.title ?? "Untitled work order"}
+                        onDelete={deleteWorkOrder.bind(null, workOrder.id)}
+                    >
+                        <p>Its line items, contractor notes and link will be deleted.</p>
+                        {contractorWorking && (
+                            <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                                This work order is still {WORK_ORDER_STATUS_LABELS[workOrder.status].toLowerCase()}.{" "}
+                                {workOrder.contractorName ?? "The contractor"} will be emailed that it&apos;s cancelled.
+                            </p>
+                        )}
+                        {!workOrder.archived && (
+                            <p className="text-neutral-400">
+                                To keep the history, go back and use <strong>Archive</strong> instead.
+                            </p>
+                        )}
+                    </DeleteButton>
+                    {!workOrder.archived && <ArchiveControls workOrderId={workOrder.id} archived={false} />}
+                </div>
             </div>
         </main>
     );

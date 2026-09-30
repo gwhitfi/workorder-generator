@@ -41,8 +41,8 @@ export function ArchiveContactButton({
     if (openCount > 0) {
         return (
             <p className="text-sm text-neutral-500">
-                Can&apos;t archive: {openCount} open {openCount === 1 ? "work order" : "work orders"}. Reassign, close
-                or cancel {openCount === 1 ? "it" : "them"} first.
+                Can&apos;t archive or delete: {openCount} open {openCount === 1 ? "work order" : "work orders"}.
+                Reassign, close or cancel {openCount === 1 ? "it" : "them"} first.
             </p>
         );
     }

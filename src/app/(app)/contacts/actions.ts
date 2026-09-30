@@ -3,6 +3,7 @@ import { ContactType } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { OPEN_STATUSES } from "@/lib/workOrders";
+import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
@@ -110,6 +111,40 @@ function workOrderCount(contactId: string) {
     });
 }
 
+// A removed contractor would leave open jobs unassigned while their link still works.
+async function openWorkOrdersError(contact: { id: string; displayName: string }) {
+    const openCount = await prisma.workOrder.count({
+        where: { contractorId: contact.id, archived: false, status: { in: OPEN_STATUSES } },
+    });
+    if (openCount === 0) return null;
+
+    const noun = openCount === 1 ? "work order" : "work orders";
+    return `${contact.displayName} has ${openCount} open ${noun}. Reassign, close or cancel ${openCount === 1 ? "it" : "them"} first.`;
+}
+
+export async function deleteContact(contactId: string, confirmation: string): Promise<ActionResult> {
+    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
+
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+
+    const contact = await prisma.contact.findFirst({
+        where: { id: contactId, organizationId: result.organization.id },
+    });
+    if (!contact) return { ok: false, error: "Contact not found." };
+
+    const blocked = await openWorkOrdersError(contact);
+    if (blocked) return { ok: false, error: blocked };
+
+    // Work orders keep their name/phone/email snapshot; only the link to the contact is cleared.
+    await prisma.contact.delete({ where: { id: contactId } });
+
+    revalidatePath("/contacts");
+    revalidatePath("/work-orders");
+    if (contact.unitId) revalidatePath("/properties", "layout");
+    redirect("/contacts");
+}
+
 export async function archiveContact(contactId: string): Promise<ActionResult> {
     const result = await getCurrentUser();
     if (result.state !== "ready") return { ok: false, error: "Not authorized" };
@@ -119,15 +154,8 @@ export async function archiveContact(contactId: string): Promise<ActionResult> {
     });
     if (!contact) return { ok: false, error: "Contact not found." };
 
-    const openCount = await prisma.workOrder.count({
-        where: { contractorId: contactId, archived: false, status: { in: OPEN_STATUSES } },
-    });
-    if (openCount > 0) {
-        return {
-            ok: false,
-            error: `${contact.displayName} has ${openCount} open ${openCount === 1 ? "work order" : "work orders"}. Reassign, close or cancel ${openCount === 1 ? "it" : "them"} first.`,
-        };
-    }
+    const blocked = await openWorkOrdersError(contact);
+    if (blocked) return { ok: false, error: blocked };
 
     await prisma.contact.update({ where: { id: contactId }, data: { archived: true } });
 

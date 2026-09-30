@@ -4,9 +4,8 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
-import { after } from "next/server";
-import { sendEmail } from "@/lib/email";
-import { cancelledEmail } from "@/lib/emails/cancelledEmail";
+import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
+import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
 
 export async function createProperty(formData: FormData) {
@@ -141,21 +140,10 @@ export async function archiveProperty(propertyId: string) {
         prisma.property.update({ where: { id: propertyId }, data: { archived: true } }),
     ]);
 
-    after(async () => {
-        for (const workOrder of toNotify) {
-            if (!workOrder.contractorEmail) continue;
-            try {
-                const email = cancelledEmail({
-                    organization,
-                    title: workOrder.title,
-                    address: formatWorkOrderAddress(property, workOrder.unit),
-                });
-                await sendEmail({ to: workOrder.contractorEmail, ...email, replyTo: organization.email });
-            } catch (error) {
-                console.error(`Cancellation notice failed for work order ${workOrder.id}`, error);
-            }
-        }
-    });
+    notifyContractorsCancelled(
+        organization,
+        toNotify.map((wo) => ({ ...wo, address: formatWorkOrderAddress(property, wo.unit) })),
+    );
 
     revalidatePath("/properties");
     revalidatePath(`/properties/${propertyId}`);
@@ -182,6 +170,39 @@ export async function togglePropertyFavorite(propertyId: string) {
     revalidatePath(`/properties/${propertyId}`);
 }
 
+export async function deleteProperty(propertyId: string, confirmation: string): Promise<ActionResult> {
+    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
+
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+    const organization = result.organization;
+
+    const property = await prisma.property.findFirst({ where: { id: propertyId, organizationId: organization.id } });
+    if (!property) return { ok: false, error: "Property not found." };
+
+    const toNotify = await prisma.workOrder.findMany({
+        where: { propertyId, archived: false, status: { in: ["SENT", "IN_PROGRESS"] } },
+        include: { unit: true },
+    });
+
+    // Work orders block the property delete (onDelete: Restrict), so they go first. Units and spaces cascade.
+    await prisma.$transaction([
+        prisma.contact.updateMany({ where: { unit: { propertyId } }, data: { unitId: null } }),
+        prisma.workOrder.deleteMany({ where: { propertyId } }),
+        prisma.property.delete({ where: { id: propertyId } }),
+    ]);
+
+    notifyContractorsCancelled(
+        organization,
+        toNotify.map((wo) => ({ ...wo, address: formatWorkOrderAddress(property, wo.unit) })),
+    );
+
+    revalidatePath("/properties");
+    revalidatePath("/work-orders");
+    revalidatePath("/contacts");
+    revalidatePath("/");
+    redirect("/properties");
+}
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -299,6 +320,45 @@ export async function archiveUnit(unitId: string): Promise<ActionResult> {
     return { ok: true };
 }
 
+export async function deleteUnit(unitId: string, confirmation: string): Promise<ActionResult> {
+    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
+
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+    const organization = result.organization;
+
+    const unit = await prisma.unit.findFirst({
+        where: { id: unitId, organizationId: organization.id, archived: false, property: { archived: false } },
+        include: { property: true },
+    });
+    if (!unit) return { ok: false, error: "Unit not found." };
+
+    const unitCount = await prisma.unit.count({ where: { propertyId: unit.propertyId, archived: false } });
+    if (unitCount <= 1) return { ok: false, error: "A property needs at least one unit. Delete the property instead." };
+
+    const toNotify = await prisma.workOrder.findMany({
+        where: { unitId, archived: false, status: { in: ["SENT", "IN_PROGRESS"] } },
+    });
+
+    // Spaces cascade; work orders would only lose their unit, so they're deleted outright.
+    await prisma.$transaction([
+        prisma.contact.updateMany({ where: { unitId }, data: { unitId: null } }),
+        prisma.workOrder.deleteMany({ where: { unitId } }),
+        prisma.unit.delete({ where: { id: unitId } }),
+    ]);
+
+    notifyContractorsCancelled(
+        organization,
+        toNotify.map((wo) => ({ ...wo, address: formatWorkOrderAddress(unit.property, unit) })),
+    );
+
+    revalidateProperty(unit.propertyId);
+    revalidatePath("/work-orders");
+    revalidatePath("/contacts");
+    revalidatePath("/");
+    return { ok: true };
+}
+
 export async function addSpace(unitId: string, rawName: string): Promise<ActionResult> {
     const orgId = await currentOrgId();
     if (!orgId) return { ok: false, error: "Not authorized" };
@@ -369,14 +429,17 @@ export async function renameSpace(spaceId: string, rawName: string): Promise<Act
     return { ok: true };
 }
 
-export async function archiveSpace(spaceId: string): Promise<ActionResult> {
+// Work order areas keep their own name, so deleting a space only unlinks them.
+export async function deleteSpace(spaceId: string, confirmation: string): Promise<ActionResult> {
+    if (!isDeleteConfirmed(confirmation)) return DELETE_NOT_CONFIRMED;
+
     const orgId = await currentOrgId();
     if (!orgId) return { ok: false, error: "Not authorized" };
 
     const space = await findOpenSpace(spaceId, orgId);
     if (!space?.unit) return { ok: false, error: "Space not found." };
 
-    await prisma.space.update({ where: { id: spaceId }, data: { archived: true } });
+    await prisma.space.delete({ where: { id: spaceId } });
 
     revalidateProperty(space.unit.propertyId);
     return { ok: true };

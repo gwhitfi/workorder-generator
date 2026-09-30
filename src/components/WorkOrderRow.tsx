@@ -7,26 +7,41 @@ import { formatDueDate } from "@/lib/dates";
 export type WorkOrderWithPlace = Prisma.WorkOrderGetPayload<{ include: { property: true; unit: true } }>;
 
 const COLS = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)_minmax(0,1.2fr)]";
+const COLS_NO_CONTRACTOR = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)]";
 
-export function WorkOrderList({ workOrders }: { workOrders: WorkOrderWithPlace[] }) {
+export function WorkOrderList({
+    workOrders,
+    hideContractor = false,
+}: {
+    workOrders: WorkOrderWithPlace[];
+    hideContractor?: boolean;
+}) {
+    const labels = ["Title", "Status", "Due", "Property", ...(hideContractor ? [] : ["Contractor"])];
+
     return (
         <List>
-            <ListHeader cols={COLS} labels={["Title", "Status", "Due", "Property", "Contractor"]} />
+            <ListHeader cols={hideContractor ? COLS_NO_CONTRACTOR : COLS} labels={labels} />
             {workOrders.map((workOrder) => (
-                <WorkOrderRow key={workOrder.id} workOrder={workOrder} />
+                <WorkOrderRow key={workOrder.id} workOrder={workOrder} hideContractor={hideContractor} />
             ))}
         </List>
     );
 }
 
-export default function WorkOrderRow({ workOrder }: { workOrder: WorkOrderWithPlace }) {
+export default function WorkOrderRow({
+    workOrder,
+    hideContractor = false,
+}: {
+    workOrder: WorkOrderWithPlace;
+    hideContractor?: boolean;
+}) {
     const overdue = isOverdue(workOrder);
 
     return (
         <ListRow
             href={`/work-orders/${workOrder.id}`}
             label={`View ${workOrder.title ?? "untitled work order"}`}
-            cols={COLS}
+            cols={hideContractor ? COLS_NO_CONTRACTOR : COLS}
         >
             <Cell className="basis-full truncate font-medium">
                 {workOrder.title ?? <span className="italic text-neutral-500">Untitled work order</span>}
@@ -49,7 +64,9 @@ export default function WorkOrderRow({ workOrder }: { workOrder: WorkOrderWithPl
                 {workOrder.property.addressLine1}
                 {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
             </Cell>
-            <Cell className="basis-full truncate text-neutral-400">{workOrder.contractorName}</Cell>
+            {!hideContractor && (
+                <Cell className="basis-full truncate text-neutral-400">{workOrder.contractorName}</Cell>
+            )}
         </ListRow>
     );
 }
