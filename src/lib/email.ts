@@ -9,7 +9,6 @@ function getClient() {
     return client;
 }
 
-// Emails are sent from the server, so links need the app's public address rather than the browser's.
 export function getAppUrl() {
     const url = process.env.APP_URL;
     if (!url) throw new Error("Email is not configured: APP_URL is missing");

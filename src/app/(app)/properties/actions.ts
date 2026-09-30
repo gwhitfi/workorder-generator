@@ -117,15 +117,12 @@ export async function updateProperty(propertyId: string, formData: FormData) {
     redirect(`/properties/${propertyId}`);
 }
 
-// Archiving a property ends all of its work: open work orders are cancelled, completed ones are closed,
-// and everything is archived together in one transaction.
 export async function archiveProperty(propertyId: string) {
     const { property, organization } = await findProperty(propertyId);
 
     const now = new Date();
     const onProperty = { propertyId, organizationId: organization.id };
 
-    // Contractors who were sent a link get told it's cancelled. Drafts were never sent.
     const toNotify = await prisma.workOrder.findMany({
         where: { ...onProperty, archived: false, status: { in: ["SENT", "IN_PROGRESS"] } },
         include: { unit: true },
@@ -167,7 +164,6 @@ export async function archiveProperty(propertyId: string) {
     redirect("/properties");
 }
 
-// Only the property comes back; its work orders stay cancelled/archived and can be restored one by one.
 export async function restoreProperty(propertyId: string) {
     await findProperty(propertyId);
 
@@ -177,8 +173,15 @@ export async function restoreProperty(propertyId: string) {
     revalidatePath(`/properties/${propertyId}`);
 }
 
-// --- Units and spaces -------------------------------------------------------------------------------
-// These return a result instead of throwing so validation messages reach the page.
+export async function togglePropertyFavorite(propertyId: string) {
+    const { property } = await findProperty(propertyId);
+
+    await prisma.property.update({ where: { id: propertyId }, data: { favorite: !property.favorite } });
+
+    revalidatePath("/properties");
+    revalidatePath(`/properties/${propertyId}`);
+}
+
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
@@ -268,8 +271,6 @@ export async function renameUnit(unitId: string, rawName: string): Promise<Actio
     return { ok: true };
 }
 
-// Blocked while the unit has open work orders or is the property's last unit.
-// Tenants linked to the unit are unlinked but stay in Contacts.
 export async function archiveUnit(unitId: string): Promise<ActionResult> {
     const orgId = await currentOrgId();
     if (!orgId) return { ok: false, error: "Not authorized" };
@@ -333,7 +334,6 @@ async function findOpenSpace(spaceId: string, orgId: string) {
             id: spaceId,
             organizationId: orgId,
             archived: false,
-            // Only property spaces; the organization's common spaces (no unit) aren't managed here.
             unit: { archived: false, property: { archived: false } },
         },
         include: { unit: { select: { propertyId: true } } },
@@ -369,7 +369,6 @@ export async function renameSpace(spaceId: string, rawName: string): Promise<Act
     return { ok: true };
 }
 
-// Past work orders keep their own copy of the space name, so archiving only removes it from future pickers.
 export async function archiveSpace(spaceId: string): Promise<ActionResult> {
     const orgId = await currentOrgId();
     if (!orgId) return { ok: false, error: "Not authorized" };

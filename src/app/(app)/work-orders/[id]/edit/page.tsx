@@ -30,7 +30,6 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
 
     if (!workOrder) notFound();
 
-    // Completed, closed and archived work orders are read-only; Reopen or Restore unlocks them.
     if (workOrder.archived || !["DRAFT", "SENT", "IN_PROGRESS"].includes(workOrder.status)) {
         redirect(`/work-orders/${id}`);
     }
@@ -63,7 +62,6 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
                     unitId: workOrder.unitId ?? "",
                     contractorId: workOrder.contractorId ?? "",
                     notes: workOrder.notes ?? "",
-                    // Due dates are stored at UTC midnight, so the UTC date is the calendar date.
                     dueDate: workOrder.dueDate ? workOrder.dueDate.toISOString().slice(0, 10) : "",
                     notifyTenant: workOrder.notifyTenant,
                 }}

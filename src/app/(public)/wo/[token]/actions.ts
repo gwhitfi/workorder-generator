@@ -101,11 +101,9 @@ export async function completeWorkOrder(token: string, completionNotes: string) 
 
     revalidate(token, workOrder.id);
 
-    // Runs after the response is sent, so an email problem never blocks or slows the contractor.
     after(() => notifyOffice({ ...workOrder, completedAt, completionNotes: notes }));
 }
 
-// Not exported: only exported functions in a "use server" file become callable actions.
 async function notifyOffice(workOrder: CompletionWorkOrder) {
     const to = workOrder.organization.email;
     if (!to) {

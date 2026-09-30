@@ -9,6 +9,8 @@ import { Favorite } from "@/components/list/List";
 import { WorkOrderList } from "@/components/WorkOrderRow";
 import { ArchivePropertyButton, RestorePropertyButton } from "./ArchiveProperty";
 import UnitManager from "./UnitManager";
+import FavoriteToggle from "@/components/FavoriteToggle";
+import { togglePropertyFavorite } from "../actions";
 
 export default async function PropertyDetail({ params }: { params: Promise<{ id: string }> }) {
     const { id } = await params;
@@ -99,7 +101,14 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                 <div className="mb-4 flex items-start justify-between gap-4">
                     <h1 className="text-2xl font-semibold">
                         {property.displayName}
-                        <Favorite show={property.favorite} />
+                        {property.archived ? (
+                            <Favorite show={property.favorite} />
+                        ) : (
+                            <FavoriteToggle
+                                favorite={property.favorite}
+                                onToggle={togglePropertyFavorite.bind(null, property.id)}
+                            />
+                        )}
                     </h1>
                     {!property.archived && (
                         <Link

@@ -14,7 +14,6 @@ export type PropertyFormValues = {
     notes: string;
 };
 
-// With `initial`, the form edits an existing property's details only; units and spaces are managed on the property page.
 export default function PropertyForm({
     initial,
     action = createProperty,

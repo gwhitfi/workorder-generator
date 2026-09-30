@@ -42,7 +42,6 @@ export default async function NewWorkOrder({ searchParams }: { searchParams: Pro
         },
     });
 
-    // Pre-select the property when coming from a property page, but only if it belongs to this org.
     const { propertyId } = await searchParams;
     const defaultPropertyId = properties.some((p) => p.id === propertyId) ? propertyId : undefined;
 

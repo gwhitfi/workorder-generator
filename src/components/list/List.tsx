@@ -1,9 +1,6 @@
 import Link from "next/link";
 import React from "react";
 
-// Rows stack as compact cards on phones and line up as columns from `sm` up.
-// Pass the same `cols` class (e.g. "sm:grid-cols-[2fr_1fr]") to ListHeader and every ListRow.
-
 export function List({ children }: { children: React.ReactNode }) {
     return (
         <ul className="divide-y divide-neutral-800 overflow-hidden rounded-lg border border-neutral-800 bg-neutral-900/40">
@@ -43,7 +40,6 @@ export function ListRow({
             >
                 {children}
             </div>
-            {/* Covers the whole row; anything interactive inside a Cell sits above it via ListLink. */}
             <Link
                 href={href}
                 aria-label={label}
@@ -53,7 +49,6 @@ export function ListRow({
     );
 }
 
-// Empty cells collapse on phones but keep their column on wider screens.
 export function Cell({ className = "", children }: { className?: string; children?: React.ReactNode }) {
     return <div className={`min-w-0 empty:hidden sm:empty:block ${className}`}>{children}</div>;
 }

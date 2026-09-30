@@ -10,8 +10,6 @@ import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
 
-// Reads and validates the fields shared by the create and edit forms. The property is passed in
-// separately because it can't be changed once a work order exists.
 async function readWorkOrderForm(formData: FormData, organizationId: string, propertyId: string) {
     const unitId = (formData.get("unitId") as string) || null;
     const contractorId = (formData.get("contractorId") as string) || null;
@@ -120,7 +118,6 @@ export async function updateWorkOrder(workOrderId: string, formData: FormData) {
     const { contractor, ...fields } = await readWorkOrderForm(formData, organizationId, workOrder.propertyId);
     const contractorChanged = (contractor?.id ?? null) !== workOrder.contractorId;
     const unitChanged = fields.unitId !== workOrder.unitId;
-    // Once sent, the old contractor still has the link, so a new contractor gets a new one.
     const newLink = contractorChanged && workOrder.status !== "DRAFT";
 
     await prisma.workOrder.update({
@@ -129,7 +126,6 @@ export async function updateWorkOrder(workOrderId: string, formData: FormData) {
             ...fields,
             ...(contractorChanged ? contractorSnapshot(contractor) : {}),
             ...(unitChanged ? tenantSnapshot(await findTenant(fields.unitId, organizationId)) : {}),
-            // The new contractor hasn't been sent anything yet, so their first email isn't a "reminder".
             ...(newLink ? { publicToken: randomBytes(24).toString("base64url"), deliveryMethod: null } : {}),
         },
     });
@@ -466,7 +462,6 @@ export async function sendWorkOrder(workOrderId: string, deliveryMethod: Deliver
 
 type EmailResult = { ok: true; to: string } | { ok: false; error: string };
 
-// Returns a result instead of throwing so the message reaches the UI (thrown errors are hidden in production).
 export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> {
     const result = await getCurrentUser();
     if (result.state !== "ready") return { ok: false, error: "Not authorized" };
@@ -511,7 +506,6 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
         return { ok: false, error: error instanceof Error ? error.message : "Email failed to send" };
     }
 
-    // Only record the send once the email actually went out.
     await prisma.workOrder.update({
         where: { id: workOrderId },
         data: {
@@ -607,7 +601,6 @@ export async function regeneratePublicToken(workOrderId: string) {
 
     if (!workOrder) throw new Error("Invalid work order");
 
-    // The old link stops working as soon as the token changes.
     await prisma.workOrder.update({
         where: { id: workOrderId },
         data: { publicToken: randomBytes(24).toString("base64url") },
