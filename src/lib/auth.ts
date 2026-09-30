@@ -1,5 +1,5 @@
 import { auth, currentUser, clerkClient } from "@clerk/nextjs/server";
-import type { User, Organization } from "@/generated/prisma/client";
+import { Prisma, type User, type Organization } from "@/generated/prisma/client";
 import { DEFAULT_SPACES, DEFAULT_TAGS } from "./defaults";
 import prisma from "./prisma";
 
@@ -23,25 +23,19 @@ export async function getCurrentUser(): Promise<AuthResult> {
     if (!organization) {
         const client = await clerkClient();
         const clerkOrg = await client.organizations.getOrganization({ organizationId: orgId });
-        organization = await prisma.organization.create({
-            data: { clerkOrgId: orgId, name: clerkOrg.name },
-        });
-        const org = organization;
-        await prisma.space.createMany({
-            data: DEFAULT_SPACES.map((name, i) => ({
-                name,
-                sortOrder: i,
-                organizationId: org.id,
-            })),
-        });
-
-        await prisma.tag.createMany({
-            data: DEFAULT_TAGS.map((name, i) => ({
-                name,
-                sortOrder: i,
-                organizationId: org.id,
-            })),
-        });
+        try {
+            organization = await prisma.organization.create({
+                data: {
+                    clerkOrgId: orgId,
+                    name: clerkOrg.name,
+                    spaces: { createMany: { data: DEFAULT_SPACES.map((name, i) => ({ name, sortOrder: i })) } },
+                    tags: { createMany: { data: DEFAULT_TAGS.map((name, i) => ({ name, sortOrder: i })) } },
+                },
+            });
+        } catch (error) {
+            if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
+            organization = await prisma.organization.findUniqueOrThrow({ where: { clerkOrgId: orgId } });
+        }
     }
 
     let user = await prisma.user.findUnique({
@@ -55,15 +49,20 @@ export async function getCurrentUser(): Promise<AuthResult> {
             throw new Error("Clerk user has no email address");
         }
 
-        user = await prisma.user.create({
-            data: {
-                clerkId: userId,
-                email,
-                firstName: clerkUser?.firstName ?? null,
-                lastName: clerkUser?.lastName ?? null,
-                organizationId: organization.id,
-            },
-        });
+        try {
+            user = await prisma.user.create({
+                data: {
+                    clerkId: userId,
+                    email,
+                    firstName: clerkUser?.firstName ?? null,
+                    lastName: clerkUser?.lastName ?? null,
+                    organizationId: organization.id,
+                },
+            });
+        } catch (error) {
+            if (!(error instanceof Prisma.PrismaClientKnownRequestError && error.code === "P2002")) throw error;
+            user = await prisma.user.findUniqueOrThrow({ where: { clerkId: userId } });
+        }
     }
     return { state: "ready", user, organization };
 }

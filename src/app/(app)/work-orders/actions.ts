@@ -11,6 +11,7 @@ import { workOrderEmail } from "@/lib/emails/workOrderEmail";
 import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
+import { todayInAppTimeZone } from "@/lib/dates";
 
 async function readWorkOrderForm(formData: FormData, organizationId: string, propertyId: string) {
     const unitId = (formData.get("unitId") as string) || null;
@@ -68,6 +69,19 @@ function tenantSnapshot(
     };
 }
 
+type Tx = Parameters<Parameters<typeof prisma.$transaction>[0]>[0];
+
+async function nextJobNumber(tx: Tx, organizationId: string) {
+    const year = todayInAppTimeZone().getUTCFullYear();
+    const [row] = await tx.$queryRaw<{ lastJobNumber: number }[]>`
+        UPDATE "Organization"
+        SET "lastJobNumber" = CASE WHEN "jobNumberYear" = ${year} THEN "lastJobNumber" + 1 ELSE 1001 END,
+            "jobNumberYear" = ${year}
+        WHERE "id" = ${organizationId}
+        RETURNING "lastJobNumber"`;
+    return `${year}-${row.lastJobNumber}`;
+}
+
 export async function createWorkOrder(formData: FormData) {
     const result = await getCurrentUser();
 
@@ -87,17 +101,20 @@ export async function createWorkOrder(formData: FormData) {
     const { contractor, ...fields } = await readWorkOrderForm(formData, organizationId, propertyId);
     const tenant = await findTenant(fields.unitId, organizationId);
 
-    const workOrder = await prisma.workOrder.create({
-        data: {
-            organizationId,
-            publicToken: randomBytes(24).toString("base64url"),
-            propertyId,
-            ...fields,
-            status: "DRAFT",
-            ...contractorSnapshot(contractor),
-            ...tenantSnapshot(tenant),
-        },
-    });
+    const workOrder = await prisma.$transaction(async (tx) =>
+        tx.workOrder.create({
+            data: {
+                organizationId,
+                jobNumber: await nextJobNumber(tx, organizationId),
+                publicToken: randomBytes(24).toString("base64url"),
+                propertyId,
+                ...fields,
+                status: "DRAFT",
+                ...contractorSnapshot(contractor),
+                ...tenantSnapshot(tenant),
+            },
+        }),
+    );
 
     revalidatePath("/work-orders");
     redirect(`/work-orders/${workOrder.id}`);
@@ -144,14 +161,27 @@ export async function archiveWorkOrder(workOrderId: string) {
 
     const workOrder = await prisma.workOrder.findFirst({
         where: { id: workOrderId, organizationId: result.organization.id },
+        include: { property: true, unit: true },
     });
     if (!workOrder) throw new Error("Invalid work order");
 
-    await prisma.workOrder.update({ where: { id: workOrderId }, data: { archived: true } });
+    const willCancel = !workOrder.archived && (workOrder.status === "SENT" || workOrder.status === "IN_PROGRESS");
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: willCancel ? { archived: true, status: "CANCELLED", cancelledAt: new Date() } : { archived: true },
+    });
+
+    if (willCancel) {
+        notifyContractorsCancelled(result.organization, [
+            { ...workOrder, address: formatWorkOrderAddress(workOrder.property, workOrder.unit) },
+        ]);
+    }
 
     revalidatePath("/work-orders");
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath(`/wo/${workOrder.publicToken}`);
+    revalidatePath("/");
     redirect("/work-orders");
 }
 
@@ -525,6 +555,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
         const email = workOrderEmail({
             organization: result.organization,
             title: workOrder.title,
+            jobNumber: workOrder.jobNumber,
             address,
             dueDate: workOrder.dueDate,
             notes: workOrder.notes,
@@ -533,7 +564,7 @@ export async function emailWorkOrder(workOrderId: string): Promise<EmailResult> 
             isResend: workOrder.deliveryMethod === "EMAIL",
         });
 
-        await sendEmail({ to, ...email, replyTo: result.organization.email });
+        await sendEmail({ to, ...email, replyTo: result.organization.email, fromName: result.organization.name });
     } catch (error) {
         console.error("emailWorkOrder failed", error);
         return { ok: false, error: error instanceof Error ? error.message : "Email failed to send" };
@@ -611,6 +642,7 @@ export async function closeWorkOrder(workOrderId: string) {
     });
 
     if (!workOrder) throw new Error("Invalid work order");
+    if (workOrder.status !== "COMPLETED") throw new Error("Only completed work orders can be closed");
 
     await prisma.workOrder.update({
         where: { id: workOrderId },
@@ -622,6 +654,37 @@ export async function closeWorkOrder(workOrderId: string) {
 
     revalidatePath(`/work-orders/${workOrderId}`);
     revalidatePath("/work-orders");
+}
+
+export async function cancelWorkOrder(workOrderId: string) {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const workOrder = await prisma.workOrder.findFirst({
+        where: { id: workOrderId, organizationId: result.organization.id },
+        include: { property: true, unit: true },
+    });
+
+    if (!workOrder) throw new Error("Invalid work order");
+    if (workOrder.status !== "SENT" && workOrder.status !== "IN_PROGRESS") {
+        throw new Error("Only sent or in-progress work orders can be cancelled");
+    }
+
+    await prisma.workOrder.update({
+        where: { id: workOrderId },
+        data: { status: "CANCELLED", cancelledAt: new Date() },
+    });
+
+    if (!workOrder.archived) {
+        notifyContractorsCancelled(result.organization, [
+            { ...workOrder, address: formatWorkOrderAddress(workOrder.property, workOrder.unit) },
+        ]);
+    }
+
+    revalidatePath(`/work-orders/${workOrderId}`);
+    revalidatePath("/work-orders");
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+    revalidatePath("/");
 }
 
 export async function regeneratePublicToken(workOrderId: string) {

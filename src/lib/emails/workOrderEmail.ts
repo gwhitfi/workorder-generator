@@ -4,6 +4,7 @@ import { formatDueDate } from "@/lib/dates";
 type WorkOrderEmailInput = {
     organization: { name: string; phone: string | null; email: string | null };
     title: string | null;
+    jobNumber: string;
     address: string;
     dueDate: Date | null;
     notes: string | null;
@@ -19,7 +20,7 @@ export function workOrderEmail(input: WorkOrderEmailInput) {
     const items = `${input.itemCount} ${input.itemCount === 1 ? "item" : "items"}`;
     const contact = [org.phone, org.email].filter(Boolean) as string[];
 
-    const subject = `${input.isResend ? "Reminder" : "New work order"}: ${title} — ${input.address}`;
+    const subject = `${input.isResend ? "Reminder" : "New work order"} #${input.jobNumber}: ${title} — ${input.address}`;
 
     const text = [
         `${org.name} sent you a work order.`,

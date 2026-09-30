@@ -56,6 +56,8 @@ model Organization {
   name      String
   phone     String?
   email     String?
+  jobNumberYear Int?
+  lastJobNumber Int @default(1000)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
@@ -201,8 +203,8 @@ model Unit {
 
 model WorkOrder {
   id              String          @id @default(cuid())
-  publicToken     String          @unique @default(cuid())
-  jobNumber       String?
+  publicToken     String          @unique
+  jobNumber       String
   status          WorkOrderStatus @default(DRAFT)
   deliveryMethod  DeliveryMethod?
   title           String?

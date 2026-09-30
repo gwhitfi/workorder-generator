@@ -49,7 +49,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
         <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
             <div className="mb-8">
                 <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">
-                    {workOrder.organization.name} · #{workOrder.jobNumber ?? workOrder.id.slice(-6).toUpperCase()}
+                    {workOrder.organization.name} · #{workOrder.jobNumber}
                 </p>
 
                 <div className="mb-1 flex items-center gap-3">

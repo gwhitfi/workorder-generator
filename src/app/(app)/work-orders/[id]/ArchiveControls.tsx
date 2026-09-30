@@ -6,7 +6,17 @@ import { archiveWorkOrder, restoreWorkOrder } from "../actions";
 const buttonClass =
     "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
-export default function ArchiveControls({ workOrderId, archived }: { workOrderId: string; archived: boolean }) {
+export default function ArchiveControls({
+    workOrderId,
+    archived,
+    willCancel = false,
+    contractorName = null,
+}: {
+    workOrderId: string;
+    archived: boolean;
+    willCancel?: boolean;
+    contractorName?: string | null;
+}) {
     const [confirming, setConfirming] = useState(false);
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
@@ -49,7 +59,9 @@ export default function ArchiveControls({ workOrderId, archived }: { workOrderId
             {confirming ? (
                 <span className="flex flex-wrap items-center gap-2 text-sm">
                     <span className="text-neutral-300">
-                        Archive this work order? It will be hidden from lists and the contractor link will stop working.
+                        {willCancel
+                            ? `Archive this work order? It will be cancelled, ${contractorName ?? "the contractor"} will be emailed, and their link will stop working.`
+                            : "Archive this work order? It will be hidden from lists and the contractor link will stop working."}
                     </span>
                     <button
                         className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"

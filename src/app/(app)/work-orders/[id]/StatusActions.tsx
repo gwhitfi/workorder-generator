@@ -2,7 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { sendWorkOrder, emailWorkOrder, markWorkOrderCompleted, reopenWorkOrder, closeWorkOrder } from "../actions";
+import {
+    sendWorkOrder,
+    emailWorkOrder,
+    markWorkOrderCompleted,
+    reopenWorkOrder,
+    closeWorkOrder,
+    cancelWorkOrder,
+} from "../actions";
 import { DeliveryMethod } from "@/generated/prisma/enums";
 
 export default function StatusActions({
@@ -19,6 +26,7 @@ export default function StatusActions({
     const [pending, setPending] = useState(false);
     const [error, setError] = useState<string | null>(null);
     const [confirmingEmail, setConfirmingEmail] = useState(false);
+    const [confirmingCancel, setConfirmingCancel] = useState(false);
     const [sentTo, setSentTo] = useState<string | null>(null);
 
     async function handleEmail() {
@@ -91,6 +99,7 @@ export default function StatusActions({
             setError("Something went wrong. Try again.");
         } finally {
             setPending(false);
+            setConfirmingCancel(false);
         }
     }
 
@@ -120,13 +129,38 @@ export default function StatusActions({
                     >
                         Mark completed
                     </button>
-                    <button
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
-                        onClick={() => run(() => closeWorkOrder(workOrderId))}
-                        disabled={pending}
-                    >
-                        Close
-                    </button>
+                    {confirmingCancel ? (
+                        <span className="flex flex-wrap items-center gap-2 text-sm">
+                            <span className="text-neutral-300">
+                                Cancel this work order?{" "}
+                                {contractor?.email
+                                    ? `${contractor.name} will be emailed and their link will stop working.`
+                                    : "The contractor link will stop working."}
+                            </span>
+                            <button
+                                className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"
+                                onClick={() => run(() => cancelWorkOrder(workOrderId))}
+                                disabled={pending}
+                            >
+                                {pending ? "Cancelling..." : "Yes, cancel it"}
+                            </button>
+                            <button
+                                className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                                onClick={() => setConfirmingCancel(false)}
+                                disabled={pending}
+                            >
+                                Keep it
+                            </button>
+                        </span>
+                    ) : (
+                        <button
+                            className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                            onClick={() => setConfirmingCancel(true)}
+                            disabled={pending}
+                        >
+                            Cancel work order
+                        </button>
+                    )}
                 </>
             )}
             {status === "COMPLETED" && (

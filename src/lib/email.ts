@@ -15,24 +15,33 @@ export function getAppUrl() {
     return url.replace(/\/+$/, "");
 }
 
+function formatFrom(from: string, name?: string | null) {
+    if (!name) return from;
+    const address = from.match(/<([^>]+)>/)?.[1] ?? from;
+    const displayName = name.replace(/["\\<>\r\n]/g, "");
+    return `"${displayName} via Work Order Generator" <${address}>`;
+}
+
 export async function sendEmail({
     to,
     subject,
     html,
     text,
     replyTo,
+    fromName,
 }: {
     to: string;
     subject: string;
     html: string;
     text: string;
     replyTo?: string | null;
+    fromName?: string | null;
 }) {
     const from = process.env.EMAIL_FROM;
     if (!from) throw new Error("Email is not configured: EMAIL_FROM is missing");
 
     const { data, error } = await getClient().emails.send({
-        from,
+        from: formatFrom(from, fromName),
         to,
         subject,
         html,

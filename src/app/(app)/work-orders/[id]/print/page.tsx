@@ -45,7 +45,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                 <PrintButton />
             </div>
             <div className="hidden print:block text-xs text-neutral-500 mb-4">
-                Work Order Generator · {workOrder.jobNumber ?? workOrder.id.slice(-6).toUpperCase()}
+                Work Order Generator · #{workOrder.jobNumber}
             </div>
             <h1 className="mb-2 flex items-center justify-center gap-3 text-2xl font-semibold">
                 {workOrder.title ?? "Untitled work order"}

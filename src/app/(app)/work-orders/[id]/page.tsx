@@ -89,6 +89,7 @@ export default async function WorkOrderDetail({
             )}
             <div className="mb-8">
                 <div className="mb-1 flex items-center gap-3">
+                    <span className="text-sm font-medium text-neutral-400">#{workOrder.jobNumber}</span>
                     <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
@@ -275,7 +276,14 @@ export default async function WorkOrderDetail({
                             </p>
                         )}
                     </DeleteButton>
-                    {!workOrder.archived && <ArchiveControls workOrderId={workOrder.id} archived={false} />}
+                    {!workOrder.archived && (
+                        <ArchiveControls
+                            workOrderId={workOrder.id}
+                            archived={false}
+                            willCancel={contractorWorking}
+                            contractorName={workOrder.contractorName}
+                        />
+                    )}
                 </div>
             </div>
         </main>

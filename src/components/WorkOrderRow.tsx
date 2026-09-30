@@ -44,7 +44,8 @@ export default function WorkOrderRow({
             cols={hideContractor ? COLS_NO_CONTRACTOR : COLS}
         >
             <Cell className="basis-full truncate font-medium">
-                {workOrder.title ?? <span className="italic text-neutral-500">Untitled work order</span>}
+                <span className="mr-2 font-normal text-neutral-500">#{workOrder.jobNumber}</span>
+                {workOrder.title ??<span className="italic text-neutral-500">Untitled work order</span>}
             </Cell>
             <Cell>
                 <span className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_COLORS[workOrder.status]}`}>

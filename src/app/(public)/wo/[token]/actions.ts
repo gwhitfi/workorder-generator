@@ -117,6 +117,7 @@ async function notifyOffice(workOrder: CompletionWorkOrder) {
             contractorName: workOrder.contractorName,
             contractorEmail: workOrder.contractorEmail,
             title: workOrder.title,
+            jobNumber: workOrder.jobNumber,
             address: formatWorkOrderAddress(workOrder.property, workOrder.unit),
             completedAt: workOrder.completedAt ?? new Date(),
             completionNotes: workOrder.completionNotes,
@@ -124,7 +125,7 @@ async function notifyOffice(workOrder: CompletionWorkOrder) {
             url: `${getAppUrl()}/work-orders/${workOrder.id}`,
         });
 
-        await sendEmail({ to, ...email, replyTo: workOrder.contractorEmail });
+        await sendEmail({ to, ...email, replyTo: workOrder.contractorEmail, fromName: workOrder.contractorName });
     } catch (error) {
         console.error(`Completion notice failed for work order ${workOrder.id}`, error);
     }

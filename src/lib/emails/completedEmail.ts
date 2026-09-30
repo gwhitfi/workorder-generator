@@ -6,6 +6,7 @@ type CompletedEmailInput = {
     contractorName: string | null;
     contractorEmail: string | null;
     title: string | null;
+    jobNumber: string;
     address: string;
     completedAt: Date;
     completionNotes: string | null;
@@ -26,7 +27,7 @@ export function completedEmail(input: CompletedEmailInput) {
     const unchecked = items.filter((i) => !i.completed);
     const withNotes = items.filter((i) => i.contractorNotes);
 
-    const subject = `Completed: ${title} — ${input.address}`;
+    const subject = `Completed #${input.jobNumber}: ${title} — ${input.address}`;
     const summary = `${who} marked this work order complete on ${date}.`;
     const progress = `${doneCount} of ${items.length} ${items.length === 1 ? "item" : "items"} done`;
 
