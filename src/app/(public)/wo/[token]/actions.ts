@@ -6,17 +6,12 @@ import { after } from "next/server";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { completedEmail } from "@/lib/emails/completedEmail";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
+import { completeInput, noteInput, toggleInput } from "./schemas";
 
-const MAX_NOTE_LENGTH = 2000;
 const OPEN_STATUSES = ["SENT", "IN_PROGRESS"] as const;
 
 function isOpen(status: string) {
     return (OPEN_STATUSES as readonly string[]).includes(status);
-}
-
-function cleanNote(note: string) {
-    const trimmed = note.trim().slice(0, MAX_NOTE_LENGTH);
-    return trimmed || null;
 }
 
 async function getOpenLineItem(token: string, lineItemId: string) {
@@ -39,14 +34,15 @@ function revalidate(token: string, workOrderId: string) {
     revalidatePath("/work-orders");
 }
 
-export async function toggleLineItem(token: string, lineItemId: string) {
-    const lineItem = await getOpenLineItem(token, lineItemId);
+export async function toggleLineItem(token: string, lineItemId: string): Promise<void> {
+    const input = toggleInput.parse({ token, lineItemId });
+    const lineItem = await getOpenLineItem(input.token, input.lineItemId);
     const workOrder = lineItem.area.workOrder;
     const completed = !lineItem.completed;
 
     await prisma.$transaction([
         prisma.lineItem.update({
-            where: { id: lineItemId },
+            where: { id: lineItem.id },
             data: { completed, completedAt: completed ? new Date() : null },
         }),
         ...(completed && workOrder.status === "SENT"
@@ -54,18 +50,19 @@ export async function toggleLineItem(token: string, lineItemId: string) {
             : []),
     ]);
 
-    revalidate(token, workOrder.id);
+    revalidate(input.token, workOrder.id);
 }
 
-export async function saveLineItemNote(token: string, lineItemId: string, note: string) {
-    const lineItem = await getOpenLineItem(token, lineItemId);
+export async function saveLineItemNote(token: string, lineItemId: string, note: string): Promise<void> {
+    const input = noteInput.parse({ token, lineItemId, note });
+    const lineItem = await getOpenLineItem(input.token, input.lineItemId);
 
     await prisma.lineItem.update({
-        where: { id: lineItemId },
-        data: { contractorNotes: cleanNote(note) },
+        where: { id: lineItem.id },
+        data: { contractorNotes: input.note },
     });
 
-    revalidate(token, lineItem.area.workOrderId);
+    revalidate(input.token, lineItem.area.workOrderId);
 }
 
 function loadForCompletion(token: string) {
@@ -85,21 +82,22 @@ function loadForCompletion(token: string) {
 
 type CompletionWorkOrder = NonNullable<Awaited<ReturnType<typeof loadForCompletion>>>;
 
-export async function completeWorkOrder(token: string, completionNotes: string) {
-    const workOrder = await loadForCompletion(token);
+export async function completeWorkOrder(token: string, completionNotes: string): Promise<void> {
+    const input = completeInput.parse({ token, completionNotes });
+    const workOrder = await loadForCompletion(input.token);
 
     if (!workOrder) throw new Error("Invalid work order");
     if (workOrder.archived || !isOpen(workOrder.status)) throw new Error("Work order is not open");
 
     const completedAt = new Date();
-    const notes = cleanNote(completionNotes);
+    const notes = input.completionNotes;
 
     await prisma.workOrder.update({
         where: { id: workOrder.id },
         data: { status: "COMPLETED", completedAt, completionNotes: notes },
     });
 
-    revalidate(token, workOrder.id);
+    revalidate(input.token, workOrder.id);
 
     after(() => notifyOffice({ ...workOrder, completedAt, completionNotes: notes }));
 }

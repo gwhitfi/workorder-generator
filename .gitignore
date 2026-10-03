@@ -46,4 +46,5 @@ next-env.d.ts
 /src/generated
 
 # personal notes
-/TODO.md
+/_docs
+CLAUDE.md
