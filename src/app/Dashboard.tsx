@@ -50,7 +50,7 @@ export default async function Dashboard({ organization }: { organization: Organi
     const recentActivity = recentOrders.filter((wo) => !attentionIds.has(wo.id)).slice(0, 5);
 
     const steps = [
-        { label: "Add a property", href: "/properties/new", done: propertyCount > 0 },
+        { label: "Add your first property", href: "/properties/new", done: propertyCount > 0 },
         { label: "Add a contractor", href: "/contacts/new", done: contractorCount > 0 },
         { label: "Set your office contact", href: "/settings", done: !!(organization.phone || organization.email) },
         { label: "Create a work order", href: "/work-orders/new", done: workOrderCount > 0 },
