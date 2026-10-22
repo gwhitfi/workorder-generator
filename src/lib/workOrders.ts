@@ -28,7 +28,7 @@ export const WORK_ORDER_FILTERS = {
 export type WorkOrderFilter = keyof typeof WORK_ORDER_FILTERS;
 
 export function isWorkOrderFilter(value: unknown): value is WorkOrderFilter {
-    return typeof value === "string" && value in WORK_ORDER_FILTERS;
+    return typeof value === "string" && Object.hasOwn(WORK_ORDER_FILTERS, value);
 }
 
 type AddressProperty = { addressLine1: string; city: string; state: string; zipCode: string };

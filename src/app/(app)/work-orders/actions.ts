@@ -412,8 +412,8 @@ export async function moveLineItem(lineItemId: string, direction: "up" | "down")
 }
 
 export async function updateLineItem(lineItemId: string, description: string, priority: LineItemPriority) {
-    const reuslt = await getCurrentUser();
-    if (reuslt.state !== "ready") throw new Error("Not authorized");
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
 
     const lineItem = await prisma.lineItem.findFirst({
         where: { id: lineItemId },
@@ -422,7 +422,7 @@ export async function updateLineItem(lineItemId: string, description: string, pr
         },
     });
 
-    if (!lineItem || lineItem.area.workOrder.organizationId !== reuslt.organization.id) {
+    if (!lineItem || lineItem.area.workOrder.organizationId !== result.organization.id) {
         throw new Error("Invalid line item");
     }
 
@@ -445,6 +445,8 @@ export async function sendWorkOrder(workOrderId: string, deliveryMethod: Deliver
 
     if (!workOrder) throw new Error("Invalid work order");
     if (!workOrder.contractorId) throw new Error("Assign a contractor before sending");
+    if (workOrder.archived) throw new Error("Archived work orders can't be sent");
+    if (workOrder.status !== "DRAFT") throw new Error("Only draft work orders can be marked as sent");
 
     await prisma.workOrder.update({
         where: { id: workOrderId },

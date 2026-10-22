@@ -15,7 +15,7 @@ export function getAppUrl() {
     return url.replace(/\/+$/, "");
 }
 
-function formatFrom(from: string, name?: string | null) {
+export function formatFrom(from: string, name?: string | null) {
     if (!name) return from;
     const address = from.match(/<([^>]+)>/)?.[1] ?? from;
     const displayName = name.replace(/["\\<>\r\n]/g, "");
