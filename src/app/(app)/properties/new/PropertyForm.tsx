@@ -18,10 +18,12 @@ export default function PropertyForm({
     initial,
     action = createProperty,
     submitLabel = "Save Property",
+    returnTo,
 }: {
     initial?: PropertyFormValues;
     action?: (formData: FormData) => void | Promise<void>;
     submitLabel?: string;
+    returnTo?: string;
 } = {}) {
     const editing = !!initial;
     type Unit = { name: string };
@@ -154,7 +156,7 @@ export default function PropertyForm({
                     <input type="hidden" name="units" value={JSON.stringify(units)} />
                 </div>
             )}
-
+            {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
             <button
                 type="submit"
                 className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer"

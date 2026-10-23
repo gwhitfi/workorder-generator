@@ -3,6 +3,7 @@
 import { useState } from "react";
 import { createWorkOrder } from "../actions";
 import { inputClass, labelClass } from "@/lib/defaults";
+import { useRouter } from "next/navigation";
 
 type UnitOption = { id: string; name: string };
 type PropertyOption = {
@@ -29,6 +30,8 @@ export type WorkOrderFormValues = {
     dueDate: string; // YYYY-MM-DD
     notifyTenant: boolean;
 };
+
+const ADD_NEW = "__add_new__";
 
 export default function WorkOrderForm({
     properties,
@@ -57,6 +60,8 @@ export default function WorkOrderForm({
     const selectedUnitId = units.length === 1 ? units[0].id : selectedUnit;
     const tenant = tenants.find((t) => t.unitId === selectedUnitId);
     const [contactTenant, setContactTenant] = useState(initial?.notifyTenant ?? false);
+
+    const router = useRouter();
     return (
         <form action={action} autoComplete="off" className="flex flex-col gap-4">
             <label className={labelClass}>
@@ -82,11 +87,16 @@ export default function WorkOrderForm({
                             className={inputClass}
                             value={selectedProperty}
                             onChange={(e) => {
+                                if (e.target.value === ADD_NEW) {
+                                    router.push("/properties/new?returnTo=/work-orders/new");
+                                    return;
+                                }
                                 setSelectedProperty(e.target.value);
                                 setSelectedUnit("");
                             }}
                         >
                             <option value="">Select a property</option>
+                            <option value={ADD_NEW}>Add new property</option>
                             {properties.map((property) => (
                                 <option key={property.id} value={property.id}>
                                     {property.displayName}

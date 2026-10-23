@@ -37,7 +37,7 @@ export async function createProperty(formData: FormData) {
               }))
             : [{ name: "Main", isDefault: true, sortOrder: 0, organizationId: result.organization.id }];
 
-    await prisma.property.create({
+    const property = await prisma.property.create({
         data: {
             organizationId: result.organization.id,
             displayName,
@@ -55,6 +55,9 @@ export async function createProperty(formData: FormData) {
     });
 
     revalidatePath("/properties");
+    if (formData.get("returnTo") === "/work-orders/new") {
+        redirect(`/work-orders/new?propertyId=${property.id}`);
+    }
     redirect("/properties");
 }
 
