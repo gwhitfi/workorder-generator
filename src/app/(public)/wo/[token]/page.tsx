@@ -6,6 +6,7 @@ import InfoCard from "@/components/InfoCard";
 import ContractorSpaceCard from "./ContractorSpaceCard";
 import CompleteWorkOrder from "./CompleteWorkOrder";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
+import { formatPhone } from "@/lib/phone";
 
 export const metadata: Metadata = {
     title: "Work Order",
@@ -88,7 +89,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                     <InfoCard label="Tenant" title={workOrder.tenantName ?? "No tenant on file"}>
                         {workOrder.tenantPhone && (
                             <a href={`tel:${workOrder.tenantPhone}`} className="block hover:text-neutral-100">
-                                {workOrder.tenantPhone}
+                                {formatPhone(workOrder.tenantPhone)}
                             </a>
                         )}
                         {workOrder.tenantEmail && (
@@ -104,7 +105,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                     <InfoCard label="Office" title={workOrder.organization.name}>
                         {workOrder.organization.phone && (
                             <a href={`tel:${workOrder.organization.phone}`} className="block hover:text-neutral-100">
-                                {workOrder.organization.phone}
+                                {formatPhone(workOrder.organization.phone)}
                             </a>
                         )}
                         {workOrder.organization.email && (

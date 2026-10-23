@@ -1,6 +1,7 @@
 "use client";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { createContact } from "../actions";
+import type { ContactFormState } from "../schemas";
 import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
 
 type UnitOption = { id: string; name: string };
@@ -37,10 +38,13 @@ export default function ContactForm({
 }: {
     properties: PropertyOption[];
     initial?: ContactFormValues;
-    action?: (formData: FormData) => void | Promise<void>;
+    action?: (state: ContactFormState, formData: FormData) => Promise<ContactFormState>;
     submitLabel?: string;
     lockType?: boolean;
 }) {
+    const [state, formAction, pending] = useActionState(action, {});
+    // React resets the form after each submit, so refill it with what was sent.
+    const value = (name: keyof ContactFormValues) => state.values?.[name] ?? initial?.[name];
     const editing = !!initial;
     const [contactType, setContactType] = useState(initial?.contactType ?? "CONTRACTOR");
     const [selectedProperty, setSelectedProperty] = useState(initial?.propertyId ?? "");
@@ -52,10 +56,11 @@ export default function ContactForm({
     const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
 
     return (
-        <form action={action} autoComplete="off" className="flex flex-col gap-4">
+        <form action={formAction} autoComplete="off" className="flex flex-col gap-4">
             <label className={labelClass}>
                 Display Name
-                <input name="displayName" required defaultValue={initial?.displayName} className={inputClass} />
+                <input name="displayName" required defaultValue={value("displayName")} className={inputClass} />
+                <FieldError errors={state.errors?.displayName} />
             </label>
             <label className={labelClass}>
                 Contact Type
@@ -85,41 +90,49 @@ export default function ContactForm({
             <div className="grid grid-cols-2 gap-3">
                 <label className={labelClass}>
                     First Name
-                    <input name="firstName" defaultValue={initial?.firstName} className={inputClass} />
+                    <input name="firstName" defaultValue={value("firstName")} className={inputClass} />
+                    <FieldError errors={state.errors?.firstName} />
                 </label>
                 <label className={labelClass}>
                     Last Name
-                    <input name="lastName" defaultValue={initial?.lastName} className={inputClass} />
+                    <input name="lastName" defaultValue={value("lastName")} className={inputClass} />
+                    <FieldError errors={state.errors?.lastName} />
                 </label>
             </div>
             {contactType !== "TENANT" && (
                 <div className="flex flex-col gap-4">
                     <label className={labelClass}>
                         Company
-                        <input name="company" defaultValue={initial?.company} className={inputClass} />
+                        <input name="company" defaultValue={value("company")} className={inputClass} />
+                        <FieldError errors={state.errors?.company} />
                     </label>
                     <label className={labelClass}>
                         Address
-                        <input name="addressLine1" defaultValue={initial?.addressLine1} className={inputClass} />
+                        <input name="addressLine1" defaultValue={value("addressLine1")} className={inputClass} />
+                        <FieldError errors={state.errors?.addressLine1} />
                     </label>
                     <label className={labelClass}>
                         Address (cont)
-                        <input name="addressLine2" defaultValue={initial?.addressLine2} className={inputClass} />
+                        <input name="addressLine2" defaultValue={value("addressLine2")} className={inputClass} />
+                        <FieldError errors={state.errors?.addressLine2} />
                     </label>
                     <div className="grid grid-cols-6 gap-3">
                         <label className="col-span-3 block">
                             <span className={labelClass}>City</span>
-                            <input name="city" defaultValue={initial?.city} className={inputClass} />
+                            <input name="city" defaultValue={value("city")} className={inputClass} />
+                            <FieldError errors={state.errors?.city} />
                         </label>
 
                         <label className="col-span-1 block">
                             <span className={labelClass}>State</span>
-                            <input name="state" maxLength={2} defaultValue={initial?.state} className={inputClass} />
+                            <input name="state" maxLength={2} defaultValue={value("state")} className={inputClass} />
+                            <FieldError errors={state.errors?.state} />
                         </label>
 
                         <label className="col-span-2 block">
                             <span className={labelClass}>Zip code</span>
-                            <input name="zipCode" defaultValue={initial?.zipCode} className={inputClass} />
+                            <input name="zipCode" defaultValue={value("zipCode")} className={inputClass} />
+                            <FieldError errors={state.errors?.zipCode} />
                         </label>
                     </div>
                 </div>
@@ -151,7 +164,10 @@ export default function ContactForm({
                                 key={selectedProperty}
                                 name="unitId"
                                 required
-                                defaultValue={selectedProperty === initial?.propertyId ? initial.unitId : ""}
+                                defaultValue={
+                                    state.values?.unitId ??
+                                    (selectedProperty === initial?.propertyId ? initial.unitId : "")
+                                }
                                 className={inputClass}
                             >
                                 <option value="">Select a unit</option>
@@ -169,22 +185,31 @@ export default function ContactForm({
             <div className="grid grid-cols-2 gap-3">
                 <label className={labelClass}>
                     Phone Number
-                    <input type="tel" name="phone" required defaultValue={initial?.phone} className={inputClass} />
+                    <input type="tel" name="phone" required defaultValue={value("phone")} className={inputClass} />
+                    <FieldError errors={state.errors?.phone} />
                 </label>
                 <label className={labelClass}>
                     Email
-                    <input type="email" name="email" required defaultValue={initial?.email} className={inputClass} />
+                    <input type="email" name="email" required defaultValue={value("email")} className={inputClass} />
+                    <FieldError errors={state.errors?.email} />
                 </label>
             </div>
             <label className={labelClass}>
-                Notes <textarea name="notes" defaultValue={initial?.notes} className={inputClass} />
+                Notes <textarea name="notes" defaultValue={value("notes")} className={inputClass} />
+                <FieldError errors={state.errors?.notes} />
             </label>
             <button
                 type="submit"
-                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer"
+                disabled={pending}
+                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer disabled:opacity-60"
             >
                 {submitLabel}
             </button>
         </form>
     );
+}
+
+function FieldError({ errors }: { errors?: string[] }) {
+    if (!errors?.length) return null;
+    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
 }

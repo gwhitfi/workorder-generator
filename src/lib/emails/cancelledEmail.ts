@@ -1,4 +1,5 @@
 import { escapeHtml } from "./shared";
+import { formatPhone } from "@/lib/phone";
 
 type CancelledEmailInput = {
     organization: { name: string; phone: string | null; email: string | null };
@@ -10,7 +11,7 @@ type CancelledEmailInput = {
 export function cancelledEmail(input: CancelledEmailInput) {
     const title = input.title ?? "Work order";
     const org = input.organization;
-    const contact = [org.phone, org.email].filter(Boolean) as string[];
+    const contact = [org.phone && formatPhone(org.phone), org.email].filter(Boolean) as string[];
 
     const subject = `Cancelled #${input.jobNumber}: ${title} — ${input.address}`;
     const summary = `${org.name} has cancelled this work order. No further work is needed, and the link you received no longer works.`;

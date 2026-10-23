@@ -3,6 +3,7 @@ import { redirect } from "next/navigation";
 import Link from "next/link";
 import type { ReactNode } from "react";
 import prisma from "@/lib/prisma";
+import { formatPhone } from "@/lib/phone";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { List, ListHeader, ListRow, Cell, ListLink, Favorite } from "@/components/list/List";
@@ -135,7 +136,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
                                                 <Cell className="text-neutral-400">
                                                     {contact.phone && (
                                                         <ListLink href={`tel:${contact.phone}`}>
-                                                            {contact.phone}
+                                                            {formatPhone(contact.phone)}
                                                         </ListLink>
                                                     )}
                                                 </Cell>

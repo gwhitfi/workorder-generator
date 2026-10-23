@@ -2,6 +2,7 @@ import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
+import { formatPhone } from "@/lib/phone";
 import ContactForm from "../../new/ContactForm";
 import { updateContact } from "../../actions";
 
@@ -60,7 +61,7 @@ export default async function EditContact({ params }: { params: Promise<{ id: st
                     city: contact.city ?? "",
                     state: contact.state ?? "",
                     zipCode: contact.zipCode ?? "",
-                    phone: contact.phone ?? "",
+                    phone: contact.phone ? formatPhone(contact.phone) : "",
                     email: contact.email ?? "",
                     notes: contact.notes ?? "",
                     propertyId: unit?.propertyId ?? "",

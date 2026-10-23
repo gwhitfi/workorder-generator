@@ -1,6 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
 import prisma from "@/lib/prisma";
+import { formatPhone } from "@/lib/phone";
 import { OPEN_STATUSES } from "@/lib/workOrders";
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
@@ -104,7 +105,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                     <InfoCard label="Contact" title={contactTitle}>
                         {contact.phone ? (
                             <a href={`tel:${contact.phone}`} className="block truncate hover:text-neutral-100">
-                                {contact.phone}
+                                {formatPhone(contact.phone)}
                             </a>
                         ) : (
                             <p className="text-neutral-500">No phone</p>

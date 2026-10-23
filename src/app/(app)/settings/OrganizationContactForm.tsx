@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useActionState } from "react";
 import { updateOrganization } from "./actions";
 import { inputClass } from "@/lib/defaults";
 
@@ -15,35 +15,32 @@ export default function OrganizationContactForm({
     phone: string | null;
     email: string | null;
 }) {
-    const [pending, setPending] = useState(false);
-    const [message, setMessage] = useState<{ ok: boolean; text: string } | null>(null);
-
-    async function handleSubmit(formData: FormData) {
-        setPending(true);
-        try {
-            await updateOrganization(formData);
-            setMessage({ ok: true, text: "Saved." });
-        } catch {
-            setMessage({ ok: false, text: "Could not save. Try again." });
-        } finally {
-            setPending(false);
-        }
-    }
+    const [state, formAction, pending] = useActionState(updateOrganization, {});
+    // React resets the form after each submit, so refill it with what was sent.
+    const values = state.values;
 
     return (
-        <form action={handleSubmit} className="flex flex-col gap-4">
+        <form action={formAction} className="flex flex-col gap-4">
             <label className={labelClass}>
                 Organization Name
-                <input name="name" defaultValue={name} required className={inputClass} />
+                <input name="name" defaultValue={values?.name ?? name} required className={inputClass} />
+                <FieldError errors={state.errors?.name} />
             </label>
             <div className="grid gap-3 sm:grid-cols-2">
                 <label className={labelClass}>
                     Office Phone
-                    <input type="tel" name="phone" defaultValue={phone ?? ""} className={inputClass} />
+                    <input type="tel" name="phone" defaultValue={values?.phone ?? phone ?? ""} className={inputClass} />
+                    <FieldError errors={state.errors?.phone} />
                 </label>
                 <label className={labelClass}>
                     Office Email
-                    <input type="email" name="email" defaultValue={email ?? ""} className={inputClass} />
+                    <input
+                        type="email"
+                        name="email"
+                        defaultValue={values?.email ?? email ?? ""}
+                        className={inputClass}
+                    />
+                    <FieldError errors={state.errors?.email} />
                 </label>
             </div>
 
@@ -55,10 +52,14 @@ export default function OrganizationContactForm({
                 >
                     {pending ? "Saving..." : "Save"}
                 </button>
-                {message && (
-                    <span className={`text-sm ${message.ok ? "text-green-400" : "text-red-400"}`}>{message.text}</span>
-                )}
+                {state.ok && <span className="text-sm text-green-400">Saved.</span>}
+                {state.error && <span className="text-sm text-red-400">{state.error}</span>}
             </div>
         </form>
     );
+}
+
+function FieldError({ errors }: { errors?: string[] }) {
+    if (!errors?.length) return null;
+    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
 }

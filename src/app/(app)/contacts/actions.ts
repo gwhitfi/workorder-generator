@@ -1,17 +1,37 @@
 "use server";
-import { ContactType } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { OPEN_STATUSES } from "@/lib/workOrders";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
+import { contactInput, type ContactFormState } from "./schemas";
 
 type ActionResult = { ok: true } | { ok: false; error: string };
 
+// Sent back with errors so the form can refill what the user typed.
+function submittedValues(formData: FormData) {
+    const values: Record<string, string> = {};
+    for (const key of Object.keys(contactInput.shape)) {
+        const value = formData.get(key);
+        if (typeof value === "string") values[key] = value;
+    }
+    return values;
+}
+
 async function readContactForm(formData: FormData, organizationId: string) {
-    const contactType = formData.get("contactType") as ContactType;
-    const unitId = contactType === "TENANT" ? (formData.get("unitId") as string) || null : null;
+    const parsed = contactInput.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+        const state: ContactFormState = {
+            errors: z.flattenError(parsed.error).fieldErrors,
+            values: submittedValues(formData),
+        };
+        return { ok: false as const, state };
+    }
+
+    const fields = parsed.data;
+    const unitId = fields.contactType === "TENANT" ? fields.unitId : null;
 
     if (unitId) {
         const unit = await prisma.unit.findFirst({
@@ -20,22 +40,7 @@ async function readContactForm(formData: FormData, organizationId: string) {
         if (!unit) throw new Error("Invalid unit");
     }
 
-    return {
-        contactType,
-        displayName: formData.get("displayName") as string,
-        firstName: (formData.get("firstName") as string) || null,
-        lastName: (formData.get("lastName") as string) || null,
-        company: (formData.get("company") as string) || null,
-        addressLine1: (formData.get("addressLine1") as string) || null,
-        addressLine2: (formData.get("addressLine2") as string) || null,
-        city: (formData.get("city") as string) || null,
-        state: (formData.get("state") as string) || null,
-        zipCode: (formData.get("zipCode") as string) || null,
-        email: formData.get("email") as string,
-        phone: formData.get("phone") as string,
-        notes: (formData.get("notes") as string) || null,
-        unitId,
-    };
+    return { ok: true as const, fields: { ...fields, unitId } };
 }
 
 async function findContact(contactId: string) {
@@ -55,27 +60,34 @@ function revalidateContact(contactId: string) {
     revalidatePath(`/contacts/${contactId}`);
 }
 
-export async function createContact(formData: FormData) {
+export async function createContact(prevState: ContactFormState, formData: FormData): Promise<ContactFormState> {
     const result = await getCurrentUser();
 
     if (result.state !== "ready") {
         throw new Error("Not authorized");
     }
 
-    const fields = await readContactForm(formData, result.organization.id);
+    const form = await readContactForm(formData, result.organization.id);
+    if (!form.ok) return form.state;
 
     await prisma.contact.create({
-        data: { organizationId: result.organization.id, ...fields },
+        data: { organizationId: result.organization.id, ...form.fields },
     });
     revalidatePath("/contacts");
     redirect("/contacts");
 }
 
-export async function updateContact(contactId: string, formData: FormData) {
+export async function updateContact(
+    contactId: string,
+    prevState: ContactFormState,
+    formData: FormData,
+): Promise<ContactFormState> {
     const contact = await findContact(contactId);
     if (contact.archived) throw new Error("Restore this contact before editing it");
 
-    const fields = await readContactForm(formData, contact.organizationId);
+    const form = await readContactForm(formData, contact.organizationId);
+    if (!form.ok) return form.state;
+    const fields = form.fields;
 
     if (fields.contactType !== contact.contactType && (await workOrderCount(contactId)) > 0) {
         throw new Error("This contact is on work orders, so its type can't change");

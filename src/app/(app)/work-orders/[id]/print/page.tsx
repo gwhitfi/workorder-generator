@@ -3,6 +3,7 @@ import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import { PRIORITY_LABELS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
+import { formatPhone } from "@/lib/phone";
 import PrintButton from "@/components/PrintButton";
 
 export default async function WorkOrderPrint({ params }: { params: Promise<{ id: string }> }) {
@@ -69,7 +70,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                         {workOrder.contractorName ? (
                             <>
                                 <p>{workOrder.contractorName}</p>
-                                {workOrder.contractorPhone && <p>{workOrder.contractorPhone}</p>}
+                                {workOrder.contractorPhone && <p>{formatPhone(workOrder.contractorPhone)}</p>}
                                 {workOrder.contractorEmail && <p>{workOrder.contractorEmail}</p>}
                             </>
                         ) : (
@@ -82,7 +83,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                         {workOrder.tenantName ? (
                             <>
                                 <p>{workOrder.tenantName}</p>
-                                {workOrder.tenantPhone && <p>{workOrder.tenantPhone}</p>}
+                                {workOrder.tenantPhone && <p>{formatPhone(workOrder.tenantPhone)}</p>}
                                 {workOrder.tenantEmail && <p>{workOrder.tenantEmail}</p>}
                             </>
                         ) : (

@@ -1,5 +1,6 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
+import { formatPhone } from "@/lib/phone";
 import OrganizationContactForm from "./OrganizationContactForm";
 
 export default async function Settings() {
@@ -26,7 +27,7 @@ export default async function Settings() {
                 </p>
                 <OrganizationContactForm
                     name={organization.name}
-                    phone={organization.phone}
+                    phone={organization.phone ? formatPhone(organization.phone) : null}
                     email={organization.email}
                 />
             </section>

@@ -11,6 +11,7 @@ import ArchiveControls from "./ArchiveControls";
 import DeleteButton from "@/components/DeleteButton";
 import { deleteWorkOrder } from "../actions";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
+import { formatPhone } from "@/lib/phone";
 
 export default async function WorkOrderDetail({
     params,
@@ -133,7 +134,7 @@ export default async function WorkOrderDetail({
                         title={workOrder.contractorName ?? "Not assigned"}
                         href={workOrder.contractorId ? `/contacts/${workOrder.contractorId}` : undefined}
                     >
-                        {workOrder.contractorPhone && <p>{workOrder.contractorPhone}</p>}
+                        {workOrder.contractorPhone && <p>{formatPhone(workOrder.contractorPhone)}</p>}
                         {workOrder.contractorEmail && <p>{workOrder.contractorEmail}</p>}
                     </InfoCard>
 
@@ -142,7 +143,7 @@ export default async function WorkOrderDetail({
                         title={workOrder.tenantName ?? "Not assigned"}
                         href={workOrder.tenantId ? `/contacts/${workOrder.tenantId}` : undefined}
                     >
-                        {workOrder.tenantPhone && <p>{workOrder.tenantPhone}</p>}
+                        {workOrder.tenantPhone && <p>{formatPhone(workOrder.tenantPhone)}</p>}
                         {workOrder.tenantEmail && <p>{workOrder.tenantEmail}</p>}
                     </InfoCard>
                 </div>
