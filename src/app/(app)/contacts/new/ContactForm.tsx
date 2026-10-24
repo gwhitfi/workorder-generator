@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { createContact } from "../actions";
 import type { ContactFormState } from "../schemas";
-import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
+import { CONTACT_TYPE_LABELS, US_STATE_LABELS } from "@/lib/defaults";
 
 type UnitOption = { id: string; name: string };
 type PropertyOption = {
@@ -56,10 +56,16 @@ export default function ContactForm({
     const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
 
     return (
-        <form action={formAction} autoComplete="off" className="flex flex-col gap-4">
+        <form action={formAction} autoComplete="off" noValidate className="flex flex-col gap-4">
             <label className={labelClass}>
                 Display Name
-                <input name="displayName" required defaultValue={value("displayName")} className={inputClass} />
+                <input
+                    name="displayName"
+                    required
+                    maxLength={100}
+                    defaultValue={value("displayName")}
+                    className={inputClass}
+                />
                 <FieldError errors={state.errors?.displayName} />
             </label>
             <label className={labelClass}>
@@ -78,6 +84,7 @@ export default function ContactForm({
                         </option>
                     ))}
                 </select>
+                <FieldError errors={state.errors?.contactType} />
                 {lockType && (
                     <>
                         <input type="hidden" name="contactType" value={contactType} />
@@ -90,12 +97,12 @@ export default function ContactForm({
             <div className="grid grid-cols-2 gap-3">
                 <label className={labelClass}>
                     First Name
-                    <input name="firstName" defaultValue={value("firstName")} className={inputClass} />
+                    <input name="firstName" maxLength={50} defaultValue={value("firstName")} className={inputClass} />
                     <FieldError errors={state.errors?.firstName} />
                 </label>
                 <label className={labelClass}>
                     Last Name
-                    <input name="lastName" defaultValue={value("lastName")} className={inputClass} />
+                    <input name="lastName" maxLength={50} defaultValue={value("lastName")} className={inputClass} />
                     <FieldError errors={state.errors?.lastName} />
                 </label>
             </div>
@@ -103,7 +110,7 @@ export default function ContactForm({
                 <div className="flex flex-col gap-4">
                     <label className={labelClass}>
                         Company
-                        <input name="company" defaultValue={value("company")} className={inputClass} />
+                        <input name="company" maxLength={100} defaultValue={value("company")} className={inputClass} />
                         <FieldError errors={state.errors?.company} />
                     </label>
                     <label className={labelClass}>
@@ -125,7 +132,14 @@ export default function ContactForm({
 
                         <label className="col-span-1 block">
                             <span className={labelClass}>State</span>
-                            <input name="state" maxLength={2} defaultValue={value("state")} className={inputClass} />
+                            <select name="state" defaultValue={value("state")} className={inputClass}>
+                                <option value="">—</option>
+                                {Object.entries(US_STATE_LABELS).map(([code, name]) => (
+                                    <option key={code} value={code} title={name}>
+                                        {code}
+                                    </option>
+                                ))}
+                            </select>
                             <FieldError errors={state.errors?.state} />
                         </label>
 
@@ -155,6 +169,7 @@ export default function ContactForm({
                                 </option>
                             ))}
                         </select>
+                        <FieldError errors={state.errors?.propertyId} />
                     </label>
 
                     {units.length > 1 && (
@@ -177,6 +192,7 @@ export default function ContactForm({
                                     </option>
                                 ))}
                             </select>
+                            <FieldError errors={state.errors?.unitId} />
                         </label>
                     )}
                     {units.length === 1 && <input type="hidden" name="unitId" value={units[0].id} />}
@@ -195,9 +211,10 @@ export default function ContactForm({
                 </label>
             </div>
             <label className={labelClass}>
-                Notes <textarea name="notes" defaultValue={value("notes")} className={inputClass} />
+                Notes <textarea name="notes" maxLength={5000} defaultValue={value("notes")} className={inputClass} />
                 <FieldError errors={state.errors?.notes} />
             </label>
+            {state.error && <p className="text-sm text-red-400">{state.error}</p>}
             <button
                 type="submit"
                 disabled={pending}

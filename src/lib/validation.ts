@@ -1,13 +1,16 @@
 import { z } from "zod";
+import { US_STATE_LABELS } from "./defaults";
 
 const PHONE_MESSAGE = "Enter a 10-digit phone number";
 
 const digitsOnly = (val: string) => val.replace(/\D/g, "");
 
-export const email = z.string().trim().max(254).pipe(z.email());
+export const email = z.string().trim().min(1, "Enter an email").max(254).pipe(z.email());
 
 export const phone = z
     .string()
+    .trim()
+    .min(1, "Enter a phone number")
     .transform(digitsOnly)
     .pipe(z.string().regex(/^1?\d{10}$/, PHONE_MESSAGE))
     .transform((digits) => digits.slice(-10));
@@ -28,3 +31,11 @@ export const optionalPhone = z
     .pipe(z.string().regex(/^(1?\d{10})?$/, PHONE_MESSAGE))
     .optional()
     .transform((digits) => (digits ? digits.slice(-10) : null));
+
+export const optionalState = z
+    .string()
+    .trim()
+    .toUpperCase()
+    .refine((val) => val === "" || Object.hasOwn(US_STATE_LABELS, val), "Choose a US state")
+    .optional()
+    .transform((val) => val || null);

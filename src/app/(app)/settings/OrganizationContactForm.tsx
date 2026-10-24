@@ -20,7 +20,7 @@ export default function OrganizationContactForm({
     const values = state.values;
 
     return (
-        <form action={formAction} className="flex flex-col gap-4">
+        <form action={formAction} noValidate className="flex flex-col gap-4">
             <label className={labelClass}>
                 Organization Name
                 <input name="name" defaultValue={values?.name ?? name} required className={inputClass} />

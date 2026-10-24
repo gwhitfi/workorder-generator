@@ -37,7 +37,13 @@ async function readContactForm(formData: FormData, organizationId: string) {
         const unit = await prisma.unit.findFirst({
             where: { id: unitId, organizationId, archived: false, property: { archived: false } },
         });
-        if (!unit) throw new Error("Invalid unit");
+        if (!unit) {
+            const state: ContactFormState = {
+                errors: { propertyId: ["That unit is no longer available. Choose another."] },
+                values: submittedValues(formData),
+            };
+            return { ok: false as const, state };
+        }
     }
 
     return { ok: true as const, fields: { ...fields, unitId } };
@@ -70,6 +76,14 @@ export async function createContact(prevState: ContactFormState, formData: FormD
     const form = await readContactForm(formData, result.organization.id);
     if (!form.ok) return form.state;
 
+    // New tenants need a unit; editing allows "No property".
+    if (form.fields.contactType === "TENANT" && !form.fields.unitId) {
+        const errors = formData.get("propertyId")
+            ? { unitId: ["Choose a unit"] }
+            : { propertyId: ["Choose a property"] };
+        return { errors, values: submittedValues(formData) };
+    }
+
     await prisma.contact.create({
         data: { organizationId: result.organization.id, ...form.fields },
     });
@@ -83,14 +97,19 @@ export async function updateContact(
     formData: FormData,
 ): Promise<ContactFormState> {
     const contact = await findContact(contactId);
-    if (contact.archived) throw new Error("Restore this contact before editing it");
+    if (contact.archived) {
+        return { error: "Restore this contact before editing it.", values: submittedValues(formData) };
+    }
 
     const form = await readContactForm(formData, contact.organizationId);
     if (!form.ok) return form.state;
     const fields = form.fields;
 
     if (fields.contactType !== contact.contactType && (await workOrderCount(contactId)) > 0) {
-        throw new Error("This contact is on work orders, so its type can't change");
+        return {
+            errors: { contactType: ["This contact is on work orders, so its type can't change."] },
+            values: submittedValues(formData),
+        };
     }
 
     const snapshot = { name: fields.displayName, phone: fields.phone, email: fields.email };

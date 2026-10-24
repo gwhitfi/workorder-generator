@@ -59,7 +59,7 @@ export default async function EditContact({ params }: { params: Promise<{ id: st
                     addressLine1: contact.addressLine1 ?? "",
                     addressLine2: contact.addressLine2 ?? "",
                     city: contact.city ?? "",
-                    state: contact.state ?? "",
+                    state: contact.state?.trim().toUpperCase() ?? "",
                     zipCode: contact.zipCode ?? "",
                     phone: contact.phone ? formatPhone(contact.phone) : "",
                     email: contact.email ?? "",

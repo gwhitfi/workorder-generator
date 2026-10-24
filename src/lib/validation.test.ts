@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { optionalEmail, optionalPhone } from "./validation";
+import { optionalEmail, optionalPhone, optionalState } from "./validation";
 
 describe("optionalPhone", () => {
     it("turns empty or missing into null", () => {
@@ -35,5 +35,27 @@ describe("optionalEmail", () => {
         const result = optionalEmail.safeParse("not-an-email");
         expect(result.success).toBe(false);
         expect(result.error?.issues[0].message).toBe("Invalid email address");
+    });
+});
+
+describe("optionalState", () => {
+    it("turns empty, blank or missing into null", () => {
+        expect(optionalState.parse("")).toBeNull();
+        expect(optionalState.parse("  ")).toBeNull();
+        expect(optionalState.parse(undefined)).toBeNull();
+    });
+
+    it("accepts a state code in any case", () => {
+        expect(optionalState.parse("SC")).toBe("SC");
+        expect(optionalState.parse(" sc ")).toBe("SC");
+        expect(optionalState.parse("DC")).toBe("DC");
+    });
+
+    it("rejects anything that isn't a US state code", () => {
+        const result = optionalState.safeParse("XX");
+        expect(result.success).toBe(false);
+        expect(result.error?.issues[0].message).toBe("Choose a US state");
+        expect(optionalState.safeParse("1").success).toBe(false);
+        expect(optionalState.safeParse("South Carolina").success).toBe(false);
     });
 });

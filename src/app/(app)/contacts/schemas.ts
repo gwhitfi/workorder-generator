@@ -1,6 +1,6 @@
 import { z } from "zod";
 import { ContactType } from "@/generated/prisma/enums";
-import { email, phone } from "@/lib/validation";
+import { email, optionalState, phone } from "@/lib/validation";
 
 const zip = z
     .string()
@@ -9,32 +9,36 @@ const zip = z
     .optional()
     .transform((val) => val || null);
 
+const tooLong = (max: number) => `Use ${max} characters or fewer`;
+
 const optionalText = (max: number) =>
     z
         .string()
         .trim()
-        .max(max)
+        .max(max, tooLong(max))
         .optional()
         .transform((val) => val || null);
 
 export const contactInput = z.object({
     contactType: z.enum(ContactType),
-    displayName: z.string().trim().min(1, "Enter a name").max(100),
-    firstName: optionalText(100),
-    lastName: optionalText(100),
+    displayName: z.string().trim().min(1, "Enter a name").max(100, tooLong(100)),
+    firstName: optionalText(50),
+    lastName: optionalText(50),
     company: optionalText(100),
     addressLine1: optionalText(200),
     addressLine2: optionalText(200),
     city: optionalText(100),
-    state: optionalText(2),
+    state: optionalState,
     zipCode: zip,
     email,
     phone,
-    notes: optionalText(2000),
+    notes: optionalText(5000),
     unitId: optionalText(100),
 });
 
 export type ContactFormState = {
-    errors?: Partial<Record<keyof z.input<typeof contactInput>, string[]>>;
+    error?: string;
+    // propertyId isn't saved, but a tenant's missing property is reported against it.
+    errors?: Partial<Record<keyof z.input<typeof contactInput> | "propertyId", string[]>>;
     values?: Record<string, string>;
 };
