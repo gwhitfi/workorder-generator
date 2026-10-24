@@ -1,7 +1,8 @@
 "use client";
-import { useState } from "react";
+import { useActionState, useState } from "react";
 import { createProperty } from "../actions";
-import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
+import { MAX_UNIT_NAME_LENGTH, type PropertyFormState } from "../schemas";
+import { MULTI_UNIT, PROPERTY_TYPE_LABELS, US_STATE_LABELS } from "@/lib/defaults";
 
 export type PropertyFormValues = {
     displayName: string;
@@ -21,10 +22,13 @@ export default function PropertyForm({
     returnTo,
 }: {
     initial?: PropertyFormValues;
-    action?: (formData: FormData) => void | Promise<void>;
+    action?: (state: PropertyFormState, formData: FormData) => Promise<PropertyFormState>;
     submitLabel?: string;
     returnTo?: string;
 } = {}) {
+    const [state, formAction, pending] = useActionState(action, {});
+    // React resets the form after each submit, so refill it with what was sent.
+    const value = (name: keyof PropertyFormValues) => state.values?.[name] ?? initial?.[name];
     const editing = !!initial;
     type Unit = { name: string };
 
@@ -56,10 +60,17 @@ export default function PropertyForm({
         setUnits(units.filter((_, i) => i !== index));
     }
     return (
-        <form action={action} autoComplete="off" className="flex flex-col gap-4">
+        <form action={formAction} autoComplete="off" noValidate className="flex flex-col gap-4">
             <label className={labelClass}>
                 Display Name
-                <input name="displayName" required defaultValue={initial?.displayName} className={inputClass} />
+                <input
+                    name="displayName"
+                    required
+                    maxLength={100}
+                    defaultValue={value("displayName")}
+                    className={inputClass}
+                />
+                <FieldError errors={state.errors?.displayName} />
             </label>
             <label className={labelClass}>
                 Property Type
@@ -76,33 +87,58 @@ export default function PropertyForm({
                         </option>
                     ))}
                 </select>
+                <FieldError errors={state.errors?.propertyType} />
             </label>
             <label className={labelClass}>
                 Address
-                <input name="addressLine1" required defaultValue={initial?.addressLine1} className={inputClass} />
+                <input
+                    name="addressLine1"
+                    required
+                    maxLength={200}
+                    defaultValue={value("addressLine1")}
+                    className={inputClass}
+                />
+                <FieldError errors={state.errors?.addressLine1} />
             </label>
             <label className={labelClass}>
                 Address (cont)
-                <input name="addressLine2" defaultValue={initial?.addressLine2} className={inputClass} />
+                <input
+                    name="addressLine2"
+                    maxLength={200}
+                    defaultValue={value("addressLine2")}
+                    className={inputClass}
+                />
+                <FieldError errors={state.errors?.addressLine2} />
             </label>
             <div className="grid grid-cols-6 gap-3">
                 <label className="col-span-3 block">
                     <span className={labelClass}>City</span>
-                    <input name="city" required defaultValue={initial?.city} className={inputClass} />
+                    <input name="city" required maxLength={100} defaultValue={value("city")} className={inputClass} />
+                    <FieldError errors={state.errors?.city} />
                 </label>
 
                 <label className="col-span-1 block">
                     <span className={labelClass}>State</span>
-                    <input name="state" required maxLength={2} defaultValue={initial?.state} className={inputClass} />
+                    <select name="state" required defaultValue={value("state")} className={inputClass}>
+                        <option value="">—</option>
+                        {Object.entries(US_STATE_LABELS).map(([code, name]) => (
+                            <option key={code} value={code} title={name}>
+                                {code}
+                            </option>
+                        ))}
+                    </select>
+                    <FieldError errors={state.errors?.state} />
                 </label>
 
                 <label className="col-span-2 block">
                     <span className={labelClass}>Zip code</span>
-                    <input name="zipCode" required defaultValue={initial?.zipCode} className={inputClass} />
+                    <input name="zipCode" required defaultValue={value("zipCode")} className={inputClass} />
+                    <FieldError errors={state.errors?.zipCode} />
                 </label>
             </div>
             <label className={labelClass}>
-                Notes <textarea name="notes" defaultValue={initial?.notes} className={inputClass} />
+                Notes <textarea name="notes" maxLength={5000} defaultValue={value("notes")} className={inputClass} />
+                <FieldError errors={state.errors?.notes} />
             </label>
             {showUnits && !editing && (
                 <div className="flex flex-col gap-2">
@@ -123,9 +159,11 @@ export default function PropertyForm({
                             }
                         }}
                         placeholder="Unit A, Unit B, Apt 101, etc."
+                        maxLength={MAX_UNIT_NAME_LENGTH}
                         className={inputClass}
                     />
                     {unitError && <p className="text-sm text-red-400">{unitError}</p>}
+                    <FieldError errors={state.errors?.units} />
                     <button
                         type="button"
                         onClick={addUnit}
@@ -157,12 +195,19 @@ export default function PropertyForm({
                 </div>
             )}
             {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
+            {state.error && <p className="text-sm text-red-400">{state.error}</p>}
             <button
                 type="submit"
-                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer"
+                disabled={pending}
+                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer disabled:opacity-60"
             >
                 {submitLabel}
             </button>
         </form>
     );
+}
+
+function FieldError({ errors }: { errors?: string[] }) {
+    if (!errors?.length) return null;
+    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
 }

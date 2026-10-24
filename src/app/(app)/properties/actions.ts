@@ -1,31 +1,51 @@
 "use server";
-import { PropertyType } from "@/generated/prisma/enums";
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
+import { z } from "zod";
 import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
+import { propertyInput, unitsInput, type PropertyFormState } from "./schemas";
 
-export async function createProperty(formData: FormData) {
-    type UnitInput = { name: string };
+// Sent back with errors so the form can refill what the user typed.
+function submittedValues(formData: FormData) {
+    const values: Record<string, string> = {};
+    for (const key of [...Object.keys(propertyInput.shape), "units"]) {
+        const value = formData.get(key);
+        if (typeof value === "string") values[key] = value;
+    }
+    return values;
+}
+
+function readPropertyForm(formData: FormData) {
+    const parsed = propertyInput.safeParse(Object.fromEntries(formData));
+    if (!parsed.success) {
+        const state: PropertyFormState = {
+            errors: z.flattenError(parsed.error).fieldErrors,
+            values: submittedValues(formData),
+        };
+        return { ok: false as const, state };
+    }
+    return { ok: true as const, fields: parsed.data };
+}
+
+export async function createProperty(prevState: PropertyFormState, formData: FormData): Promise<PropertyFormState> {
     const result = await getCurrentUser();
 
     if (result.state !== "ready") {
         throw new Error("Not authorized");
     }
 
-    const displayName = formData.get("displayName") as string;
-    const propertyType = formData.get("propertyType") as PropertyType;
-    const addressLine1 = formData.get("addressLine1") as string;
-    const addressLine2 = (formData.get("addressLine2") as string) || null;
-    const city = formData.get("city") as string;
-    const zipCode = formData.get("zipCode") as string;
-    const state = formData.get("state") as string;
-    const notes = (formData.get("notes") as string) || null;
-    const unitsJson = formData.get("units") as string;
-    const units: UnitInput[] = unitsJson ? JSON.parse(unitsJson) : [];
+    const form = readPropertyForm(formData);
+    const parsedUnits = unitsInput.safeParse(formData.get("units") ?? undefined);
+    if (!form.ok || !parsedUnits.success) {
+        const errors = form.ok ? {} : form.state.errors;
+        const units = parsedUnits.success ? undefined : [parsedUnits.error.issues[0].message];
+        return { errors: { ...errors, units }, values: submittedValues(formData) };
+    }
+    const units = parsedUnits.data;
 
     const unitsToCreate =
         units.length > 0
@@ -40,14 +60,7 @@ export async function createProperty(formData: FormData) {
     const property = await prisma.property.create({
         data: {
             organizationId: result.organization.id,
-            displayName,
-            propertyType,
-            addressLine1,
-            addressLine2,
-            city,
-            zipCode,
-            state,
-            notes,
+            ...form.fields,
             units: {
                 create: unitsToCreate,
             },
@@ -73,23 +86,20 @@ async function findProperty(propertyId: string) {
     return { property, organization: result.organization };
 }
 
-export async function updateProperty(propertyId: string, formData: FormData) {
+export async function updateProperty(
+    propertyId: string,
+    prevState: PropertyFormState,
+    formData: FormData,
+): Promise<PropertyFormState> {
     const { property } = await findProperty(propertyId);
-    if (property.archived) throw new Error("Archived properties can't be edited");
+    if (property.archived) {
+        return { error: "Restore this property before editing it.", values: submittedValues(formData) };
+    }
 
-    await prisma.property.update({
-        where: { id: propertyId },
-        data: {
-            displayName: formData.get("displayName") as string,
-            propertyType: formData.get("propertyType") as PropertyType,
-            addressLine1: formData.get("addressLine1") as string,
-            addressLine2: (formData.get("addressLine2") as string) || null,
-            city: formData.get("city") as string,
-            state: formData.get("state") as string,
-            zipCode: formData.get("zipCode") as string,
-            notes: (formData.get("notes") as string) || null,
-        },
-    });
+    const form = readPropertyForm(formData);
+    if (!form.ok) return form.state;
+
+    await prisma.property.update({ where: { id: propertyId }, data: form.fields });
 
     revalidatePath("/properties");
     revalidatePath(`/properties/${propertyId}`);

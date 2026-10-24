@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { optionalEmail, optionalPhone, optionalState } from "./validation";
+import { optionalEmail, optionalPhone, optionalState, optionalZip, state, zip } from "./validation";
 
 describe("optionalPhone", () => {
     it("turns empty or missing into null", () => {
@@ -57,5 +57,52 @@ describe("optionalState", () => {
         expect(result.error?.issues[0].message).toBe("Choose a US state");
         expect(optionalState.safeParse("1").success).toBe(false);
         expect(optionalState.safeParse("South Carolina").success).toBe(false);
+    });
+});
+
+describe("state", () => {
+    it("accepts a state code in any case", () => {
+        expect(state.parse(" sc ")).toBe("SC");
+    });
+
+    it("reports only the blank message when empty", () => {
+        const result = state.safeParse("  ");
+        expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Choose a state"]);
+    });
+
+    it("rejects anything that isn't a US state code", () => {
+        const result = state.safeParse("XX");
+        expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Choose a US state"]);
+    });
+});
+
+describe("zip", () => {
+    it("accepts 5 digits or ZIP+4", () => {
+        expect(zip.parse(" 29401 ")).toBe("29401");
+        expect(zip.parse("29401-1234")).toBe("29401-1234");
+    });
+
+    it("reports only the blank message when empty", () => {
+        const result = zip.safeParse("");
+        expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Enter a zip code"]);
+    });
+
+    it("rejects a malformed zip", () => {
+        for (const bad of ["2940", "294011", "29401-12", "abcde"]) {
+            const result = zip.safeParse(bad);
+            expect(result.error?.issues.map((issue) => issue.message)).toEqual(["Enter a 5-digit zip code"]);
+        }
+    });
+});
+
+describe("optionalZip", () => {
+    it("turns empty, blank or missing into null", () => {
+        expect(optionalZip.parse("")).toBeNull();
+        expect(optionalZip.parse("  ")).toBeNull();
+        expect(optionalZip.parse(undefined)).toBeNull();
+    });
+
+    it("rejects a malformed zip", () => {
+        expect(optionalZip.safeParse("2940").success).toBe(false);
     });
 });

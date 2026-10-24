@@ -1,23 +1,6 @@
 import { z } from "zod";
 import { ContactType } from "@/generated/prisma/enums";
-import { email, optionalState, phone } from "@/lib/validation";
-
-const zip = z
-    .string()
-    .trim()
-    .regex(/^(\d{5}(-\d{4})?)?$/, "Enter a 5-digit zip code")
-    .optional()
-    .transform((val) => val || null);
-
-const tooLong = (max: number) => `Use ${max} characters or fewer`;
-
-const optionalText = (max: number) =>
-    z
-        .string()
-        .trim()
-        .max(max, tooLong(max))
-        .optional()
-        .transform((val) => val || null);
+import { email, optionalState, optionalText, optionalZip, phone, tooLong } from "@/lib/validation";
 
 export const contactInput = z.object({
     contactType: z.enum(ContactType),
@@ -29,7 +12,7 @@ export const contactInput = z.object({
     addressLine2: optionalText(200),
     city: optionalText(100),
     state: optionalState,
-    zipCode: zip,
+    zipCode: optionalZip,
     email,
     phone,
     notes: optionalText(5000),

@@ -35,7 +35,7 @@ export default async function EditProperty({ params }: { params: Promise<{ id: s
                     addressLine1: property.addressLine1,
                     addressLine2: property.addressLine2 ?? "",
                     city: property.city,
-                    state: property.state,
+                    state: property.state.trim().toUpperCase(),
                     zipCode: property.zipCode,
                     notes: property.notes ?? "",
                 }}
