@@ -5,7 +5,7 @@ import { useRef, useState } from "react";
 type Result = { ok: true } | { ok: false; error: string } | void;
 
 const outlineButton =
-    "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 // The server action gets the typed text too and refuses anything but "yes".
 export default function DeleteButton({
@@ -13,7 +13,7 @@ export default function DeleteButton({
     label = "Delete permanently",
     onDelete,
     archiveInstead,
-    triggerClassName = "shrink-0 rounded-md px-4 py-2 text-sm text-neutral-500 hover:text-red-400 hover:cursor-pointer",
+    triggerClassName = "shrink-0 rounded-md px-4 py-2 text-sm text-subtle hover:text-danger hover:cursor-pointer",
     children,
 }: {
     itemName: string;
@@ -63,16 +63,16 @@ export default function DeleteButton({
                 onClick={(e) => {
                     if (e.target === dialogRef.current && !pending) dialogRef.current.close();
                 }}
-                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-red-900 bg-neutral-900 p-0 text-neutral-100 backdrop:bg-black/70"
+                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-danger/40 bg-surface p-0 text-foreground backdrop:bg-black/70"
             >
                 <div className="p-5">
                     <h2 className="mb-2 text-lg font-semibold">Delete &ldquo;{itemName}&rdquo; permanently?</h2>
-                    <p className="mb-3 text-sm font-medium text-red-400">This cannot be undone.</p>
+                    <p className="mb-3 text-sm font-medium text-danger">This cannot be undone.</p>
 
-                    {children && <div className="flex flex-col gap-2 text-sm text-neutral-300">{children}</div>}
+                    {children && <div className="flex flex-col gap-2 text-sm text-secondary">{children}</div>}
 
                     {archiveInstead && (
-                        <p className="mt-3 text-sm text-neutral-400">
+                        <p className="mt-3 text-sm text-muted">
                             Want to keep the history?{" "}
                             <button
                                 type="button"
@@ -80,15 +80,15 @@ export default function DeleteButton({
                                     dialogRef.current?.close();
                                     archiveInstead();
                                 }}
-                                className="text-neutral-100 underline hover:cursor-pointer"
+                                className="text-foreground underline hover:cursor-pointer"
                             >
                                 Archive instead
                             </button>
                         </p>
                     )}
 
-                    <label className="mt-4 block text-sm text-neutral-300">
-                        Type <strong className="text-neutral-100">yes</strong> to confirm
+                    <label className="mt-4 block text-sm text-secondary">
+                        Type <strong className="text-foreground">yes</strong> to confirm
                         <input
                             value={typed}
                             onChange={(e) => setTyped(e.target.value)}
@@ -96,11 +96,11 @@ export default function DeleteButton({
                                 if (e.key === "Enter" && confirmed && !pending) handleDelete();
                             }}
                             autoComplete="off"
-                            className="mt-1 w-full rounded-md border border-neutral-700 bg-neutral-950 px-3 py-2 text-sm text-neutral-100 focus:border-red-500 focus:outline-none"
+                            className="mt-1 w-full rounded-md border border-line-strong bg-background px-3 py-2 text-sm text-foreground focus:border-danger focus:outline-none"
                         />
                     </label>
 
-                    {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+                    {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
                     <div className="mt-5 flex flex-wrap justify-end gap-2">
                         <button
@@ -115,7 +115,7 @@ export default function DeleteButton({
                             type="button"
                             onClick={handleDelete}
                             disabled={!confirmed || pending}
-                            className="shrink-0 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                            className="shrink-0 rounded-md bg-danger-strong px-4 py-2 text-sm font-medium text-white hover:bg-danger-strong/85 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         >
                             {pending ? "Deleting..." : "Delete forever"}
                         </button>

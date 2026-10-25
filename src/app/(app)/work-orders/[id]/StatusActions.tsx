@@ -48,16 +48,16 @@ export default function StatusActions({
     const canEmail = !!contractor?.email;
     const emailControls = confirmingEmail ? (
         <>
-            <span className="text-sm text-neutral-300">Email this work order to {contractor?.email}?</span>
+            <span className="text-sm text-secondary">Email this work order to {contractor?.email}?</span>
             <button
-                className="shrink-0 rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white hover:cursor-pointer disabled:opacity-40"
+                className="shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover hover:cursor-pointer disabled:opacity-40"
                 onClick={handleEmail}
                 disabled={pending}
             >
                 {pending ? "Sending..." : "Send"}
             </button>
             <button
-                className="shrink-0 px-2 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                className="shrink-0 px-2 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                 onClick={() => setConfirmingEmail(false)}
                 disabled={pending}
             >
@@ -68,8 +68,8 @@ export default function StatusActions({
         <button
             className={
                 status === "DRAFT"
-                    ? "shrink-0 rounded-md bg-neutral-100 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-white hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
-                    : "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                    ? "shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                    : "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
             }
             onClick={() => {
                 setSentTo(null);
@@ -82,8 +82,8 @@ export default function StatusActions({
     );
 
     const missingEmailHint = contractor && !contractor.email && (
-        <span className="text-sm text-neutral-500">
-            <Link href={`/contacts/${contractor.id}`} className="underline hover:text-neutral-100">
+        <span className="text-sm text-subtle">
+            <Link href={`/contacts/${contractor.id}`} className="underline hover:text-foreground">
                 Add an email to {contractor.name}
             </Link>{" "}
             to send by email.
@@ -109,13 +109,13 @@ export default function StatusActions({
                 <>
                     {hasContractor && emailControls}
                     <button
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                        className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => sendWorkOrder(workOrderId, "PRINT" as DeliveryMethod))}
                         disabled={pending || !hasContractor}
                     >
                         Mark as sent
                     </button>
-                    {!hasContractor && <span className="text-sm text-neutral-500">Assign a contractor to send.</span>}
+                    {!hasContractor && <span className="text-sm text-subtle">Assign a contractor to send.</span>}
                     {missingEmailHint}
                 </>
             )}
@@ -123,7 +123,7 @@ export default function StatusActions({
                 <>
                     {emailControls}
                     <button
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                        className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => markWorkOrderCompleted(workOrderId))}
                         disabled={pending}
                     >
@@ -131,21 +131,21 @@ export default function StatusActions({
                     </button>
                     {confirmingCancel ? (
                         <span className="flex flex-wrap items-center gap-2 text-sm">
-                            <span className="text-neutral-300">
+                            <span className="text-secondary">
                                 Cancel this work order?{" "}
                                 {contractor?.email
                                     ? `${contractor.name} will be emailed and their link will stop working.`
                                     : "The contractor link will stop working."}
                             </span>
                             <button
-                                className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"
+                                className="text-danger hover:text-danger/80 hover:cursor-pointer disabled:opacity-40"
                                 onClick={() => run(() => cancelWorkOrder(workOrderId))}
                                 disabled={pending}
                             >
                                 {pending ? "Cancelling..." : "Yes, cancel it"}
                             </button>
                             <button
-                                className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                                className="text-subtle hover:text-foreground hover:cursor-pointer"
                                 onClick={() => setConfirmingCancel(false)}
                                 disabled={pending}
                             >
@@ -154,7 +154,7 @@ export default function StatusActions({
                         </span>
                     ) : (
                         <button
-                            className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                            className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                             onClick={() => setConfirmingCancel(true)}
                             disabled={pending}
                         >
@@ -166,14 +166,14 @@ export default function StatusActions({
             {status === "COMPLETED" && (
                 <>
                     <button
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                        className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => closeWorkOrder(workOrderId))}
                         disabled={pending}
                     >
                         Close
                     </button>
                     <button
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                        className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         onClick={() => run(() => reopenWorkOrder(workOrderId))}
                         disabled={pending}
                     >
@@ -183,7 +183,7 @@ export default function StatusActions({
             )}
             {(status === "CLOSED" || status === "CANCELLED") && (
                 <button
-                    className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                    className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                     onClick={() => run(() => reopenWorkOrder(workOrderId))}
                     disabled={pending}
                 >
@@ -191,8 +191,8 @@ export default function StatusActions({
                 </button>
             )}
             {(status === "SENT" || status === "IN_PROGRESS") && missingEmailHint}
-            {sentTo && <p className="w-full text-sm text-green-400">Sent to {sentTo}.</p>}
-            {error && <p className="w-full text-sm text-red-400">{error}</p>}
+            {sentTo && <p className="w-full text-sm text-success">Sent to {sentTo}.</p>}
+            {error && <p className="w-full text-sm text-danger">{error}</p>}
         </div>
     );
 }

@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import InfoCard from "@/components/InfoCard";
 import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
@@ -65,10 +65,10 @@ export default async function WorkOrderDetail({
     const canEdit = !readOnly;
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
             {workOrder.archived && (
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3">
-                    <p className="text-sm text-neutral-300">
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface px-4 py-3">
+                    <p className="text-sm text-secondary">
                         This work order is archived. It&apos;s hidden from lists and the contractor link is disabled.
                     </p>
                     <ArchiveControls workOrderId={workOrder.id} archived />
@@ -76,15 +76,15 @@ export default async function WorkOrderDetail({
             )}
             <div className="mb-8">
                 <div className="mb-1 flex items-center gap-3">
-                    <span className="text-sm font-medium text-neutral-400">#{workOrder.jobNumber}</span>
-                    <span className="rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
+                    <span className="text-sm font-medium text-muted">#{workOrder.jobNumber}</span>
+                    <span className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_COLORS[workOrder.status]}`}>
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">Due by {formatDueDate(workOrder.dueDate)}</span>
+                        <span className="text-sm text-subtle">Due by {formatDueDate(workOrder.dueDate)}</span>
                     )}
                     {lineItems.length > 0 && (
-                        <span className="text-sm text-neutral-500">
+                        <span className="text-sm text-subtle">
                             {doneCount} of {lineItems.length} items done
                         </span>
                     )}
@@ -95,7 +95,7 @@ export default async function WorkOrderDetail({
                     {canEdit && (
                         <Link
                             href={`/work-orders/${workOrder.id}/edit`}
-                            className="mt-1 shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                            className="mt-1 shrink-0 text-sm text-muted hover:text-foreground"
                         >
                             Edit
                         </Link>
@@ -108,10 +108,10 @@ export default async function WorkOrderDetail({
                         aria-valuemin={0}
                         aria-valuemax={lineItems.length}
                         aria-valuenow={doneCount}
-                        className="mb-6 h-1 overflow-hidden rounded-full bg-neutral-800"
+                        className="mb-6 h-1 overflow-hidden rounded-full bg-line"
                     >
                         <div
-                            className="h-full rounded-full bg-green-600"
+                            className="h-full rounded-full bg-success"
                             style={{ width: `${(doneCount / lineItems.length) * 100}%` }}
                         />
                     </div>
@@ -153,9 +153,9 @@ export default async function WorkOrderDetail({
             </div>
 
             {cancelled && (
-                <section className="mb-8 rounded-lg border border-neutral-700 bg-neutral-900 p-4">
-                    <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Cancelled</p>
-                    <p className="text-sm text-neutral-300">
+                <section className="mb-8 rounded-lg border border-line-strong bg-surface p-4">
+                    <p className="mb-1 text-xs uppercase tracking-wide text-subtle">Cancelled</p>
+                    <p className="text-sm text-secondary">
                         {workOrder.cancelledAt ? `Cancelled on ${formatTimestamp(workOrder.cancelledAt)}` : "Cancelled"}
                         {workOrder.cancelReason ? ` — ${workOrder.cancelReason}.` : "."}
                     </p>
@@ -166,12 +166,12 @@ export default async function WorkOrderDetail({
                 <section
                     className={`mb-8 rounded-lg border p-4 ${
                         workOrder.status === "CLOSED"
-                            ? "border-blue-800 bg-blue-950/30"
-                            : "border-green-800 bg-green-950/30"
+                            ? "border-status-closed/40 bg-status-closed/10"
+                            : "border-status-completed/40 bg-status-completed/10"
                     }`}
                 >
-                    <p className="mb-1 text-xs uppercase tracking-wide text-neutral-500">Completion</p>
-                    <p className="text-sm text-neutral-300">
+                    <p className="mb-1 text-xs uppercase tracking-wide text-subtle">Completion</p>
+                    <p className="text-sm text-secondary">
                         {workOrder.completedAt
                             ? `Marked complete on ${formatTimestamp(workOrder.completedAt)}.`
                             : "Marked complete."}
@@ -180,21 +180,21 @@ export default async function WorkOrderDetail({
                             ` Closed on ${formatTimestamp(workOrder.closedAt)}.`}
                     </p>
                     {lineItems.length - doneCount > 0 && (
-                        <p className="mt-1 text-sm text-amber-400">
+                        <p className="mt-1 text-sm text-warning">
                             {lineItems.length - doneCount}{" "}
                             {lineItems.length - doneCount === 1 ? "item was" : "items were"} not checked off.
                         </p>
                     )}
-                    <p className="mt-3 text-xs uppercase tracking-wide text-neutral-500">Completion notes</p>
-                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-neutral-300">
-                        {workOrder.completionNotes ?? <span className="text-neutral-500">No completion notes.</span>}
+                    <p className="mt-3 text-xs uppercase tracking-wide text-subtle">Completion notes</p>
+                    <p className="mt-1 whitespace-pre-line text-sm leading-relaxed text-secondary">
+                        {workOrder.completionNotes ?? <span className="text-subtle">No completion notes.</span>}
                     </p>
                 </section>
             )}
 
             {!workOrder.archived && !cancelled && (
                 <section className="mb-8">
-                    <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">Contractor link</p>
+                    <p className="mb-2 text-xs uppercase tracking-wide text-subtle">Contractor link</p>
                     <ContractorLink
                         workOrderId={workOrder.id}
                         token={workOrder.publicToken}
@@ -204,8 +204,8 @@ export default async function WorkOrderDetail({
             )}
 
             {workOrder.notes && (
-                <div className="text-sm text-neutral-400 leading-relaxed">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
+                <div className="text-sm text-muted leading-relaxed">
+                    <p className="text-xs uppercase tracking-wide text-subtle">Notes</p>
                     <p className="mt-1">{workOrder.notes}</p>
                 </div>
             )}
@@ -216,9 +216,9 @@ export default async function WorkOrderDetail({
                 readOnly={readOnly}
                 notice={contractorWorking ? "The contractor can see changes immediately." : undefined}
             />
-            <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-neutral-800 pt-6">
+            <div className="mt-8 flex flex-wrap items-center gap-3 border-t border-line pt-6">
                 {contractorChanged && contractorWorking && workOrder.contractorName && (
-                    <p className="w-full rounded-md border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-300">
+                    <p className="w-full rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
                         Contractor changed — a new link was created and the old one no longer works. Email the work
                         order to {workOrder.contractorName}.
                     </p>
@@ -239,7 +239,7 @@ export default async function WorkOrderDetail({
                 )}
                 <Link
                     href={`/work-orders/${workOrder.id}/print`}
-                    className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800"
+                    className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover"
                 >
                     Print preview
                 </Link>
@@ -253,13 +253,13 @@ export default async function WorkOrderDetail({
                             deleted.
                         </p>
                         {contractorWorking && (
-                            <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                            <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger">
                                 This work order is still {WORK_ORDER_STATUS_LABELS[workOrder.status].toLowerCase()}.{" "}
                                 {workOrder.contractorName ?? "The contractor"} will be emailed that it&apos;s cancelled.
                             </p>
                         )}
                         {!workOrder.archived && (
-                            <p className="text-neutral-400">
+                            <p className="text-muted">
                                 To keep the history, go back and use <strong>Archive</strong> instead.
                             </p>
                         )}

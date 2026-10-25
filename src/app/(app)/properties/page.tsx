@@ -41,7 +41,7 @@ export default async function Properties({ searchParams }: { searchParams: Promi
     });
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
             <PageHeader
                 title="Properties"
                 subtitle={`${properties.length} ${showArchived ? "archived " : ""}${properties.length === 1 ? "property" : "properties"}`}
@@ -52,14 +52,14 @@ export default async function Properties({ searchParams }: { searchParams: Promi
             <div className="-mt-4 mb-4 flex justify-end">
                 <Link
                     href={showArchived ? "/properties" : "/properties?archived=1"}
-                    className="text-sm text-neutral-500 hover:text-neutral-100"
+                    className="text-sm text-subtle hover:text-foreground"
                 >
                     {showArchived ? "← Show active" : "Show archived"}
                 </Link>
             </div>
 
             {properties.length === 0 && showArchived ? (
-                <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                     No archived properties.
                 </p>
             ) : properties.length === 0 ? (
@@ -78,23 +78,23 @@ export default async function Properties({ searchParams }: { searchParams: Promi
                             label={`View ${property.displayName}`}
                             cols={COLS}
                         >
-                            <Cell className="basis-full truncate font-medium text-neutral-100">
+                            <Cell className="basis-full truncate font-medium text-foreground">
                                 {property.displayName}
                                 <Favorite show={property.favorite} />
                             </Cell>
-                            <Cell className="basis-full text-neutral-400">
+                            <Cell className="basis-full text-muted">
                                 <p className="truncate">{property.addressLine1}</p>
-                                <p className="truncate text-xs text-neutral-500">
+                                <p className="truncate text-xs text-subtle">
                                     {property.city}, {property.state} {property.zipCode}
                                 </p>
                             </Cell>
-                            <Cell className="text-neutral-400">{PROPERTY_TYPE_LABELS[property.propertyType]}</Cell>
-                            <Cell className="text-neutral-400">
+                            <Cell className="text-muted">{PROPERTY_TYPE_LABELS[property.propertyType]}</Cell>
+                            <Cell className="text-muted">
                                 {property._count.units > 1 && `${property._count.units} units`}
                             </Cell>
                             <Cell>
                                 {property._count.workOrders > 0 && (
-                                    <span className="rounded-full border border-amber-700 px-2 py-0.5 text-xs text-amber-400">
+                                    <span className="rounded-full border border-warning/50 px-2 py-0.5 text-xs text-warning">
                                         {property._count.workOrders} open
                                     </span>
                                 )}

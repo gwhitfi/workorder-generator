@@ -73,8 +73,8 @@ export default function WorkOrderForm({
                 {lockProperty ? (
                     <div className={labelClass}>
                         Property
-                        <p className="mt-1 py-2 text-sm text-neutral-100">{property?.displayName}</p>
-                        <p className="text-xs font-normal text-neutral-500">
+                        <p className="mt-1 py-2 text-sm text-foreground">{property?.displayName}</p>
+                        <p className="text-xs font-normal text-subtle">
                             To use a different property, create a new work order.
                         </p>
                     </div>
@@ -156,19 +156,19 @@ export default function WorkOrderForm({
                     name="tenant"
                     type="checkbox"
                     checked={contactTenant}
-                    className="h-4 w-4 rounded border-neutral-700 bg-neutral-900"
+                    className="h-4 w-4 rounded border-line-strong bg-surface"
                     onChange={(e) => setContactTenant(e.target.checked)}
                 />
             </label>
             {contactTenant &&
                 (tenant ? (
-                    <p className="text-sm text-neutral-400">Notification will go to {tenant.displayName}.</p>
+                    <p className="text-sm text-muted">Notification will go to {tenant.displayName}.</p>
                 ) : (
-                    <p className="text-sm text-amber-400">No tenant on file for this unit.</p>
+                    <p className="text-sm text-warning">No tenant on file for this unit.</p>
                 ))}
             <button
                 type="submit"
-                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover  hover:cursor-pointer"
             >
                 {submitLabel}
             </button>

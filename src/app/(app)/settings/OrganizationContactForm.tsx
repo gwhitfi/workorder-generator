@@ -2,9 +2,7 @@
 
 import { useActionState } from "react";
 import { updateOrganization } from "./actions";
-import { inputClass } from "@/lib/defaults";
-
-const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
+import { inputClass, labelClass } from "@/lib/defaults";
 
 export default function OrganizationContactForm({
     name,
@@ -48,12 +46,12 @@ export default function OrganizationContactForm({
                 <button
                     type="submit"
                     disabled={pending}
-                    className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100 hover:cursor-pointer disabled:opacity-40"
+                    className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover hover:cursor-pointer disabled:opacity-40"
                 >
                     {pending ? "Saving..." : "Save"}
                 </button>
-                {state.ok && <span className="text-sm text-green-400">Saved.</span>}
-                {state.error && <span className="text-sm text-red-400">{state.error}</span>}
+                {state.ok && <span className="text-sm text-success">Saved.</span>}
+                {state.error && <span className="text-sm text-danger">{state.error}</span>}
             </div>
         </form>
     );
@@ -61,5 +59,5 @@ export default function OrganizationContactForm({
 
 function FieldError({ errors }: { errors?: string[] }) {
     if (!errors?.length) return null;
-    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
+    return <p className="mt-1 text-sm font-normal text-danger">{errors[0]}</p>;
 }

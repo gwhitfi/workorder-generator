@@ -57,7 +57,7 @@ export default async function Dashboard({ organization }: { organization: Organi
     ];
 
     return (
-        <div className="text-neutral-100">
+        <div className="text-foreground">
             <Nav />
             <main className="mx-auto max-w-5xl px-4 py-10">
                 <PageHeader
@@ -76,26 +76,26 @@ export default async function Dashboard({ organization }: { organization: Organi
                         label="With contractor"
                         value={activeCount}
                         href="/work-orders?status=active"
-                        accent="text-amber-400"
+                        accent="text-status-sent"
                     />
                     <StatCard
                         label="To review"
                         value={completedCount}
                         href="/work-orders?status=completed"
-                        accent="text-green-400"
+                        accent="text-status-completed"
                     />
                     <StatCard
                         label="Overdue"
                         value={overdueCount}
                         href="/work-orders?status=overdue"
-                        accent="text-red-400"
+                        accent="text-danger"
                     />
                 </div>
 
                 {needsAttention.length > 0 && (
                     <section className="mb-10">
                         <SectionHeading title="Needs attention" />
-                        <p className="-mt-2 mb-3 text-sm text-neutral-500">
+                        <p className="-mt-2 mb-3 text-sm text-subtle">
                             Completed work waiting to be closed out, and open work past its due date.
                         </p>
                         <WorkOrderList workOrders={needsAttention} />
@@ -105,7 +105,7 @@ export default async function Dashboard({ organization }: { organization: Organi
                 <section>
                     <SectionHeading title="Recent activity" href="/work-orders" />
                     {recentActivity.length === 0 ? (
-                        <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                        <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                             {workOrderCount === 0 ? "No work orders yet." : "Nothing else recently."}
                         </p>
                     ) : (
@@ -122,7 +122,7 @@ function SectionHeading({ title, href }: { title: string; href?: string }) {
         <div className="mb-3 flex items-baseline justify-between">
             <h2 className="text-lg font-semibold">{title}</h2>
             {href && (
-                <Link href={href} className="text-sm text-neutral-400 hover:text-neutral-100">
+                <Link href={href} className="text-sm text-muted hover:text-foreground">
                     View all
                 </Link>
             )}
@@ -134,7 +134,7 @@ function StatCard({
     label,
     value,
     href,
-    accent = "text-neutral-100",
+    accent = "text-foreground",
 }: {
     label: string;
     value: number;
@@ -144,10 +144,10 @@ function StatCard({
     return (
         <Link
             href={href}
-            className="rounded-lg border border-neutral-800 bg-neutral-900 p-4 transition-colors hover:border-neutral-600"
+            className="rounded-lg border border-line bg-surface p-4 transition-colors hover:border-line-hover"
         >
-            <p className="text-sm text-neutral-400">{label}</p>
-            <p className={`mt-1 text-2xl font-semibold ${value > 0 ? accent : "text-neutral-600"}`}>{value}</p>
+            <p className="text-sm text-muted">{label}</p>
+            <p className={`mt-1 text-2xl font-semibold ${value > 0 ? accent : "text-faint"}`}>{value}</p>
         </Link>
     );
 }
@@ -156,10 +156,10 @@ function GetStarted({ steps }: { steps: { label: string; href: string; done: boo
     const doneCount = steps.filter((s) => s.done).length;
 
     return (
-        <section className="mb-8 rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <section className="mb-8 rounded-lg border border-line bg-surface p-4">
             <div className="mb-3 flex items-baseline justify-between">
                 <h2 className="font-semibold">Get started</h2>
-                <span className="text-sm text-neutral-500">
+                <span className="text-sm text-subtle">
                     {doneCount} of {steps.length} done
                 </span>
             </div>
@@ -167,8 +167,8 @@ function GetStarted({ steps }: { steps: { label: string; href: string; done: boo
                 {steps.map((step) => (
                     <li key={step.label}>
                         {step.done ? (
-                            <span className="flex items-center gap-2 text-sm text-neutral-500 line-through">
-                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-green-700 text-xs text-green-400 no-underline">
+                            <span className="flex items-center gap-2 text-sm text-subtle line-through">
+                                <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full border border-success/50 text-xs text-success no-underline">
                                     ✓
                                 </span>
                                 {step.label}
@@ -176,9 +176,9 @@ function GetStarted({ steps }: { steps: { label: string; href: string; done: boo
                         ) : (
                             <Link
                                 href={step.href}
-                                className="flex items-center gap-2 text-sm text-neutral-100 hover:underline"
+                                className="flex items-center gap-2 text-sm text-foreground hover:underline"
                             >
-                                <span className="h-5 w-5 shrink-0 rounded-full border border-neutral-600" />
+                                <span className="h-5 w-5 shrink-0 rounded-full border border-faint" />
                                 {step.label}
                             </Link>
                         )}

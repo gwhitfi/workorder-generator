@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { createProperty } from "../actions";
 import { MAX_UNIT_NAME_LENGTH, type PropertyFormState } from "../schemas";
-import { MULTI_UNIT, PROPERTY_TYPE_LABELS, US_STATE_LABELS } from "@/lib/defaults";
+import { inputClass, labelClass, MULTI_UNIT, PROPERTY_TYPE_LABELS, US_STATE_LABELS } from "@/lib/defaults";
 
 export type PropertyFormValues = {
     displayName: string;
@@ -37,12 +37,6 @@ export default function PropertyForm({
     const [unitDraft, setUnitDraft] = useState("");
     const [unitError, setUnitError] = useState<string | null>(null);
     const showUnits = MULTI_UNIT.includes(propertyType);
-
-    const inputClass =
-        "w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 " +
-        "placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
-
-    const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
 
     function addUnit() {
         const name = unitDraft.trim();
@@ -142,9 +136,9 @@ export default function PropertyForm({
             </label>
             {showUnits && !editing && (
                 <div className="flex flex-col gap-2">
-                    <div className="border-t border-neutral-800 pt-6">
-                        <h2 className="text-lg font-semibold text-neutral-100">Units</h2>
-                        <p className="text-sm text-neutral-500 mt-1">Separate units at this address.</p>
+                    <div className="border-t border-line pt-6">
+                        <h2 className="text-lg font-semibold text-foreground">Units</h2>
+                        <p className="text-sm text-subtle mt-1">Separate units at this address.</p>
                     </div>
                     <input
                         value={unitDraft}
@@ -162,12 +156,12 @@ export default function PropertyForm({
                         maxLength={MAX_UNIT_NAME_LENGTH}
                         className={inputClass}
                     />
-                    {unitError && <p className="text-sm text-red-400">{unitError}</p>}
+                    {unitError && <p className="text-sm text-danger">{unitError}</p>}
                     <FieldError errors={state.errors?.units} />
                     <button
                         type="button"
                         onClick={addUnit}
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer"
+                        className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer"
                     >
                         Add Unit
                     </button>
@@ -176,13 +170,13 @@ export default function PropertyForm({
                             {units.map((unit, i) => (
                                 <li
                                     key={unit.name}
-                                    className="flex items-center gap-2 rounded-md border border-neutral-700 px-3 py-1.5 text-sm"
+                                    className="flex items-center gap-2 rounded-md border border-line-strong px-3 py-1.5 text-sm"
                                 >
                                     {unit.name}
                                     <button
                                         type="button"
                                         onClick={() => removeUnit(i)}
-                                        className="text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                                        className="text-subtle hover:text-danger hover:cursor-pointer"
                                         aria-label={`Remove ${unit.name}`}
                                     >
                                         ×
@@ -195,11 +189,11 @@ export default function PropertyForm({
                 </div>
             )}
             {returnTo && <input type="hidden" name="returnTo" value={returnTo} />}
-            {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+            {state.error && <p className="text-sm text-danger">{state.error}</p>}
             <button
                 type="submit"
                 disabled={pending}
-                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer disabled:opacity-60"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover  hover:cursor-pointer disabled:opacity-60"
             >
                 {submitLabel}
             </button>
@@ -209,5 +203,5 @@ export default function PropertyForm({
 
 function FieldError({ errors }: { errors?: string[] }) {
     if (!errors?.length) return null;
-    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
+    return <p className="mt-1 text-sm font-normal text-danger">{errors[0]}</p>;
 }

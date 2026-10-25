@@ -72,20 +72,20 @@ export default function ContractorSpaceCard({
     }
 
     return (
-        <li className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3">
+        <li className="rounded-md border border-line bg-surface px-4 py-3">
             <div className="flex items-center justify-between">
                 <h3>{area.name}</h3>
                 {area.lineItems.length > 0 && (
-                    <span className="text-xs text-neutral-500">
+                    <span className="text-xs text-subtle">
                         {doneCount}/{area.lineItems.length} done
                     </span>
                 )}
             </div>
 
             {area.lineItems.length === 0 ? (
-                <p className="mt-2 text-sm text-neutral-500">No items.</p>
+                <p className="mt-2 text-sm text-subtle">No items.</p>
             ) : (
-                <ul className="mt-2 flex flex-col gap-1 text-base text-neutral-300">
+                <ul className="mt-2 flex flex-col gap-1 text-base text-secondary">
                     {area.lineItems.map((item) => {
                         const busy = busyItemId === item.id;
 
@@ -101,8 +101,8 @@ export default function ContractorSpaceCard({
                                         disabled={readOnly || busy}
                                         className={`mt-0.5 flex h-6 w-6 shrink-0 items-center justify-center rounded border text-sm hover:cursor-pointer disabled:cursor-default disabled:opacity-60 ${
                                             item.completed
-                                                ? "border-green-700 bg-green-900/40 text-green-400"
-                                                : "border-neutral-600 hover:border-neutral-400"
+                                                ? "border-success/50 bg-success/15 text-success"
+                                                : "border-faint hover:border-muted"
                                         }`}
                                     >
                                         {item.completed && "✓"}
@@ -110,9 +110,7 @@ export default function ContractorSpaceCard({
 
                                     <div className="flex min-w-0 flex-1 flex-wrap items-center gap-2">
                                         <span
-                                            className={
-                                                item.completed ? "text-neutral-500 line-through" : "text-neutral-200"
-                                            }
+                                            className={item.completed ? "text-subtle line-through" : "text-foreground"}
                                         >
                                             {item.description}
                                         </span>
@@ -129,7 +127,7 @@ export default function ContractorSpaceCard({
                                         <button
                                             type="button"
                                             onClick={() => startNote(item)}
-                                            className="shrink-0 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                                            className="shrink-0 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                                         >
                                             + Note
                                         </button>
@@ -150,7 +148,7 @@ export default function ContractorSpaceCard({
                                             src={`/wo/${token}/photos/${item.attachments[0].id}`}
                                             alt={`Photo for ${item.description}`}
                                             loading="lazy"
-                                            className="h-24 w-24 rounded border border-neutral-700 object-cover hover:border-neutral-400"
+                                            className="h-24 w-24 rounded border border-line-strong object-cover hover:border-muted"
                                         />
                                     </a>
                                 )}
@@ -174,14 +172,14 @@ export default function ContractorSpaceCard({
                                                 type="button"
                                                 onClick={() => handleSaveNote(item)}
                                                 disabled={busy}
-                                                className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40"
+                                                className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40"
                                             >
                                                 {busy ? "Saving..." : "Save note"}
                                             </button>
                                             <button
                                                 type="button"
                                                 onClick={() => setNotingId(null)}
-                                                className="shrink-0 px-2 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                                                className="shrink-0 px-2 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                                             >
                                                 Cancel
                                             </button>
@@ -191,8 +189,8 @@ export default function ContractorSpaceCard({
                                     item.contractorNotes && (
                                         <p
                                             onClick={readOnly ? undefined : () => startNote(item)}
-                                            className={`ml-9 mt-1 whitespace-pre-line rounded px-1 text-sm text-neutral-400 ${
-                                                readOnly ? "" : "cursor-text hover:bg-neutral-800"
+                                            className={`ml-9 mt-1 whitespace-pre-line rounded px-1 text-sm text-muted ${
+                                                readOnly ? "" : "cursor-text hover:bg-surface-hover"
                                             }`}
                                         >
                                             {item.contractorNotes}
@@ -205,7 +203,7 @@ export default function ContractorSpaceCard({
                 </ul>
             )}
 
-            {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+            {error && <p className="mt-2 text-sm text-danger">{error}</p>}
         </li>
     );
 }

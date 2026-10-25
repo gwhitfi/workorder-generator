@@ -47,9 +47,9 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
     );
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
             <div className="mb-8">
-                <p className="mb-2 text-xs uppercase tracking-wide text-neutral-500">
+                <p className="mb-2 text-xs uppercase tracking-wide text-subtle">
                     {workOrder.organization.name} · #{workOrder.jobNumber}
                 </p>
 
@@ -58,20 +58,20 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                         {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                     </span>
                     {workOrder.dueDate && (
-                        <span className="text-sm text-neutral-500">Due by {formatDueDate(workOrder.dueDate)}</span>
+                        <span className="text-sm text-subtle">Due by {formatDueDate(workOrder.dueDate)}</span>
                     )}
                 </div>
 
                 <h1 className="mb-4 text-2xl font-semibold">{workOrder.title ?? "Work order"}</h1>
 
                 {workOrder.status === "COMPLETED" && (
-                    <p className="mb-4 rounded-md border border-green-800 bg-green-950/40 px-3 py-2 text-sm text-green-300">
+                    <p className="mb-4 rounded-md border border-status-completed/40 bg-status-completed/10 px-3 py-2 text-sm text-status-completed">
                         Marked complete{workOrder.completedAt && ` on ${formatTimestamp(workOrder.completedAt)}`}.
                         Contact the office if anything needs to change.
                     </p>
                 )}
                 {workOrder.status === "CLOSED" && (
-                    <p className="mb-4 rounded-md border border-blue-800 bg-blue-950/40 px-3 py-2 text-sm text-blue-300">
+                    <p className="mb-4 rounded-md border border-status-closed/40 bg-status-closed/10 px-3 py-2 text-sm text-status-closed">
                         This work order has been closed out. No further work is needed.
                     </p>
                 )}
@@ -91,14 +91,14 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
 
                     <InfoCard label="Tenant" title={workOrder.tenantName ?? "No tenant on file"}>
                         {workOrder.tenantPhone && (
-                            <a href={`tel:${workOrder.tenantPhone}`} className="block hover:text-neutral-100">
+                            <a href={`tel:${workOrder.tenantPhone}`} className="block hover:text-foreground">
                                 {formatPhone(workOrder.tenantPhone)}
                             </a>
                         )}
                         {workOrder.tenantEmail && (
                             <a
                                 href={`mailto:${workOrder.tenantEmail}`}
-                                className="block break-all hover:text-neutral-100"
+                                className="block break-all hover:text-foreground"
                             >
                                 {workOrder.tenantEmail}
                             </a>
@@ -107,49 +107,49 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
 
                     <InfoCard label="Office" title={workOrder.organization.name}>
                         {workOrder.organization.phone && (
-                            <a href={`tel:${workOrder.organization.phone}`} className="block hover:text-neutral-100">
+                            <a href={`tel:${workOrder.organization.phone}`} className="block hover:text-foreground">
                                 {formatPhone(workOrder.organization.phone)}
                             </a>
                         )}
                         {workOrder.organization.email && (
                             <a
                                 href={`mailto:${workOrder.organization.email}`}
-                                className="block break-all hover:text-neutral-100"
+                                className="block break-all hover:text-foreground"
                             >
                                 {workOrder.organization.email}
                             </a>
                         )}
                         {!workOrder.organization.phone && !workOrder.organization.email && (
-                            <p className="text-neutral-500">No contact info on file</p>
+                            <p className="text-subtle">No contact info on file</p>
                         )}
                     </InfoCard>
                 </div>
             </div>
 
             {workOrder.notes && (
-                <div className="mb-6 text-sm text-neutral-400 leading-relaxed">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
+                <div className="mb-6 text-sm text-muted leading-relaxed">
+                    <p className="text-xs uppercase tracking-wide text-subtle">Notes</p>
                     <p className="mt-1 whitespace-pre-line">{workOrder.notes}</p>
                 </div>
             )}
 
-            <div className="border-t border-neutral-800 pt-6">
+            <div className="border-t border-line pt-6">
                 <div className="flex items-baseline justify-between">
-                    <h2 className="text-lg font-semibold text-neutral-100">Work items</h2>
+                    <h2 className="text-lg font-semibold text-foreground">Work items</h2>
                     {itemCount > 0 && (
-                        <span className="text-sm text-neutral-500">
+                        <span className="text-sm text-subtle">
                             {completedCount} of {itemCount} done
                         </span>
                     )}
                 </div>
                 {!readOnly && (
-                    <p className="mt-1 mb-4 text-sm text-neutral-500">
+                    <p className="mt-1 mb-4 text-sm text-subtle">
                         Check off each item as you finish it. Add a note if anything needs explaining.
                     </p>
                 )}
 
                 {workOrder.areas.length === 0 ? (
-                    <p className="mt-4 text-sm text-neutral-500">No work items listed.</p>
+                    <p className="mt-4 text-sm text-subtle">No work items listed.</p>
                 ) : (
                     <ul className="mt-4 flex flex-col gap-2">
                         {workOrder.areas.map((area) => (
@@ -161,9 +161,9 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
 
             {readOnly ? (
                 workOrder.completionNotes && (
-                    <section className="mt-8 border-t border-neutral-800 pt-6 text-sm">
-                        <p className="text-xs uppercase tracking-wide text-neutral-500">Completion notes</p>
-                        <p className="mt-1 whitespace-pre-line leading-relaxed text-neutral-300">
+                    <section className="mt-8 border-t border-line pt-6 text-sm">
+                        <p className="text-xs uppercase tracking-wide text-subtle">Completion notes</p>
+                        <p className="mt-1 whitespace-pre-line leading-relaxed text-secondary">
                             {workOrder.completionNotes}
                         </p>
                     </section>

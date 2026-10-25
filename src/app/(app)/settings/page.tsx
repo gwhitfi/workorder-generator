@@ -17,12 +17,12 @@ export default async function Settings() {
     const { organization } = result;
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
             <h1 className="mb-8 text-2xl font-semibold">Settings</h1>
 
             <section>
-                <h2 className="text-lg font-semibold text-neutral-100">Organization</h2>
-                <p className="mt-1 mb-4 text-sm text-neutral-500">
+                <h2 className="text-lg font-semibold text-foreground">Organization</h2>
+                <p className="mt-1 mb-4 text-sm text-subtle">
                     Your name, phone and email are shown to contractors on the work orders and emails you send them.
                 </p>
                 <OrganizationContactForm

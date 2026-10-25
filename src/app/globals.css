@@ -1,10 +1,78 @@
 @import "tailwindcss";
 @source "../lib";
 
+/* Theme colors: each is set once per theme here and used through the named classes in @theme below
+   (bg-surface, text-muted, border-line, ...). Dark is the default; light applies with data-theme="light" on <html>,
+   which the script in layout.tsx sets from the saved choice or the device setting (src/lib/theme.ts). */
 :root {
     color-scheme: dark;
+
+    /* Page and text, brightest to dimmest */
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: var(--color-neutral-100);
+    --secondary: var(--color-neutral-300);
+    --muted: var(--color-neutral-400);
+    --subtle: var(--color-neutral-500);
+    --faint: var(--color-neutral-600);
+
+    /* Cards, inputs and borders */
+    --surface: var(--color-neutral-900);
+    --surface-hover: var(--color-neutral-800);
+    --line: var(--color-neutral-800);
+    --line-strong: var(--color-neutral-700);
+    --line-hover: var(--color-neutral-600);
+
+    /* Primary buttons, links, focus rings and selected states */
+    --accent: var(--color-emerald-400);
+    --accent-hover: var(--color-emerald-300);
+    --on-accent: var(--color-neutral-950);
+
+    /* Messages. Tinted boxes use opacity, e.g. bg-danger/10 border-danger/40 */
+    --danger: var(--color-red-400);
+    --danger-strong: var(--color-red-700);
+    --warning: var(--color-amber-400);
+    --success: var(--color-green-400);
+
+    /* Work order statuses */
+    --status-draft: var(--color-neutral-400);
+    --status-sent: var(--color-blue-400);
+    --status-in-progress: var(--color-amber-400);
+    --status-completed: var(--color-green-400);
+    --status-closed: var(--color-violet-400);
+    --status-cancelled: var(--color-red-400);
+}
+
+[data-theme="light"] {
+    color-scheme: light;
+
+    --background: var(--color-neutral-50);
+    --foreground: var(--color-neutral-900);
+    --secondary: var(--color-neutral-800);
+    --muted: var(--color-neutral-700);
+    --subtle: var(--color-neutral-600);
+    --faint: var(--color-neutral-500);
+
+    --surface: #ffffff;
+    --surface-hover: var(--color-neutral-200);
+    --line: var(--color-neutral-300);
+    --line-strong: var(--color-neutral-400);
+    --line-hover: var(--color-neutral-600);
+
+    --accent: var(--color-emerald-700);
+    --accent-hover: var(--color-emerald-800);
+    --on-accent: #ffffff;
+
+    --danger: var(--color-red-700);
+    --danger-strong: var(--color-red-600);
+    --warning: var(--color-amber-700);
+    --success: var(--color-green-700);
+
+    --status-draft: var(--color-neutral-700);
+    --status-sent: var(--color-blue-700);
+    --status-in-progress: var(--color-amber-700);
+    --status-completed: var(--color-green-700);
+    --status-closed: var(--color-violet-700);
+    --status-cancelled: var(--color-red-700);
 }
 
 @media print {
@@ -16,6 +84,28 @@
 @theme inline {
     --color-background: var(--background);
     --color-foreground: var(--foreground);
+    --color-secondary: var(--secondary);
+    --color-muted: var(--muted);
+    --color-subtle: var(--subtle);
+    --color-faint: var(--faint);
+    --color-surface: var(--surface);
+    --color-surface-hover: var(--surface-hover);
+    --color-line: var(--line);
+    --color-line-strong: var(--line-strong);
+    --color-line-hover: var(--line-hover);
+    --color-accent: var(--accent);
+    --color-accent-hover: var(--accent-hover);
+    --color-on-accent: var(--on-accent);
+    --color-danger: var(--danger);
+    --color-danger-strong: var(--danger-strong);
+    --color-warning: var(--warning);
+    --color-success: var(--success);
+    --color-status-draft: var(--status-draft);
+    --color-status-sent: var(--status-sent);
+    --color-status-in-progress: var(--status-in-progress);
+    --color-status-completed: var(--status-completed);
+    --color-status-closed: var(--status-closed);
+    --color-status-cancelled: var(--status-cancelled);
     --font-sans: var(--font-geist-sans);
     --font-mono: var(--font-geist-mono);
 }

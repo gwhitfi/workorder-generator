@@ -44,15 +44,15 @@ export default function WorkOrderRow({
             cols={hideContractor ? COLS_NO_CONTRACTOR : COLS}
         >
             <Cell className="basis-full truncate font-medium">
-                <span className="mr-2 font-normal text-neutral-500">#{workOrder.jobNumber}</span>
-                {workOrder.title ??<span className="italic text-neutral-500">Untitled work order</span>}
+                <span className="mr-2 font-normal text-subtle">#{workOrder.jobNumber}</span>
+                {workOrder.title ??<span className="italic text-subtle">Untitled work order</span>}
             </Cell>
             <Cell>
                 <span className={`rounded-full border px-2 py-0.5 text-xs ${STATUS_COLORS[workOrder.status]}`}>
                     {WORK_ORDER_STATUS_LABELS[workOrder.status]}
                 </span>
             </Cell>
-            <Cell className={overdue ? "text-red-400" : "text-neutral-400"}>
+            <Cell className={overdue ? "text-danger" : "text-muted"}>
                 {workOrder.dueDate && (
                     <>
                         <span className="sm:hidden">Due </span>
@@ -61,12 +61,12 @@ export default function WorkOrderRow({
                     </>
                 )}
             </Cell>
-            <Cell className="basis-full truncate text-neutral-400">
+            <Cell className="basis-full truncate text-muted">
                 {workOrder.property.addressLine1}
                 {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
             </Cell>
             {!hideContractor && (
-                <Cell className="basis-full truncate text-neutral-400">{workOrder.contractorName}</Cell>
+                <Cell className="basis-full truncate text-muted">{workOrder.contractorName}</Cell>
             )}
         </ListRow>
     );

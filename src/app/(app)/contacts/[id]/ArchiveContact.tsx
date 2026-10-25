@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { archiveContact, restoreContact } from "../actions";
 
 const outlineButton =
-    "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 export function ArchiveContactButton({
     contactId,
@@ -40,7 +40,7 @@ export function ArchiveContactButton({
 
     if (openCount > 0) {
         return (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-subtle">
                 Can&apos;t archive or delete: {openCount} open {openCount === 1 ? "work order" : "work orders"}.
                 Reassign, close or cancel {openCount === 1 ? "it" : "them"} first.
             </p>
@@ -52,7 +52,7 @@ export function ArchiveContactButton({
             <button
                 type="button"
                 onClick={() => dialogRef.current?.showModal()}
-                className="shrink-0 rounded-md px-4 py-2 text-sm text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                className="shrink-0 rounded-md px-4 py-2 text-sm text-subtle hover:text-danger hover:cursor-pointer"
             >
                 Archive contact
             </button>
@@ -63,18 +63,18 @@ export function ArchiveContactButton({
                     // Clicking the backdrop (the dialog element itself) closes it.
                     if (e.target === dialogRef.current && !pending) dialogRef.current.close();
                 }}
-                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-neutral-700 bg-neutral-900 p-0 text-neutral-100 backdrop:bg-black/70"
+                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-line-strong bg-surface p-0 text-foreground backdrop:bg-black/70"
             >
                 <div className="p-5">
                     <h2 className="mb-2 text-lg font-semibold">Archive &ldquo;{contactName}&rdquo;?</h2>
-                    <p className="text-sm text-neutral-300">
+                    <p className="text-sm text-secondary">
                         {isTenant
                             ? "They'll be hidden from contacts and won't be added to new work orders for their unit."
                             : "They'll be hidden from contacts and can't be picked for new work orders."}{" "}
                         Past work orders keep their details. You can restore them later.
                     </p>
 
-                    {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+                    {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
                     <div className="mt-5 flex flex-wrap justify-end gap-2">
                         <button
@@ -89,7 +89,7 @@ export function ArchiveContactButton({
                             type="button"
                             onClick={handleArchive}
                             disabled={pending}
-                            className="shrink-0 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 hover:cursor-pointer disabled:opacity-40"
+                            className="shrink-0 rounded-md bg-danger-strong px-4 py-2 text-sm font-medium text-white hover:bg-danger-strong/85 hover:cursor-pointer disabled:opacity-40"
                         >
                             {pending ? "Archiving..." : "Archive contact"}
                         </button>
@@ -121,7 +121,7 @@ export function RestoreContactButton({ contactId }: { contactId: string }) {
             <button type="button" onClick={handleRestore} disabled={pending} className={outlineButton}>
                 {pending ? "Restoring..." : "Restore"}
             </button>
-            {error && <span className="text-sm text-red-400">{error}</span>}
+            {error && <span className="text-sm text-danger">{error}</span>}
         </>
     );
 }

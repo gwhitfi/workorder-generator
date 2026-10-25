@@ -112,12 +112,12 @@ export default function SpaceCard({
         }
     }
     return (
-        <li className="rounded-md border border-neutral-800 bg-neutral-900 px-4 py-3">
+        <li className="rounded-md border border-line bg-surface px-4 py-3">
             <div className="flex items-center justify-between gap-3">
                 <h3 className="flex items-baseline gap-2">
                     {area.name}
                     {area.lineItems.length > 0 && (
-                        <span className="text-xs text-neutral-500">
+                        <span className="text-xs text-subtle">
                             {doneCount}/{area.lineItems.length} done
                         </span>
                     )}
@@ -127,7 +127,7 @@ export default function SpaceCard({
                         type="button"
                         onClick={() => onMove(area.id, "up")}
                         disabled={index === 0 || busy}
-                        className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
+                        className="text-subtle hover:text-foreground hover:cursor-pointer disabled:opacity-30"
                         aria-label={`Move ${area.name} up`}
                     >
                         ↑
@@ -136,7 +136,7 @@ export default function SpaceCard({
                         type="button"
                         onClick={() => onMove(area.id, "down")}
                         disabled={index === total - 1 || busy}
-                        className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-30"
+                        className="text-subtle hover:text-foreground hover:cursor-pointer disabled:opacity-30"
                         aria-label={`Move ${area.name} down`}
                     >
                         ↓
@@ -145,14 +145,14 @@ export default function SpaceCard({
                         type="button"
                         onClick={() => onRemove(area.id)}
                         disabled={busy}
-                        className="text-xs text-neutral-500 hover:text-red-400 hover:cursor-pointer disabled:opacity-30"
+                        className="text-xs text-subtle hover:text-danger hover:cursor-pointer disabled:opacity-30"
                     >
                         Remove
                     </button>
                 </div>
             </div>
             {area.lineItems.length > 0 && (
-                <ul className="mt-2 flex flex-col gap-1 text-base text-neutral-300">
+                <ul className="mt-2 flex flex-col gap-1 text-base text-secondary">
                     {area.lineItems.map((item, i) => (
                         <li key={item.id} className="group">
                             <div className="flex items-center gap-2">
@@ -160,8 +160,8 @@ export default function SpaceCard({
                                     aria-label={item.completed ? "Done" : "Not done"}
                                     className={`flex h-5 w-5 shrink-0 items-center justify-center rounded-full border text-xs ${
                                         item.completed
-                                            ? "border-green-700 bg-green-900/40 text-green-400"
-                                            : "border-neutral-700"
+                                            ? "border-success/50 bg-success/15 text-success"
+                                            : "border-line-strong"
                                     }`}
                                 >
                                     {item.completed && "✓"}
@@ -176,7 +176,7 @@ export default function SpaceCard({
                                             if (e.key === "Escape") setEditingId(null);
                                         }}
                                         autoFocus
-                                        className="flex-1 rounded border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-base text-neutral-100 focus:outline-none"
+                                        className="flex-1 rounded border border-faint bg-surface-hover px-2 py-0.5 text-base text-foreground focus:outline-none"
                                     />
                                 ) : (
                                     <span
@@ -188,8 +188,8 @@ export default function SpaceCard({
                                                       setEditDraft(item.description);
                                                   }
                                         }
-                                        className={`rounded px-1 ${readOnly ? "" : "cursor-text hover:bg-neutral-800"} ${
-                                            item.completed ? "text-neutral-500" : ""
+                                        className={`rounded px-1 ${readOnly ? "" : "cursor-text hover:bg-surface-hover"} ${
+                                            item.completed ? "text-subtle" : ""
                                         }`}
                                     >
                                         {item.description}
@@ -203,7 +203,7 @@ export default function SpaceCard({
                                     </span>
                                 )}
                                 {item.completedAt && (
-                                    <span suppressHydrationWarning className="shrink-0 text-xs text-green-500">
+                                    <span suppressHydrationWarning className="shrink-0 text-xs text-success">
                                         Done {new Date(item.completedAt).toLocaleDateString()}
                                     </span>
                                 )}
@@ -213,7 +213,7 @@ export default function SpaceCard({
                                             type="button"
                                             onClick={() => handleMoveItem(item.id, "up")}
                                             disabled={i === 0 || busyItemId === item.id}
-                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
                                             aria-label={`Move ${item.description} up`}
                                         >
                                             ↑
@@ -222,7 +222,7 @@ export default function SpaceCard({
                                             type="button"
                                             onClick={() => handleMoveItem(item.id, "down")}
                                             disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
-                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-neutral-100 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
                                             aria-label={`Move ${item.description} down`}
                                         >
                                             ↓
@@ -232,7 +232,7 @@ export default function SpaceCard({
                                             type="button"
                                             onClick={() => handleRemoveItem(item.id)}
                                             disabled={busyItemId === item.id}
-                                            className="text-xs text-neutral-600 opacity-0 transition-opacity group-hover:opacity-100 hover:text-red-400 hover:cursor-pointer disabled:text-neutral-800 disabled:hover:text-neutral-800"
+                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger hover:cursor-pointer disabled:text-line disabled:hover:text-line"
                                             aria-label={`Remove ${item.description}`}
                                         >
                                             Remove
@@ -247,8 +247,8 @@ export default function SpaceCard({
                                 readOnly={readOnly}
                             />
                             {item.contractorNotes && (
-                                <p className="ml-7 mt-1 whitespace-pre-line border-l-2 border-neutral-700 pl-2 text-sm text-neutral-400">
-                                    <span className="text-neutral-500">Contractor: </span>
+                                <p className="ml-7 mt-1 whitespace-pre-line border-l-2 border-line-strong pl-2 text-sm text-muted">
+                                    <span className="text-subtle">Contractor: </span>
                                     {item.contractorNotes}
                                 </p>
                             )}
@@ -261,7 +261,7 @@ export default function SpaceCard({
                 <button
                     type="button"
                     onClick={() => setAdding(true)}
-                    className="mt-3 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                    className="mt-3 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                 >
                     + Add line item
                 </button>
@@ -285,7 +285,7 @@ export default function SpaceCard({
                         autoFocus
                         className={inputClass}
                     />
-                    {error && <p className="text-sm text-red-400">{error}</p>}
+                    {error && <p className="text-sm text-danger">{error}</p>}
                     <div className="flex gap-2">
                         <select value={priority} onChange={(e) => setPriority(e.target.value)} className={inputClass}>
                             {Object.entries(PRIORITY_LABELS).map(([value, label]) => (
@@ -299,7 +299,7 @@ export default function SpaceCard({
                             type="button"
                             onClick={handleAddItem}
                             disabled={pending || !description.trim()}
-                            className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40"
+                            className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40"
                         >
                             {pending ? "Adding..." : "Add"}
                         </button>
@@ -307,7 +307,7 @@ export default function SpaceCard({
                         <button
                             type="button"
                             onClick={() => setAdding(false)}
-                            className="shrink-0 px-2 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                            className="shrink-0 px-2 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                         >
                             Done
                         </button>

@@ -84,17 +84,17 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
     ].slice(0, 10);
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
             {property.archived && (
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3">
-                    <p className="text-sm text-neutral-300">
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface px-4 py-3">
+                    <p className="text-sm text-secondary">
                         This property is archived. Restoring it won&apos;t reopen its cancelled work orders.
                     </p>
                     <RestorePropertyButton propertyId={property.id} />
                 </div>
             )}
             <div className="mb-8">
-                <span className="mb-2 inline-block rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
+                <span className="mb-2 inline-block rounded-full border border-line-strong px-2 py-0.5 text-xs text-muted">
                     {PROPERTY_TYPE_LABELS[property.propertyType]}
                 </span>
                 <div className="mb-4 flex items-start justify-between gap-4">
@@ -112,7 +112,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                     {!property.archived && (
                         <Link
                             href={`/properties/${property.id}/edit`}
-                            className="mt-1 shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                            className="mt-1 shrink-0 text-sm text-muted hover:text-foreground"
                         >
                             Edit
                         </Link>
@@ -139,11 +139,11 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                             <Link
                                 key={tenant.id}
                                 href={`/contacts/${tenant.id}`}
-                                className="block truncate hover:text-neutral-100 hover:underline"
+                                className="block truncate hover:text-foreground hover:underline"
                             >
                                 {tenant.displayName}
                                 {tenant.unit && !tenant.unit.isDefault && (
-                                    <span className="text-neutral-500"> · Unit {tenant.unit.name}</span>
+                                    <span className="text-subtle"> · Unit {tenant.unit.name}</span>
                                 )}
                             </Link>
                         ))}
@@ -156,26 +156,26 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
             </div>
 
             {property.notes && (
-                <div className="mb-8 text-sm leading-relaxed text-neutral-400">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
+                <div className="mb-8 text-sm leading-relaxed text-muted">
+                    <p className="text-xs uppercase tracking-wide text-subtle">Notes</p>
                     <p className="mt-1 whitespace-pre-line">{property.notes}</p>
                 </div>
             )}
 
-            <section className="mb-8 border-t border-neutral-800 pt-6">
+            <section className="mb-8 border-t border-line pt-6">
                 <div className="mb-3 flex items-baseline justify-between gap-4">
                     <h2 className="text-lg font-semibold">Work orders</h2>
                     {!property.archived && (
                         <Link
                             href={`/work-orders/new?propertyId=${property.id}`}
-                            className="shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                            className="shrink-0 text-sm text-muted hover:text-foreground"
                         >
                             + Create work order
                         </Link>
                     )}
                 </div>
                 {shownWorkOrders.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                    <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                         No work orders for this property yet.
                     </p>
                 ) : (
@@ -184,11 +184,11 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
             </section>
 
             {!isSingleUnit && (
-                <section className="border-t border-neutral-800 pt-6">
+                <section className="border-t border-line pt-6">
                     <h2 className="mb-3 text-lg font-semibold">Units</h2>
 
                     {property.units.length === 0 ? (
-                        <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                        <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                             No units on file.
                         </p>
                     ) : !property.archived ? (
@@ -207,7 +207,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                             {property.units.map((unit) => (
                                 <li
                                     key={unit.id}
-                                    className="rounded-lg border border-neutral-800 bg-neutral-900 px-4 py-3 font-medium"
+                                    className="rounded-lg border border-line bg-surface px-4 py-3 font-medium"
                                 >
                                     {unit.name}
                                 </li>
@@ -216,10 +216,10 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                     )}
                 </section>
             )}
-            <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-neutral-800 pt-6">
+            <div className="mt-8 flex flex-wrap justify-end gap-2 border-t border-line pt-6">
                 <DeleteButton itemName={property.displayName} onDelete={deleteProperty.bind(null, property.id)}>
                     {deletedWorkOrderCount > 0 && (
-                        <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                        <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger">
                             This also permanently deletes{" "}
                             <strong>
                                 {deletedWorkOrderCount} {deletedWorkOrderCount === 1 ? "work order" : "work orders"}
@@ -237,7 +237,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                         </p>
                     )}
                     {!property.archived && (
-                        <p className="text-neutral-400">
+                        <p className="text-muted">
                             To keep the history, go back and use <strong>Archive property</strong> instead.
                         </p>
                     )}

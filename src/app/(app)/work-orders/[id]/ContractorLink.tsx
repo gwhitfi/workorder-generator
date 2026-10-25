@@ -9,7 +9,7 @@ const getOrigin = () => window.location.origin;
 const getServerOrigin = () => "";
 
 const buttonClass =
-    "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 export default function ContractorLink({
     workOrderId,
@@ -29,7 +29,7 @@ export default function ContractorLink({
 
     if (status === "DRAFT") {
         return (
-            <p className="text-sm text-neutral-500">
+            <p className="text-sm text-subtle">
                 The contractor link becomes active once this work order is marked as sent.
             </p>
         );
@@ -85,12 +85,12 @@ export default function ContractorLink({
             <div className="flex flex-wrap items-center gap-2 text-sm">
                 {confirming ? (
                     <>
-                        <span className="text-neutral-300">The old link will stop working. Continue?</span>
+                        <span className="text-secondary">The old link will stop working. Continue?</span>
                         <button
                             type="button"
                             onClick={handleRegenerate}
                             disabled={pending}
-                            className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"
+                            className="text-danger hover:text-danger/80 hover:cursor-pointer disabled:opacity-40"
                         >
                             {pending ? "Regenerating..." : "Yes, regenerate"}
                         </button>
@@ -98,7 +98,7 @@ export default function ContractorLink({
                             type="button"
                             onClick={() => setConfirming(false)}
                             disabled={pending}
-                            className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                            className="text-subtle hover:text-foreground hover:cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -107,14 +107,14 @@ export default function ContractorLink({
                     <button
                         type="button"
                         onClick={() => setConfirming(true)}
-                        className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                        className="text-subtle hover:text-foreground hover:cursor-pointer"
                     >
                         Regenerate link
                     </button>
                 )}
             </div>
 
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
         </div>
     );
 }

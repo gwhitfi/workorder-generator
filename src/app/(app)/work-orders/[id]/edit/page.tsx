@@ -50,7 +50,7 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
     ]);
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
             <h1 className="text-2xl font-semibold mb-6">Edit Work Order</h1>
             <WorkOrderForm
                 properties={[workOrder.property]}
@@ -71,7 +71,7 @@ export default async function EditWorkOrder({ params }: { params: Promise<{ id: 
             />
             <Link
                 href={`/work-orders/${workOrder.id}`}
-                className="mt-4 inline-block text-sm text-neutral-400 hover:text-neutral-100"
+                className="mt-4 inline-block text-sm text-muted hover:text-foreground"
             >
                 Cancel
             </Link>

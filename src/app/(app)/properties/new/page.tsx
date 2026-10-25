@@ -18,12 +18,12 @@ export default async function NewProperty({ searchParams }: { searchParams: Prom
     const fromWorkOrder = returnTo === "/work-orders/new";
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
             <h1 className="text-2xl font-semibold mb-6">Add a property</h1>
             <PropertyForm returnTo={fromWorkOrder ? returnTo : undefined} />
             <Link
                 href={fromWorkOrder ? "/work-orders/new" : "/properties"}
-                className="text-sm text-neutral-400 hover:text-neutral-100"
+                className="text-sm text-muted hover:text-foreground"
             >
                 Cancel
             </Link>

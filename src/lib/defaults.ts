@@ -17,10 +17,10 @@ export const CONTACT_TYPE_LABELS: Record<string, string> = {
 };
 
 export const inputClass =
-    "w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 " +
-    "placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
+    "w-full rounded-md border border-line-strong bg-surface px-3 py-2 text-sm text-foreground " +
+    "placeholder:text-subtle focus:border-accent focus:outline-none focus:ring-1 focus:ring-accent";
 
-export const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
+export const labelClass = "block text-sm font-medium text-secondary mb-1";
 
 export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
     DRAFT: "Draft",
@@ -32,12 +32,12 @@ export const WORK_ORDER_STATUS_LABELS: Record<string, string> = {
 };
 
 export const STATUS_COLORS: Record<keyof typeof WORK_ORDER_STATUS_LABELS, string> = {
-    DRAFT: "border-neutral-700 text-neutral-400", // Default look
-    SENT: "border-amber-700 text-amber-400", // Amber / Orange-tint
-    IN_PROGRESS: "border-yellow-600 text-yellow-400", // Yellowish
-    COMPLETED: "border-green-700 text-green-400", // Green
-    CLOSED: "border-blue-700 text-blue-400", // Blue
-    CANCELLED: "border-neutral-700 text-neutral-500 line-through", // Dim: work stopped
+    DRAFT: "border-dashed border-status-draft/50 text-status-draft", // Gray, dashed: not sent yet
+    SENT: "border-status-sent/50 text-status-sent", // Blue: waiting on the contractor
+    IN_PROGRESS: "border-status-in-progress/50 text-status-in-progress", // Amber: work happening
+    COMPLETED: "border-status-completed/50 text-status-completed", // Green: done, needs review
+    CLOSED: "border-status-closed/50 text-status-closed", // Violet: filed away
+    CANCELLED: "border-status-cancelled/30 text-status-cancelled/70 line-through", // Dim red: work stopped
 };
 
 export const PRIORITY_LABELS: Record<string, string> = {
@@ -48,8 +48,8 @@ export const PRIORITY_LABELS: Record<string, string> = {
 };
 
 export const PRIORITY_STYLES: Record<string, string> = {
-    EMERGENCY: "border-red-700 text-red-400",
-    HIGH: "border-amber-700 text-amber-400",
+    EMERGENCY: "border-danger/50 text-danger",
+    HIGH: "border-warning/50 text-warning",
 };
 
 export const US_STATE_LABELS: Record<string, string> = {

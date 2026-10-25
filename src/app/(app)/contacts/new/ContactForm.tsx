@@ -2,7 +2,7 @@
 import { useActionState, useState } from "react";
 import { createContact } from "../actions";
 import type { ContactFormState } from "../schemas";
-import { CONTACT_TYPE_LABELS, US_STATE_LABELS } from "@/lib/defaults";
+import { CONTACT_TYPE_LABELS, inputClass, labelClass, US_STATE_LABELS } from "@/lib/defaults";
 
 type UnitOption = { id: string; name: string };
 type PropertyOption = {
@@ -49,11 +49,6 @@ export default function ContactForm({
     const [contactType, setContactType] = useState(initial?.contactType ?? "CONTRACTOR");
     const [selectedProperty, setSelectedProperty] = useState(initial?.propertyId ?? "");
     const units = properties.find((p) => p.id === selectedProperty)?.units ?? [];
-    const inputClass =
-        "w-full rounded-md border border-neutral-700 bg-neutral-900 px-3 py-2 text-sm text-neutral-100 " +
-        "placeholder:text-neutral-500 focus:border-neutral-400 focus:outline-none focus:ring-1 focus:ring-neutral-400";
-
-    const labelClass = "block text-sm font-medium text-neutral-300 mb-1";
 
     return (
         <form action={formAction} autoComplete="off" noValidate className="flex flex-col gap-4">
@@ -88,7 +83,7 @@ export default function ContactForm({
                 {lockType && (
                     <>
                         <input type="hidden" name="contactType" value={contactType} />
-                        <span className="mt-1 block text-xs font-normal text-neutral-500">
+                        <span className="mt-1 block text-xs font-normal text-subtle">
                             Locked because this contact is on work orders.
                         </span>
                     </>
@@ -214,11 +209,11 @@ export default function ContactForm({
                 Notes <textarea name="notes" maxLength={5000} defaultValue={value("notes")} className={inputClass} />
                 <FieldError errors={state.errors?.notes} />
             </label>
-            {state.error && <p className="text-sm text-red-400">{state.error}</p>}
+            {state.error && <p className="text-sm text-danger">{state.error}</p>}
             <button
                 type="submit"
                 disabled={pending}
-                className="rounded-md bg-neutral-300 px-4 py-2 text-sm font-medium text-neutral-900 hover:bg-neutral-100  hover:cursor-pointer disabled:opacity-60"
+                className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover  hover:cursor-pointer disabled:opacity-60"
             >
                 {submitLabel}
             </button>
@@ -228,5 +223,5 @@ export default function ContactForm({
 
 function FieldError({ errors }: { errors?: string[] }) {
     if (!errors?.length) return null;
-    return <p className="mt-1 text-sm font-normal text-red-400">{errors[0]}</p>;
+    return <p className="mt-1 text-sm font-normal text-danger">{errors[0]}</p>;
 }

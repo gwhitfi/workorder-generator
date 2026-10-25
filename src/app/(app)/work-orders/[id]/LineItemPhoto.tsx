@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { removeLineItemPhoto, setLineItemPhoto } from "../actions";
 import { resizePhoto, UnreadablePhotoError } from "@/lib/resizePhoto";
 
-const linkClass = "text-xs text-neutral-500 hover:text-neutral-100 hover:cursor-pointer disabled:opacity-40";
+const linkClass = "text-xs text-subtle hover:text-foreground hover:cursor-pointer disabled:opacity-40";
 
 export default function LineItemPhoto({
     lineItemId,
@@ -69,7 +69,7 @@ export default function LineItemPhoto({
                         src={`/work-orders/photos/${photoId}`}
                         alt={`Photo for ${description}`}
                         loading="lazy"
-                        className="h-20 w-20 rounded border border-neutral-700 object-cover hover:border-neutral-400"
+                        className="h-20 w-20 rounded border border-line-strong object-cover hover:border-muted"
                     />
                 </a>
             )}
@@ -98,14 +98,14 @@ export default function LineItemPhoto({
                             type="button"
                             onClick={handleRemove}
                             disabled={busy !== null}
-                            className="text-xs text-neutral-500 hover:text-red-400 hover:cursor-pointer disabled:opacity-40"
+                            className="text-xs text-subtle hover:text-danger hover:cursor-pointer disabled:opacity-40"
                         >
                             {busy === "removing" ? "Removing..." : "Remove photo"}
                         </button>
                     )}
                 </div>
             )}
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
         </div>
     );
 }

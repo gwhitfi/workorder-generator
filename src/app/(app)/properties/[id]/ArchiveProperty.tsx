@@ -4,7 +4,7 @@ import { useRef, useState } from "react";
 import { archiveProperty, restoreProperty } from "../actions";
 
 const outlineButton =
-    "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 export function ArchivePropertyButton({
     propertyId,
@@ -40,7 +40,7 @@ export function ArchivePropertyButton({
             <button
                 type="button"
                 onClick={() => dialogRef.current?.showModal()}
-                className="shrink-0 rounded-md px-4 py-2 text-sm text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                className="shrink-0 rounded-md px-4 py-2 text-sm text-subtle hover:text-danger hover:cursor-pointer"
             >
                 Archive property
             </button>
@@ -51,41 +51,41 @@ export function ArchivePropertyButton({
                     // Clicking the backdrop (the dialog element itself) closes it.
                     if (e.target === dialogRef.current && !pending) dialogRef.current.close();
                 }}
-                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-neutral-700 bg-neutral-900 p-0 text-neutral-100 backdrop:bg-black/70"
+                className="m-auto w-[calc(100%-2rem)] max-w-md rounded-lg border border-line-strong bg-surface p-0 text-foreground backdrop:bg-black/70"
             >
                 <div className="p-5">
                     <h2 className="mb-2 text-lg font-semibold">Archive &ldquo;{propertyName}&rdquo;?</h2>
 
                     {openCount > 0 || completedCount > 0 ? (
-                        <div className="flex flex-col gap-2 text-sm text-neutral-300">
+                        <div className="flex flex-col gap-2 text-sm text-secondary">
                             {openCount > 0 && (
                                 <p>
                                     This property has{" "}
-                                    <strong className="text-neutral-100">
+                                    <strong className="text-foreground">
                                         {plural(openCount, "open work order", "open work orders")}
                                     </strong>
                                     . {openCount === 1 ? "It" : "They"}&apos;ll be marked{" "}
-                                    <strong className="text-neutral-100">Cancelled</strong> and archived along with the
+                                    <strong className="text-foreground">Cancelled</strong> and archived along with the
                                     property. Contractors who were sent a link will be emailed that it&apos;s cancelled.
                                 </p>
                             )}
                             {completedCount > 0 && (
                                 <p>
-                                    <strong className="text-neutral-100">
+                                    <strong className="text-foreground">
                                         {plural(completedCount, "completed work order", "completed work orders")}
                                     </strong>{" "}
                                     waiting for review will be closed and archived.
                                 </p>
                             )}
-                            <p className="text-neutral-500">Is this ok?</p>
+                            <p className="text-subtle">Is this ok?</p>
                         </div>
                     ) : (
-                        <p className="text-sm text-neutral-300">
+                        <p className="text-sm text-secondary">
                             It will be hidden from lists and new work orders. You can restore it later.
                         </p>
                     )}
 
-                    {error && <p className="mt-3 text-sm text-red-400">{error}</p>}
+                    {error && <p className="mt-3 text-sm text-danger">{error}</p>}
 
                     <div className="mt-5 flex flex-wrap justify-end gap-2">
                         <button
@@ -100,7 +100,7 @@ export function ArchivePropertyButton({
                             type="button"
                             onClick={handleArchive}
                             disabled={pending}
-                            className="shrink-0 rounded-md bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-600 hover:cursor-pointer disabled:opacity-40"
+                            className="shrink-0 rounded-md bg-danger-strong px-4 py-2 text-sm font-medium text-white hover:bg-danger-strong/85 hover:cursor-pointer disabled:opacity-40"
                         >
                             {pending ? "Archiving..." : "Archive property"}
                         </button>
@@ -132,7 +132,7 @@ export function RestorePropertyButton({ propertyId }: { propertyId: string }) {
             <button type="button" onClick={handleRestore} disabled={pending} className={outlineButton}>
                 {pending ? "Restoring..." : "Restore"}
             </button>
-            {error && <span className="text-sm text-red-400">{error}</span>}
+            {error && <span className="text-sm text-danger">{error}</span>}
         </>
     );
 }

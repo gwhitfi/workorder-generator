@@ -72,18 +72,16 @@ export default function AreaBuilder({
         }
     }
     return (
-        <div className="border-t border-neutral-800 pt-6">
-            <h2 className="text-lg font-semibold text-neutral-100">Areas</h2>
+        <div className="border-t border-line pt-6">
+            <h2 className="text-lg font-semibold text-foreground">Areas</h2>
             {notice && (
-                <p className="mt-2 rounded-md border border-amber-800 bg-amber-950/40 px-3 py-2 text-sm text-amber-300">
+                <p className="mt-2 rounded-md border border-warning/40 bg-warning/10 px-3 py-2 text-sm text-warning">
                     {notice}
                 </p>
             )}
             {!readOnly && (
                 <>
-                    <p className="mt-1 mb-4 text-sm text-neutral-500">
-                        Group the work by area: a room, the roof, the yard…
-                    </p>
+                    <p className="mt-1 mb-4 text-sm text-subtle">Group the work by area: a room, the roof, the yard…</p>
                     <div className="flex flex-col gap-2 sm:flex-row">
                         <input
                             value={name}
@@ -98,7 +96,7 @@ export default function AreaBuilder({
                             type="button"
                             onClick={handleAdd}
                             disabled={pending || !name.trim()}
-                            className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
+                            className="shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed"
                         >
                             {pending ? "Adding..." : "Add area"}
                         </button>
@@ -106,9 +104,9 @@ export default function AreaBuilder({
                 </>
             )}
 
-            {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+            {error && <p className="mt-2 text-sm text-danger">{error}</p>}
             {areas.length === 0 ? (
-                <p className="mt-4 text-sm text-neutral-500">
+                <p className="mt-4 text-sm text-subtle">
                     {readOnly ? "No areas on this work order." : "No areas added yet. Add one above."}
                 </p>
             ) : (

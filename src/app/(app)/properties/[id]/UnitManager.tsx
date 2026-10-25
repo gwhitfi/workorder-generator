@@ -15,7 +15,7 @@ type UnitRow = {
 type Result = { ok: true } | { ok: false; error: string };
 
 const smallButton =
-    "shrink-0 rounded-md border border-neutral-700 px-3 py-1.5 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-3 py-1.5 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 const plural = (n: number, one: string, many: string) => `${n} ${n === 1 ? one : many}`;
 
@@ -50,7 +50,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
     }
 
     return (
-        <div className="rounded-lg border border-neutral-800 bg-neutral-900 p-4">
+        <div className="rounded-lg border border-line bg-surface p-4">
             <div className={canArchive ? "mb-3" : undefined}>
                 <InlineName
                     value={unit.name}
@@ -63,13 +63,13 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
             {canArchive && (
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-2 text-sm">
                     {unit.openCount > 0 ? (
-                        <p className="text-neutral-500">
+                        <p className="text-subtle">
                             Can&apos;t archive: {plural(unit.openCount, "open work order", "open work orders")}. Close
                             or cancel {unit.openCount === 1 ? "it" : "them"} first.
                         </p>
                     ) : confirming ? (
                         <div className="flex flex-wrap items-center gap-2">
-                            <span className="text-neutral-300">
+                            <span className="text-secondary">
                                 Archive {unit.name}?
                                 {unit.tenantCount > 0 &&
                                     ` ${plural(unit.tenantCount, "tenant", "tenants")} will be unlinked from this unit but stay in Contacts.`}
@@ -78,7 +78,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                                 type="button"
                                 onClick={handleArchive}
                                 disabled={pending}
-                                className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"
+                                className="text-danger hover:text-danger/80 hover:cursor-pointer disabled:opacity-40"
                             >
                                 {pending ? "Archiving..." : "Yes, archive"}
                             </button>
@@ -86,7 +86,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                                 type="button"
                                 onClick={() => setConfirming(false)}
                                 disabled={pending}
-                                className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                                className="text-subtle hover:text-foreground hover:cursor-pointer"
                             >
                                 Cancel
                             </button>
@@ -98,7 +98,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                                 setError(null);
                                 setConfirming(true);
                             }}
-                            className="text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                            className="text-subtle hover:text-danger hover:cursor-pointer"
                         >
                             Archive unit
                         </button>
@@ -116,10 +116,10 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                                       }
                                     : undefined
                             }
-                            triggerClassName="text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                            triggerClassName="text-subtle hover:text-danger hover:cursor-pointer"
                         >
                             {unit.workOrderCount > 0 && (
-                                <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
+                                <p className="rounded-md border border-danger/40 bg-danger/10 px-3 py-2 text-danger">
                                     This also permanently deletes{" "}
                                     <strong>{plural(unit.workOrderCount, "work order", "work orders")}</strong> for this
                                     unit, <strong>including archived ones</strong>, and all of their photos.
@@ -135,7 +135,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                             )}
                         </DeleteButton>
                     )}
-                    {error && <p className="basis-full text-red-400">{error}</p>}
+                    {error && <p className="basis-full text-danger">{error}</p>}
                 </div>
             )}
         </div>
@@ -184,7 +184,7 @@ function InlineName({
                     setDraft(value);
                     setEditing(true);
                 }}
-                className={`${className} rounded px-1 -mx-1 text-left hover:bg-neutral-800 hover:cursor-text`}
+                className={`${className} rounded px-1 -mx-1 text-left hover:bg-surface-hover hover:cursor-text`}
                 aria-label={`Rename ${value}`}
             >
                 {value}
@@ -209,9 +209,9 @@ function InlineName({
                 disabled={pending}
                 autoFocus
                 aria-label={`Edit ${label}`}
-                className="rounded border border-neutral-600 bg-neutral-800 px-2 py-0.5 text-sm text-neutral-100 focus:outline-none"
+                className="rounded border border-faint bg-surface-hover px-2 py-0.5 text-sm text-foreground focus:outline-none"
             />
-            {error && <span className="text-xs text-red-400">{error}</span>}
+            {error && <span className="text-xs text-danger">{error}</span>}
         </span>
     );
 }
@@ -262,7 +262,7 @@ function AddInput({
                     {pending ? "Adding..." : buttonLabel}
                 </button>
             </div>
-            {error && <p className="text-sm text-red-400">{error}</p>}
+            {error && <p className="text-sm text-danger">{error}</p>}
         </div>
     );
 }

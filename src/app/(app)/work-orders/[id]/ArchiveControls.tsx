@@ -4,7 +4,7 @@ import { useState } from "react";
 import { archiveWorkOrder, restoreWorkOrder } from "../actions";
 
 const buttonClass =
-    "shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
+    "shrink-0 rounded-md border border-line-strong px-4 py-2 text-sm text-foreground hover:bg-surface-hover hover:cursor-pointer disabled:opacity-40 disabled:hover:cursor-not-allowed";
 
 export default function ArchiveControls({
     workOrderId,
@@ -49,7 +49,7 @@ export default function ArchiveControls({
                 >
                     {pending ? "Restoring..." : "Restore"}
                 </button>
-                {error && <span className="text-sm text-red-400">{error}</span>}
+                {error && <span className="text-sm text-danger">{error}</span>}
             </>
         );
     }
@@ -58,20 +58,20 @@ export default function ArchiveControls({
         <>
             {confirming ? (
                 <span className="flex flex-wrap items-center gap-2 text-sm">
-                    <span className="text-neutral-300">
+                    <span className="text-secondary">
                         {willCancel
                             ? `Archive this work order? It will be cancelled, ${contractorName ?? "the contractor"} will be emailed, and their link will stop working.`
                             : "Archive this work order? It will be hidden from lists and the contractor link will stop working."}
                     </span>
                     <button
-                        className="text-red-400 hover:text-red-300 hover:cursor-pointer disabled:opacity-40"
+                        className="text-danger hover:text-danger/80 hover:cursor-pointer disabled:opacity-40"
                         onClick={() => run(() => archiveWorkOrder(workOrderId))}
                         disabled={pending}
                     >
                         {pending ? "Archiving..." : "Yes, archive"}
                     </button>
                     <button
-                        className="text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                        className="text-subtle hover:text-foreground hover:cursor-pointer"
                         onClick={() => setConfirming(false)}
                         disabled={pending}
                     >
@@ -80,13 +80,13 @@ export default function ArchiveControls({
                 </span>
             ) : (
                 <button
-                    className="shrink-0 rounded-md px-4 py-2 text-sm text-neutral-500 hover:text-red-400 hover:cursor-pointer"
+                    className="shrink-0 rounded-md px-4 py-2 text-sm text-subtle hover:text-danger hover:cursor-pointer"
                     onClick={() => setConfirming(true)}
                 >
                     Archive
                 </button>
             )}
-            {error && <span className="w-full text-sm text-red-400">{error}</span>}
+            {error && <span className="w-full text-sm text-danger">{error}</span>}
         </>
     );
 }

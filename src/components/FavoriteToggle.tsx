@@ -23,7 +23,7 @@ export default function FavoriteToggle({ favorite, onToggle }: { favorite: boole
             aria-label={favorite ? "Remove from favorites" : "Add to favorites"}
             title={favorite ? "Remove from favorites" : "Add to favorites"}
             className={`ml-2 align-middle text-xl leading-none hover:cursor-pointer disabled:opacity-40 ${
-                favorite ? "text-amber-400 hover:text-amber-300" : "text-neutral-600 hover:text-amber-400"
+                favorite ? "text-warning hover:text-warning/80" : "text-faint hover:text-warning"
             }`}
         >
             {favorite ? "★" : "☆"}

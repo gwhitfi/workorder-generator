@@ -24,9 +24,9 @@ export default function CompleteWorkOrder({ token, remainingCount }: { token: st
     }
 
     return (
-        <section className="mt-8 border-t border-neutral-800 pt-6">
-            <h2 className="text-lg font-semibold text-neutral-100">Finish up</h2>
-            <p className="mt-1 mb-4 text-sm text-neutral-500">
+        <section className="mt-8 border-t border-line pt-6">
+            <h2 className="text-lg font-semibold text-foreground">Finish up</h2>
+            <p className="mt-1 mb-4 text-sm text-subtle">
                 Add any final notes for the office, then mark the work order complete.
             </p>
 
@@ -40,7 +40,7 @@ export default function CompleteWorkOrder({ token, remainingCount }: { token: st
             />
 
             {remainingCount > 0 && (
-                <p className="mt-2 text-sm text-amber-400">
+                <p className="mt-2 text-sm text-warning">
                     {remainingCount} {remainingCount === 1 ? "item is" : "items are"} not checked off.
                 </p>
             )}
@@ -48,12 +48,12 @@ export default function CompleteWorkOrder({ token, remainingCount }: { token: st
             <div className="mt-3 flex flex-wrap items-center gap-2">
                 {confirming ? (
                     <>
-                        <span className="text-sm text-neutral-300">Mark this work order complete?</span>
+                        <span className="text-sm text-secondary">Mark this work order complete?</span>
                         <button
                             type="button"
                             onClick={handleComplete}
                             disabled={pending}
-                            className="shrink-0 rounded-md border border-green-700 px-4 py-2 text-sm text-green-400 hover:bg-green-950 hover:cursor-pointer disabled:opacity-40"
+                            className="shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover hover:cursor-pointer disabled:opacity-40"
                         >
                             {pending ? "Submitting..." : "Yes, complete"}
                         </button>
@@ -61,7 +61,7 @@ export default function CompleteWorkOrder({ token, remainingCount }: { token: st
                             type="button"
                             onClick={() => setConfirming(false)}
                             disabled={pending}
-                            className="shrink-0 px-2 text-sm text-neutral-500 hover:text-neutral-100 hover:cursor-pointer"
+                            className="shrink-0 px-2 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                         >
                             Cancel
                         </button>
@@ -70,14 +70,14 @@ export default function CompleteWorkOrder({ token, remainingCount }: { token: st
                     <button
                         type="button"
                         onClick={() => setConfirming(true)}
-                        className="shrink-0 rounded-md border border-neutral-700 px-4 py-2 text-sm text-neutral-100 hover:bg-neutral-800 hover:cursor-pointer"
+                        className="shrink-0 rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover hover:cursor-pointer"
                     >
                         Mark work order complete
                     </button>
                 )}
             </div>
 
-            {error && <p className="mt-2 text-sm text-red-400">{error}</p>}
+            {error && <p className="mt-2 text-sm text-danger">{error}</p>}
         </section>
     );
 }

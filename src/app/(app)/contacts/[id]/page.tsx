@@ -68,15 +68,15 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
     const property = contact.unit?.property;
 
     return (
-        <main className="mx-auto max-w-3xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
             {contact.archived && (
-                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-neutral-700 bg-neutral-900 px-4 py-3">
-                    <p className="text-sm text-neutral-300">This contact is archived.</p>
+                <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface px-4 py-3">
+                    <p className="text-sm text-secondary">This contact is archived.</p>
                     <RestoreContactButton contactId={contact.id} />
                 </div>
             )}
             <div className="mb-8">
-                <span className="mb-2 inline-block rounded-full border border-neutral-700 px-2 py-0.5 text-xs text-neutral-400">
+                <span className="mb-2 inline-block rounded-full border border-line-strong px-2 py-0.5 text-xs text-muted">
                     {CONTACT_TYPE_LABELS[contact.contactType]}
                 </span>
                 <div className="mb-4 flex items-start justify-between gap-4">
@@ -94,7 +94,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                     {!contact.archived && (
                         <Link
                             href={`/contacts/${contact.id}/edit`}
-                            className="mt-1 shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                            className="mt-1 shrink-0 text-sm text-muted hover:text-foreground"
                         >
                             Edit
                         </Link>
@@ -104,18 +104,18 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                 <div className="grid gap-4 sm:grid-cols-3">
                     <InfoCard label="Contact" title={contactTitle}>
                         {contact.phone ? (
-                            <a href={`tel:${contact.phone}`} className="block truncate hover:text-neutral-100">
+                            <a href={`tel:${contact.phone}`} className="block truncate hover:text-foreground">
                                 {formatPhone(contact.phone)}
                             </a>
                         ) : (
-                            <p className="text-neutral-500">No phone</p>
+                            <p className="text-subtle">No phone</p>
                         )}
                         {contact.email ? (
-                            <a href={`mailto:${contact.email}`} className="block truncate hover:text-neutral-100">
+                            <a href={`mailto:${contact.email}`} className="block truncate hover:text-foreground">
                                 {contact.email}
                             </a>
                         ) : (
-                            <p className="text-neutral-500">No email</p>
+                            <p className="text-subtle">No email</p>
                         )}
                     </InfoCard>
 
@@ -146,26 +146,26 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
             </div>
 
             {contact.notes && (
-                <div className="mb-8 text-sm leading-relaxed text-neutral-400">
-                    <p className="text-xs uppercase tracking-wide text-neutral-500">Notes</p>
+                <div className="mb-8 text-sm leading-relaxed text-muted">
+                    <p className="text-xs uppercase tracking-wide text-subtle">Notes</p>
                     <p className="mt-1 whitespace-pre-line">{contact.notes}</p>
                 </div>
             )}
 
-            <section className="border-t border-neutral-800 pt-6">
+            <section className="border-t border-line pt-6">
                 <div className="mb-3 flex items-baseline justify-between gap-4">
                     <h2 className="text-lg font-semibold">Work orders</h2>
                     {!contact.archived && isTenant && property && !property.archived && (
                         <Link
                             href={`/work-orders/new?propertyId=${property.id}`}
-                            className="shrink-0 text-sm text-neutral-400 hover:text-neutral-100"
+                            className="shrink-0 text-sm text-muted hover:text-foreground"
                         >
                             + Create work order
                         </Link>
                     )}
                 </div>
                 {shownWorkOrders.length === 0 ? (
-                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                    <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                         No work orders for this contact yet.
                     </p>
                 ) : (
@@ -173,7 +173,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                 )}
             </section>
 
-            <div className="mt-8 flex flex-wrap items-center justify-end gap-2 border-t border-neutral-800 pt-6">
+            <div className="mt-8 flex flex-wrap items-center justify-end gap-2 border-t border-line pt-6">
                 {(isTenant || openCount === 0) && (
                     <DeleteButton itemName={contact.displayName} onDelete={deleteContact.bind(null, contact.id)}>
                         <p>
@@ -181,7 +181,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                             link to this contact.
                         </p>
                         {!contact.archived && (
-                            <p className="text-neutral-400">
+                            <p className="text-muted">
                                 To keep them in your records, go back and use <strong>Archive contact</strong> instead.
                             </p>
                         )}

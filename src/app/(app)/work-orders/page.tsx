@@ -37,7 +37,7 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
     const noun = workOrders.length === 1 ? "work order" : "work orders";
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
             <PageHeader
                 title="Work Orders"
                 subtitle={`${workOrders.length} ${noun}`}
@@ -89,8 +89,8 @@ function FilterChips({ active }: { active: WorkOrderFilter | null }) {
                                 aria-current={isActive ? "page" : undefined}
                                 className={`block rounded-full border px-3 py-1 text-sm ${
                                     isActive
-                                        ? "border-neutral-100 bg-neutral-100 text-neutral-900"
-                                        : "border-neutral-700 text-neutral-400 hover:border-neutral-500 hover:text-neutral-100"
+                                        ? "border-accent bg-accent text-on-accent"
+                                        : "border-line-strong text-muted hover:border-subtle hover:text-foreground"
                                 }`}
                             >
                                 {chip.label}

@@ -9,7 +9,7 @@ export default async function AppLayout({ children }: { children: React.ReactNod
     if (result.state === "needs-org") redirect("/setup");
 
     return (
-        <div className="min-h-screen text-neutral-100">
+        <div className="min-h-screen text-foreground">
             <Nav />
             {children}
         </div>

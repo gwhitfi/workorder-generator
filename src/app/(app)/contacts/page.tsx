@@ -70,7 +70,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
     ];
 
     return (
-        <main className="mx-auto max-w-5xl px-4 py-10 text-neutral-100">
+        <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
             <PageHeader
                 title="Contacts"
                 subtitle={`${contacts.length} ${showArchived ? "archived " : ""}${contacts.length === 1 ? "contact" : "contacts"}`}
@@ -81,14 +81,14 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             <div className="-mt-4 mb-4 flex justify-end">
                 <Link
                     href={showArchived ? "/contacts" : "/contacts?archived=1"}
-                    className="text-sm text-neutral-500 hover:text-neutral-100"
+                    className="text-sm text-subtle hover:text-foreground"
                 >
                     {showArchived ? "← Show active" : "Show archived"}
                 </Link>
             </div>
 
             {contacts.length === 0 && showArchived ? (
-                <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                     No archived contacts.
                 </p>
             ) : contacts.length === 0 ? (
@@ -106,11 +106,11 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
                             <section key={section.type}>
                                 <h2 className="mb-3 flex items-baseline gap-2 text-lg font-semibold">
                                     {section.title}
-                                    <span className="text-sm font-normal text-neutral-500">{rows.length}</span>
+                                    <span className="text-sm font-normal text-subtle">{rows.length}</span>
                                 </h2>
 
                                 {rows.length === 0 ? (
-                                    <p className="rounded-lg border border-dashed border-neutral-800 px-4 py-4 text-sm text-neutral-500">
+                                    <p className="rounded-lg border border-dashed border-line px-4 py-4 text-sm text-subtle">
                                         {section.empty}
                                     </p>
                                 ) : (
@@ -126,21 +126,21 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
                                                 label={`View ${contact.displayName}`}
                                                 cols={COLS}
                                             >
-                                                <Cell className="basis-full truncate font-medium text-neutral-100">
+                                                <Cell className="basis-full truncate font-medium text-foreground">
                                                     {contact.displayName}
                                                     <Favorite show={contact.favorite} />
                                                 </Cell>
-                                                <Cell className="basis-full truncate text-neutral-400">
+                                                <Cell className="basis-full truncate text-muted">
                                                     {section.detail(contact)}
                                                 </Cell>
-                                                <Cell className="text-neutral-400">
+                                                <Cell className="text-muted">
                                                     {contact.phone && (
                                                         <ListLink href={`tel:${contact.phone}`}>
                                                             {formatPhone(contact.phone)}
                                                         </ListLink>
                                                     )}
                                                 </Cell>
-                                                <Cell className="text-neutral-400">
+                                                <Cell className="text-muted">
                                                     {contact.email && (
                                                         <ListLink href={`mailto:${contact.email}`}>
                                                             {contact.email}
