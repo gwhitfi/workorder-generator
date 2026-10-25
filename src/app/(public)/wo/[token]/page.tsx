@@ -26,7 +26,10 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
-                    lineItems: { orderBy: { sortOrder: "asc" } },
+                    lineItems: {
+                        orderBy: { sortOrder: "asc" },
+                        include: { attachments: { select: { id: true }, orderBy: { createdAt: "desc" }, take: 1 } },
+                    },
                 },
             },
         },

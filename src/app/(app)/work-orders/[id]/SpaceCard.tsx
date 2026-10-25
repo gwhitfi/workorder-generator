@@ -4,6 +4,7 @@ import { useRef, useState } from "react";
 import { addLineItem, removeLineItem, moveLineItem, updateLineItem } from "../actions";
 import { LineItemPriority } from "@/generated/prisma/enums";
 import { inputClass, PRIORITY_STYLES, PRIORITY_LABELS } from "@/lib/defaults";
+import LineItemPhoto from "./LineItemPhoto";
 
 type LineItemRow = {
     id: string;
@@ -12,6 +13,8 @@ type LineItemRow = {
     completed: boolean;
     completedAt: Date | null;
     contractorNotes: string | null;
+    // At most one: the line item's photo.
+    attachments: { id: string }[];
 };
 
 type AreaRow = {
@@ -237,6 +240,12 @@ export default function SpaceCard({
                                     </>
                                 )}
                             </div>
+                            <LineItemPhoto
+                                lineItemId={item.id}
+                                description={item.description}
+                                photoId={item.attachments[0]?.id ?? null}
+                                readOnly={readOnly}
+                            />
                             {item.contractorNotes && (
                                 <p className="ml-7 mt-1 whitespace-pre-line border-l-2 border-neutral-700 pl-2 text-sm text-neutral-400">
                                     <span className="text-neutral-500">Contractor: </span>

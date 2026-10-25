@@ -44,7 +44,10 @@ export default async function WorkOrderDetail({
             areas: {
                 orderBy: { sortOrder: "asc" },
                 include: {
-                    lineItems: { orderBy: { sortOrder: "asc" } },
+                    lineItems: {
+                        orderBy: { sortOrder: "asc" },
+                        include: { attachments: { select: { id: true }, orderBy: { createdAt: "desc" }, take: 1 } },
+                    },
                 },
             },
         },
@@ -245,7 +248,10 @@ export default async function WorkOrderDetail({
                         itemName={workOrder.title ?? "Untitled work order"}
                         onDelete={deleteWorkOrder.bind(null, workOrder.id)}
                     >
-                        <p>Its line items, contractor notes and link will be deleted.</p>
+                        <p>
+                            Its line items, <strong>all of its photos</strong>, contractor notes and link will be
+                            deleted.
+                        </p>
                         {contractorWorking && (
                             <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
                                 This work order is still {WORK_ORDER_STATUS_LABELS[workOrder.status].toLowerCase()}.{" "}

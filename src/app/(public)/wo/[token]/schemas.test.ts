@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { completeInput, noteInput, toggleInput } from "./schemas";
+import { completeInput, noteInput, photoInput, toggleInput } from "./schemas";
 
 const token = "abc123";
 const lineItemId = "cl0000000000000000000000";
@@ -55,5 +55,17 @@ describe("completeInput", () => {
 
     it("rejects completion notes over 2000 characters", () => {
         expect(completeInput.safeParse({ token, completionNotes: "x".repeat(2001) }).success).toBe(false);
+    });
+});
+
+describe("photoInput", () => {
+    it("accepts a token and attachment ID", () => {
+        expect(photoInput.parse({ token, attachmentId: lineItemId })).toEqual({ token, attachmentId: lineItemId });
+    });
+
+    it("rejects an empty or over-long token or attachment ID", () => {
+        expect(photoInput.safeParse({ token: "", attachmentId: lineItemId }).success).toBe(false);
+        expect(photoInput.safeParse({ token, attachmentId: "" }).success).toBe(false);
+        expect(photoInput.safeParse({ token, attachmentId: "x".repeat(101) }).success).toBe(false);
     });
 });

@@ -1,0 +1,33 @@
+import prisma from "@/lib/prisma";
+import { photoNotFound, servePhoto } from "@/lib/servePhoto";
+import { photoInput } from "../../schemas";
+
+// Contractor view of a photo. No account: the publicToken is the credential, so the photo must belong to
+// that token's work order, and the work order must be one the contractor page shows.
+export async function GET(
+    request: Request,
+    { params }: { params: Promise<{ token: string; id: string }> },
+): Promise<Response> {
+    const { token, id } = await params;
+    const input = photoInput.safeParse({ token, attachmentId: id });
+    if (!input.success) return photoNotFound();
+
+    const attachment = await prisma.attachment.findFirst({
+        where: {
+            id: input.data.attachmentId,
+            lineItem: {
+                area: {
+                    workOrder: {
+                        publicToken: input.data.token,
+                        archived: false,
+                        status: { notIn: ["DRAFT", "CANCELLED"] },
+                    },
+                },
+            },
+        },
+        select: { storageKey: true },
+    });
+    if (!attachment) return photoNotFound();
+
+    return servePhoto(attachment.storageKey, request);
+}

@@ -224,7 +224,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                             <strong>
                                 {deletedWorkOrderCount} {deletedWorkOrderCount === 1 ? "work order" : "work orders"}
                             </strong>{" "}
-                            for this property, <strong>including archived ones</strong>.
+                            for this property, <strong>including archived ones</strong>, and all of their photos.
                             {openCount > 0 &&
                                 ` ${openCount} ${openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
                         </p>

@@ -15,6 +15,7 @@ type AreaRow = {
         completed: boolean;
         completedAt: Date | null;
         contractorNotes: string | null;
+        attachments: { id: string }[];
     }[];
 };
 

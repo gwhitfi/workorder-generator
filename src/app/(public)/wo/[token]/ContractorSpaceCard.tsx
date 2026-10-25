@@ -10,6 +10,8 @@ type LineItemRow = {
     priority: string;
     completed: boolean;
     contractorNotes: string | null;
+    // At most one: the line item's photo.
+    attachments: { id: string }[];
 };
 
 type AreaRow = {
@@ -133,6 +135,25 @@ export default function ContractorSpaceCard({
                                         </button>
                                     )}
                                 </div>
+
+                                {item.attachments[0] && (
+                                    <a
+                                        href={`/wo/${token}/photos/${item.attachments[0].id}`}
+                                        target="_blank"
+                                        rel="noopener"
+                                        className="ml-9 mt-2 inline-block"
+                                        aria-label={`Open the photo for ${item.description}`}
+                                    >
+                                        {/* next/image's optimizer would cache the photo outside our access check. */}
+                                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                                        <img
+                                            src={`/wo/${token}/photos/${item.attachments[0].id}`}
+                                            alt={`Photo for ${item.description}`}
+                                            loading="lazy"
+                                            className="h-24 w-24 rounded border border-neutral-700 object-cover hover:border-neutral-400"
+                                        />
+                                    </a>
+                                )}
 
                                 {notingId === item.id ? (
                                     <div className="ml-9 mt-2 flex flex-col gap-2">

@@ -7,6 +7,8 @@ import { z } from "zod";
 import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
 import { formatWorkOrderAddress } from "@/lib/workOrders";
+import { attachmentKeys, onWorkOrders } from "@/lib/attachments";
+import { deleteFiles } from "@/lib/storage";
 import { propertyInput, unitsInput, type PropertyFormState } from "./schemas";
 
 // Sent back with errors so the form can refill what the user typed.
@@ -175,12 +177,18 @@ export async function deleteProperty(propertyId: string, confirmation: string): 
         include: { unit: true },
     });
 
+    // Photos on the property itself or on any of its work orders.
+    const photoKeys = await attachmentKeys(organization.id, {
+        OR: [{ propertyId }, onWorkOrders({ propertyId })],
+    });
+
     // Work orders block the property delete (onDelete: Restrict), so they go first. Units cascade.
     await prisma.$transaction([
         prisma.contact.updateMany({ where: { unit: { propertyId } }, data: { unitId: null } }),
         prisma.workOrder.deleteMany({ where: { propertyId } }),
         prisma.property.delete({ where: { id: propertyId } }),
     ]);
+    await deleteFiles(photoKeys);
 
     notifyContractorsCancelled(
         organization,
@@ -330,12 +338,15 @@ export async function deleteUnit(unitId: string, confirmation: string): Promise<
         where: { unitId, archived: false, status: { in: ["SENT", "IN_PROGRESS"] } },
     });
 
+    const photoKeys = await attachmentKeys(organization.id, onWorkOrders({ unitId }));
+
     // Work orders would only lose their unit, so they're deleted outright.
     await prisma.$transaction([
         prisma.contact.updateMany({ where: { unitId }, data: { unitId: null } }),
         prisma.workOrder.deleteMany({ where: { unitId } }),
         prisma.unit.delete({ where: { id: unitId } }),
     ]);
+    await deleteFiles(photoKeys);
 
     notifyContractorsCancelled(
         organization,

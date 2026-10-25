@@ -10,8 +10,12 @@ import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
 import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
-import { formatWorkOrderAddress } from "@/lib/workOrders";
+import { formatWorkOrderAddress, OPEN_STATUSES } from "@/lib/workOrders";
 import { todayInAppTimeZone } from "@/lib/dates";
+import { z } from "zod";
+import { checkPhoto, MAX_PHOTO_BYTES } from "@/lib/photos";
+import { deleteFiles, lineItemPhotoKey, uploadFile } from "@/lib/storage";
+import { attachmentKeys, onWorkOrders } from "@/lib/attachments";
 
 async function readWorkOrderForm(formData: FormData, organizationId: string, propertyId: string) {
     const unitId = (formData.get("unitId") as string) || null;
@@ -221,8 +225,10 @@ export async function deleteWorkOrder(
     });
     if (!workOrder) return { ok: false, error: "Work order not found" };
 
-    // Areas, line items and attachments cascade.
+    // Areas, line items and attachments cascade; their stored files are deleted afterwards.
+    const photoKeys = await attachmentKeys(result.organization.id, onWorkOrders({ id: workOrderId }));
     await prisma.workOrder.delete({ where: { id: workOrderId } });
+    await deleteFiles(photoKeys);
 
     if (!workOrder.archived && ["SENT", "IN_PROGRESS"].includes(workOrder.status)) {
         notifyContractorsCancelled(result.organization, [
@@ -280,7 +286,9 @@ export async function removeArea(areaId: string) {
         throw new Error("Invalid area");
     }
 
+    const photoKeys = await attachmentKeys(result.organization.id, { lineItem: { areaId } });
     await prisma.area.delete({ where: { id: areaId } });
+    await deleteFiles(photoKeys);
     revalidatePath(`/work-orders/${area.workOrderId}`);
 }
 
@@ -368,7 +376,9 @@ export async function removeLineItem(lineItemId: string) {
         throw new Error("Invalid line item");
     }
 
+    const photoKeys = await attachmentKeys(result.organization.id, { lineItemId });
     await prisma.lineItem.delete({ where: { id: lineItemId } });
+    await deleteFiles(photoKeys);
     revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
 }
 
@@ -432,6 +442,116 @@ export async function updateLineItem(lineItemId: string, description: string, pr
     });
 
     revalidatePath(`/work-orders/${lineItem.area.workOrderId}`);
+}
+
+type PhotoResult = { ok: true } | { ok: false; error: string };
+
+const lineItemIdInput = z.string().min(1).max(100);
+const photoInput = z.instanceof(File, { message: "Choose a photo." });
+
+type PhotoLineItem =
+    { ok: true; id: string; workOrder: { id: string; publicToken: string } } | { ok: false; error: string };
+
+// Photos can change only while the work order itself can be edited.
+async function findPhotoLineItem(lineItemId: unknown, organizationId: string): Promise<PhotoLineItem> {
+    const id = lineItemIdInput.safeParse(lineItemId);
+    if (!id.success) return { ok: false, error: "Line item not found." };
+
+    const lineItem = await prisma.lineItem.findFirst({
+        where: { id: id.data, area: { workOrder: { organizationId } } },
+        select: { id: true, area: { select: { workOrder: true } } },
+    });
+    if (!lineItem) return { ok: false, error: "Line item not found." };
+
+    const workOrder = lineItem.area.workOrder;
+    if (workOrder.archived || !OPEN_STATUSES.includes(workOrder.status)) {
+        return { ok: false, error: "Photos can only be changed on open work orders." };
+    }
+
+    return { ok: true, id: lineItem.id, workOrder: { id: workOrder.id, publicToken: workOrder.publicToken } };
+}
+
+function revalidatePhoto(workOrder: { id: string; publicToken: string }) {
+    revalidatePath(`/work-orders/${workOrder.id}`);
+    revalidatePath(`/wo/${workOrder.publicToken}`);
+}
+
+// Adds the line item's photo, replacing the one it already has.
+export async function setLineItemPhoto(lineItemId: string, formData: FormData): Promise<PhotoResult> {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+    const organizationId = result.organization.id;
+
+    const lineItem = await findPhotoLineItem(lineItemId, organizationId);
+    if (!lineItem.ok) return lineItem;
+
+    const file = photoInput.safeParse(formData.get("photo"));
+    if (!file.success) return { ok: false, error: "Choose a photo." };
+    if (file.data.size > MAX_PHOTO_BYTES) return { ok: false, error: "Photos must be 3 MB or smaller." };
+
+    const bytes = new Uint8Array(await file.data.arrayBuffer());
+    const photo = checkPhoto(bytes);
+    if (!photo.ok) return photo;
+
+    const storageKey = lineItemPhotoKey(organizationId, lineItem.id, photo.type);
+    try {
+        await uploadFile(storageKey, bytes, photo.type.mimeType);
+    } catch (error) {
+        console.error("setLineItemPhoto upload failed", error);
+        return { ok: false, error: "The photo couldn't be uploaded. Try again." };
+    }
+
+    let replacedKeys: string[];
+    try {
+        replacedKeys = await prisma.$transaction(async (tx) => {
+            const existing = await tx.attachment.findMany({
+                where: { lineItemId: lineItem.id, organizationId },
+                select: { storageKey: true },
+            });
+            await tx.attachment.deleteMany({ where: { lineItemId: lineItem.id, organizationId } });
+            await tx.attachment.create({
+                data: {
+                    organizationId,
+                    lineItemId: lineItem.id,
+                    storageKey,
+                    fileName: file.data.name.slice(0, 255) || null,
+                    mimeType: photo.type.mimeType,
+                    sizeBytes: bytes.length,
+                },
+            });
+            return existing.map((a) => a.storageKey);
+        });
+    } catch (error) {
+        console.error("setLineItemPhoto save failed", error);
+        await deleteFiles([storageKey]);
+        return { ok: false, error: "The photo couldn't be saved. Try again." };
+    }
+
+    await deleteFiles(replacedKeys);
+    revalidatePhoto(lineItem.workOrder);
+    return { ok: true };
+}
+
+export async function removeLineItemPhoto(lineItemId: string): Promise<PhotoResult> {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") return { ok: false, error: "Not authorized" };
+    const organizationId = result.organization.id;
+
+    const lineItem = await findPhotoLineItem(lineItemId, organizationId);
+    if (!lineItem.ok) return lineItem;
+
+    const removedKeys = await prisma.$transaction(async (tx) => {
+        const existing = await tx.attachment.findMany({
+            where: { lineItemId: lineItem.id, organizationId },
+            select: { storageKey: true },
+        });
+        await tx.attachment.deleteMany({ where: { lineItemId: lineItem.id, organizationId } });
+        return existing.map((a) => a.storageKey);
+    });
+
+    await deleteFiles(removedKeys);
+    revalidatePhoto(lineItem.workOrder);
+    return { ok: true };
 }
 
 export async function sendWorkOrder(workOrderId: string, deliveryMethod: DeliveryMethod) {

@@ -122,7 +122,7 @@ function UnitCard({ unit, canArchive }: { unit: UnitRow; canArchive: boolean }) 
                                 <p className="rounded-md border border-red-900 bg-red-950/40 px-3 py-2 text-red-200">
                                     This also permanently deletes{" "}
                                     <strong>{plural(unit.workOrderCount, "work order", "work orders")}</strong> for this
-                                    unit, <strong>including archived ones</strong>.
+                                    unit, <strong>including archived ones</strong>, and all of their photos.
                                     {unit.openCount > 0 &&
                                         ` ${unit.openCount} ${unit.openCount === 1 ? "is" : "are"} still open; contractors who were sent a link will be emailed that it's cancelled.`}
                                 </p>
