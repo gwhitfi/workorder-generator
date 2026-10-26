@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { notFound } from "next/navigation";
 import prisma from "@/lib/prisma";
-import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { STATUS_COLORS, unitLabel, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import InfoCard from "@/components/InfoCard";
 import ContractorSpaceCard from "./ContractorSpaceCard";
 import CompleteWorkOrder from "./CompleteWorkOrder";
@@ -80,7 +80,7 @@ export default async function PublicWorkOrder({ params }: { params: Promise<{ to
                     <InfoCard
                         label="Property"
                         title={`${workOrder.property.addressLine1}${
-                            workOrder.unit && !workOrder.unit.isDefault ? `, Unit ${workOrder.unit.name}` : ""
+                            workOrder.unit && !workOrder.unit.isDefault ? `, ${unitLabel(workOrder.unit.name)}` : ""
                         }`}
                     >
                         {workOrder.property.addressLine2 && <p>{workOrder.property.addressLine2}</p>}

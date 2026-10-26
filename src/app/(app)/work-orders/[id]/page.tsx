@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { STATUS_COLORS, unitLabel, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import InfoCard from "@/components/InfoCard";
 import AreaBuilder from "./AreaBuilder";
 import StatusActions from "./StatusActions";
@@ -132,7 +132,7 @@ export default async function WorkOrderDetail({
                     >
                         <p>
                             {workOrder.property.addressLine1}
-                            {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
+                            {workOrder.unit && !workOrder.unit.isDefault && `, ${unitLabel(workOrder.unit.name)}`}
                         </p>
                         <p>
                             {workOrder.property.city}, {workOrder.property.state} {workOrder.property.zipCode}

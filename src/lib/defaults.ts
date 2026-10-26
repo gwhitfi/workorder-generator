@@ -105,3 +105,9 @@ export const US_STATE_LABELS: Record<string, string> = {
     WI: "Wisconsin",
     WY: "Wyoming",
 };
+
+// Short unit names ("B", "2B", "101") read better as "Unit B"; names with a space ("Unit A", "Apt 101",
+// "Upper Level") already say what they are, so they're shown as typed.
+export function unitLabel(name: string): string {
+    return /\s/.test(name.trim()) ? name.trim() : `Unit ${name.trim()}`;
+}

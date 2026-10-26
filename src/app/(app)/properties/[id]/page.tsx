@@ -2,7 +2,7 @@ import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
 import Link from "next/link";
-import { MULTI_UNIT, PROPERTY_TYPE_LABELS } from "@/lib/defaults";
+import { MULTI_UNIT, PROPERTY_TYPE_LABELS, unitLabel } from "@/lib/defaults";
 import { OPEN_STATUSES } from "@/lib/workOrders";
 import InfoCard from "@/components/InfoCard";
 import { Favorite } from "@/components/list/List";
@@ -143,7 +143,7 @@ export default async function PropertyDetail({ params }: { params: Promise<{ id:
                             >
                                 {tenant.displayName}
                                 {tenant.unit && !tenant.unit.isDefault && (
-                                    <span className="text-subtle"> · Unit {tenant.unit.name}</span>
+                                    <span className="text-subtle"> · {unitLabel(tenant.unit.name)}</span>
                                 )}
                             </Link>
                         ))}

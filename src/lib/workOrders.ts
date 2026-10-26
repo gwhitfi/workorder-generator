@@ -1,5 +1,6 @@
 import type { Prisma, WorkOrderStatus } from "@/generated/prisma/client";
 import { todayInAppTimeZone } from "@/lib/dates";
+import { unitLabel } from "@/lib/defaults";
 import { hrefWithSort, sortRows, streetSortKey, type SortColumns, type SortState } from "@/lib/sorting";
 
 export const OPEN_STATUSES: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS"];
@@ -112,7 +113,7 @@ type AddressUnit = { name: string; isDefault: boolean } | null;
 
 export function formatWorkOrderAddress(property: AddressProperty, unit: AddressUnit) {
     return (
-        `${property.addressLine1}${unit && !unit.isDefault ? `, Unit ${unit.name}` : ""}, ` +
+        `${property.addressLine1}${unit && !unit.isDefault ? `, ${unitLabel(unit.name)}` : ""}, ` +
         `${property.city}, ${property.state} ${property.zipCode}`
     );
 }

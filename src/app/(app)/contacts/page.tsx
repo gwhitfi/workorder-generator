@@ -4,6 +4,7 @@ import Link from "next/link";
 import type { ReactNode } from "react";
 import prisma from "@/lib/prisma";
 import { formatPhone } from "@/lib/phone";
+import { unitLabel } from "@/lib/defaults";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { List, ListHeader, ListRow, Cell, ListLink, Favorite } from "@/components/list/List";
@@ -103,7 +104,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             detailLabel: "Property",
             detailSortable: true,
             detail: (c) =>
-                c.unit && `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · Unit ${c.unit.name}`}`,
+                c.unit && `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · ${unitLabel(c.unit.name)}`}`,
         },
         {
             type: "OTHER",

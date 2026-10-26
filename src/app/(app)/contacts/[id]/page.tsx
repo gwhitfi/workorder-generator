@@ -1,5 +1,5 @@
 import { getCurrentUser } from "@/lib/auth";
-import { CONTACT_TYPE_LABELS } from "@/lib/defaults";
+import { CONTACT_TYPE_LABELS, unitLabel } from "@/lib/defaults";
 import prisma from "@/lib/prisma";
 import { formatPhone } from "@/lib/phone";
 import { OPEN_STATUSES } from "@/lib/workOrders";
@@ -125,7 +125,7 @@ export default async function ContactDetail({ params }: { params: Promise<{ id: 
                             title={property ? property.displayName : "Not linked to a property"}
                             href={property ? `/properties/${property.id}` : undefined}
                         >
-                            {contact.unit && !contact.unit.isDefault && <p>Unit {contact.unit.name}</p>}
+                            {contact.unit && !contact.unit.isDefault && <p>{unitLabel(contact.unit.name)}</p>}
                         </InfoCard>
                     ) : (
                         <InfoCard label="Address" title={contact.addressLine1 ?? "No address on file"}>

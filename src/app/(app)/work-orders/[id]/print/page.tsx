@@ -1,7 +1,7 @@
 import { getCurrentUser } from "@/lib/auth";
 import prisma from "@/lib/prisma";
 import { redirect, notFound } from "next/navigation";
-import { PRIORITY_LABELS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
+import { PRIORITY_LABELS, unitLabel, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
 import PrintButton from "@/components/PrintButton";
@@ -58,7 +58,7 @@ export default async function WorkOrderPrint({ params }: { params: Promise<{ id:
                         <h3 className="mb-1 font-semibold text-neutral-600">Address</h3>
                         <p>
                             {workOrder.property.addressLine1}
-                            {workOrder.unit && !workOrder.unit.isDefault && `, Unit ${workOrder.unit.name}`}
+                            {workOrder.unit && !workOrder.unit.isDefault && `, ${unitLabel(workOrder.unit.name)}`}
                         </p>
                         <p>
                             {workOrder.property.city}, {workOrder.property.state} {workOrder.property.zipCode}
