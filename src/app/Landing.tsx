@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Logo from "@/components/Logo";
 
 const FEATURES = [
     {
@@ -20,8 +21,8 @@ export default function Landing() {
         <div className="text-foreground">
             <header className="border-b border-line">
                 <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-                    <Link href="/" className="font-semibold">
-                        Work Order Generator
+                    <Link href="/" className="shrink-0">
+                        <Logo className="h-6 w-auto" />
                     </Link>
                     <nav className="flex items-center gap-4">
                         <Link href="/sign-in" className="text-sm text-muted hover:text-foreground">

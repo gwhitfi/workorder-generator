@@ -1,30 +1,37 @@
 import Link from "next/link";
 import { UserButton } from "@clerk/nextjs";
 import ThemeToggle from "./ThemeToggle";
+import Logo from "./Logo";
+import MobileMenu, { type NavLink } from "./MobileMenu";
+
+const links: NavLink[] = [
+    { href: "/work-orders", label: "Work Orders" },
+    { href: "/contacts", label: "Contacts" },
+    { href: "/properties", label: "Properties" },
+    { href: "/settings", label: "Settings" },
+];
 
 export default function Nav() {
     return (
-        <header className="border-b border-line print:hidden">
-            <div className="mx-auto flex max-w-5xl items-center justify-between px-4 py-4">
-                <Link href="/" className="font-semibold text-foreground">
-                    Work Order Generator
+        <header className="relative border-b border-line print:hidden">
+            <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-4">
+                <Link href="/" className="shrink-0 text-foreground">
+                    <Logo className="h-6 w-auto" />
                 </Link>
-                <nav className="flex items-center gap-6">
-                    <Link href="/work-orders" className="text-sm text-muted hover:text-foreground">
-                        Work Orders
-                    </Link>
-                    <Link href="/contacts" className="text-sm text-muted hover:text-foreground">
-                        Contacts
-                    </Link>
-                    <Link href="/properties" className="text-sm text-muted hover:text-foreground">
-                        Properties
-                    </Link>
-                    <Link href="/settings" className="text-sm text-muted hover:text-foreground">
-                        Settings
-                    </Link>
+                <div className="flex shrink-0 items-center gap-3 md:gap-6">
+                    <nav className="hidden items-center gap-6 md:flex">
+                        {links.map((link) => (
+                            <Link key={link.href} href={link.href} className="text-sm text-muted hover:text-foreground">
+                                {link.label}
+                            </Link>
+                        ))}
+                    </nav>
                     <ThemeToggle />
                     <UserButton />
-                </nav>
+                    <div className="md:hidden">
+                        <MobileMenu links={links} />
+                    </div>
+                </div>
             </div>
         </header>
     );
