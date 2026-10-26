@@ -28,11 +28,14 @@ export const WORK_ORDER_FILTERS = {
 
 export type WorkOrderFilter = keyof typeof WORK_ORDER_FILTERS;
 
+// The "Split view by status" setting on /work-orders, saved per browser: "1" on, "0" off.
+export const SPLIT_VIEW_COOKIE = "wo-split-view";
+
 export function isWorkOrderFilter(value: unknown): value is WorkOrderFilter {
     return typeof value === "string" && Object.hasOwn(WORK_ORDER_FILTERS, value);
 }
 
-const STATUS_ORDER: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS", "COMPLETED", "CLOSED", "CANCELLED"];
+export const STATUS_ORDER: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS", "COMPLETED", "CLOSED", "CANCELLED"];
 
 type SortableWorkOrder = {
     title: string;

@@ -4,13 +4,14 @@ import { getCurrentUser } from "@/lib/auth";
 import { randomBytes } from "node:crypto";
 import prisma from "@/lib/prisma";
 import { revalidatePath } from "next/cache";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { DeliveryMethod, LineItemPriority } from "@/generated/prisma/enums";
 import { getAppUrl, sendEmail } from "@/lib/email";
 import { workOrderEmail } from "@/lib/emails/workOrderEmail";
 import { notifyContractorsCancelled } from "@/lib/emails/notifyCancelled";
 import { DELETE_NOT_CONFIRMED, isDeleteConfirmed } from "@/lib/confirmDelete";
-import { formatWorkOrderAddress, OPEN_STATUSES } from "@/lib/workOrders";
+import { formatWorkOrderAddress, OPEN_STATUSES, SPLIT_VIEW_COOKIE } from "@/lib/workOrders";
 import { todayInAppTimeZone } from "@/lib/dates";
 import { z } from "zod";
 import { checkPhoto, MAX_PHOTO_BYTES } from "@/lib/photos";
@@ -84,6 +85,23 @@ async function nextJobNumber(tx: Tx, organizationId: string) {
         WHERE "id" = ${organizationId}
         RETURNING "lastJobNumber"`;
     return `${year}-${row.lastJobNumber}`;
+}
+
+// Saves the work order list's "Split view by status" setting in a cookie, so the page renders the right view.
+export async function setSplitView(enabled: boolean): Promise<void> {
+    const result = await getCurrentUser();
+    if (result.state !== "ready") throw new Error("Not authorized");
+
+    const on = z.boolean().parse(enabled);
+    (await cookies()).set(SPLIT_VIEW_COOKIE, on ? "1" : "0", {
+        path: "/work-orders",
+        maxAge: 60 * 60 * 24 * 365,
+        sameSite: "lax",
+        httpOnly: true,
+        secure: process.env.NODE_ENV === "production",
+    });
+
+    revalidatePath("/work-orders");
 }
 
 export async function createWorkOrder(formData: FormData) {
