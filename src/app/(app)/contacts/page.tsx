@@ -7,10 +7,47 @@ import { formatPhone } from "@/lib/phone";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { List, ListHeader, ListRow, Cell, ListLink, Favorite } from "@/components/list/List";
+import {
+    contactSortName,
+    hrefWithSort,
+    parseSort,
+    sortLabels,
+    sortRows,
+    type SearchParams,
+    type SortColumns,
+} from "@/lib/sorting";
 
 const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,1.5fr)_minmax(0,1fr)_minmax(0,1.5fr)]";
 
-export default async function Contacts({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
+type SortableContact = {
+    contactType: string;
+    displayName: string;
+    firstName: string | null;
+    lastName: string | null;
+    company: string | null;
+    phone: string | null;
+    email: string | null;
+    unit: { name: string; isDefault: boolean; property: { displayName: string } } | null;
+};
+
+// "detail" is the second column: the company for contractors, the property and unit for tenants.
+// The Other section's Notes column isn't sortable.
+const SORTS: SortColumns<SortableContact, "name" | "detail" | "phone" | "email"> = {
+    name: { value: contactSortName },
+    detail: {
+        value: (c) => {
+            if (c.contactType === "CONTRACTOR") return c.company;
+            if (c.contactType === "TENANT" && c.unit) {
+                return [c.unit.property.displayName, c.unit.isDefault ? null : c.unit.name];
+            }
+            return null;
+        },
+    },
+    phone: { value: (c) => c.phone },
+    email: { value: (c) => c.email },
+};
+
+export default async function Contacts({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -21,7 +58,10 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
         redirect("/setup");
     }
 
-    const showArchived = (await searchParams).archived === "1";
+    const params = await searchParams;
+    const showArchived = params.archived === "1";
+    const sort = parseSort(params, SORTS);
+    const label = sortLabels("/contacts", params, SORTS, sort);
 
     const contacts = await prisma.contact.findMany({
         where: {
@@ -38,11 +78,14 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
 
     type ContactRow = (typeof contacts)[number];
 
+    const sortedContacts = sortRows(contacts, SORTS, sort);
+
     const sections: {
         type: ContactRow["contactType"];
         title: string;
         empty: string;
         detailLabel: string;
+        detailSortable: boolean;
         detail: (c: ContactRow) => ReactNode;
     }[] = [
         {
@@ -50,6 +93,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             title: "Contractors",
             empty: "No contractors yet.",
             detailLabel: "Company",
+            detailSortable: true,
             detail: (c) => c.company,
         },
         {
@@ -57,6 +101,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             title: "Tenants",
             empty: "No tenants yet.",
             detailLabel: "Property",
+            detailSortable: true,
             detail: (c) =>
                 c.unit && `${c.unit.property.displayName}${c.unit.isDefault ? "" : ` · Unit ${c.unit.name}`}`,
         },
@@ -65,6 +110,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             title: "Other",
             empty: "No other contacts yet.",
             detailLabel: "Notes",
+            detailSortable: false,
             detail: (c) => c.notes,
         },
     ];
@@ -80,7 +126,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
 
             <div className="-mt-4 mb-4 flex justify-end">
                 <Link
-                    href={showArchived ? "/contacts" : "/contacts?archived=1"}
+                    href={hrefWithSort("/contacts", sort, showArchived ? {} : { archived: "1" })}
                     className="text-sm text-subtle hover:text-foreground"
                 >
                     {showArchived ? "← Show active" : "Show archived"}
@@ -100,7 +146,7 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
             ) : (
                 <div className="flex flex-col gap-8">
                     {sections.map((section) => {
-                        const rows = contacts.filter((c) => c.contactType === section.type);
+                        const rows = sortedContacts.filter((c) => c.contactType === section.type);
 
                         return (
                             <section key={section.type}>
@@ -117,7 +163,14 @@ export default async function Contacts({ searchParams }: { searchParams: Promise
                                     <List>
                                         <ListHeader
                                             cols={COLS}
-                                            labels={["Name", section.detailLabel, "Phone", "Email"]}
+                                            labels={[
+                                                label("Name", "name"),
+                                                section.detailSortable
+                                                    ? label(section.detailLabel, "detail")
+                                                    : section.detailLabel,
+                                                label("Phone", "phone"),
+                                                label("Email", "email"),
+                                            ]}
                                         />
                                         {rows.map((contact) => (
                                             <ListRow

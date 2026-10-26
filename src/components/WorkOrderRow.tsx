@@ -1,6 +1,7 @@
 import type { Prisma } from "@/generated/prisma/client";
 import { STATUS_COLORS, WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
-import { isOverdue } from "@/lib/workOrders";
+import { isOverdue, type WorkOrderSort } from "@/lib/workOrders";
+import type { SortLabel } from "@/lib/sorting";
 import { List, ListHeader, ListRow, Cell } from "@/components/list/List";
 import { formatDueDate } from "@/lib/dates";
 
@@ -9,14 +10,24 @@ export type WorkOrderWithPlace = Prisma.WorkOrderGetPayload<{ include: { propert
 const COLS = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)_minmax(0,1.2fr)]";
 const COLS_NO_CONTRACTOR = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)]";
 
+// Pass `label` (from sortLabels) to make the headers sortable; the caller sorts the rows.
 export function WorkOrderList({
     workOrders,
     hideContractor = false,
+    label,
 }: {
     workOrders: WorkOrderWithPlace[];
     hideContractor?: boolean;
+    label?: (label: string, key: WorkOrderSort) => SortLabel;
 }) {
-    const labels = ["Title", "Status", "Due", "Property", ...(hideContractor ? [] : ["Contractor"])];
+    const header = (text: string, key: WorkOrderSort) => (label ? label(text, key) : text);
+    const labels = [
+        header("Title", "title"),
+        header("Status", "status"),
+        header("Due", "due"),
+        header("Property", "property"),
+        ...(hideContractor ? [] : [header("Contractor", "contractor")]),
+    ];
 
     return (
         <List>

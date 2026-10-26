@@ -5,9 +5,16 @@ import prisma from "@/lib/prisma";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { WorkOrderList } from "@/components/WorkOrderRow";
-import { WORK_ORDER_FILTERS, isWorkOrderFilter, type WorkOrderFilter } from "@/lib/workOrders";
+import {
+    WORK_ORDER_FILTERS,
+    WORK_ORDER_SORTS,
+    isWorkOrderFilter,
+    type WorkOrderFilter,
+    type WorkOrderSort,
+} from "@/lib/workOrders";
+import { hrefWithSort, parseSort, sortLabels, sortRows, type SearchParams, type SortState } from "@/lib/sorting";
 
-export default async function WorkOrder({ searchParams }: { searchParams: Promise<{ status?: string | string[] }> }) {
+export default async function WorkOrder({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -18,8 +25,9 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
         redirect("/setup");
     }
 
-    const { status } = await searchParams;
-    const filter = isWorkOrderFilter(status) ? status : null;
+    const params = await searchParams;
+    const filter = isWorkOrderFilter(params.status) ? params.status : null;
+    const sort = parseSort(params, WORK_ORDER_SORTS);
 
     const workOrders = await prisma.workOrder.findMany({
         where: {
@@ -31,6 +39,7 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
         include: {
             property: true,
             unit: true,
+            contractor: { select: { firstName: true, lastName: true } },
         },
     });
 
@@ -45,7 +54,7 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
                 actionLabel="Add Work Order"
             />
 
-            <FilterChips active={filter} />
+            <FilterChips active={filter} sort={sort} />
 
             {workOrders.length === 0 ? (
                 filter ? (
@@ -62,13 +71,16 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
                     />
                 )
             ) : (
-                <WorkOrderList workOrders={workOrders} />
+                <WorkOrderList
+                    workOrders={sortRows(workOrders, WORK_ORDER_SORTS, sort)}
+                    label={sortLabels("/work-orders", params, WORK_ORDER_SORTS, sort)}
+                />
             )}
         </main>
     );
 }
 
-function FilterChips({ active }: { active: WorkOrderFilter | null }) {
+function FilterChips({ active, sort }: { active: WorkOrderFilter | null; sort: SortState<WorkOrderSort> | null }) {
     const chips: { key: WorkOrderFilter | null; label: string }[] = [
         { key: null, label: "All" },
         ...(Object.keys(WORK_ORDER_FILTERS) as WorkOrderFilter[]).map((key) => ({
@@ -85,7 +97,7 @@ function FilterChips({ active }: { active: WorkOrderFilter | null }) {
                     return (
                         <li key={chip.label} className="shrink-0">
                             <Link
-                                href={chip.key ? `/work-orders?status=${chip.key}` : "/work-orders"}
+                                href={hrefWithSort("/work-orders", sort, chip.key ? { status: chip.key } : {})}
                                 aria-current={isActive ? "page" : undefined}
                                 className={`block rounded-full border px-3 py-1 text-sm ${
                                     isActive

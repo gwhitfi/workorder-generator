@@ -6,10 +6,34 @@ import { PROPERTY_TYPE_LABELS } from "@/lib/defaults";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { List, ListHeader, ListRow, Cell, Favorite } from "@/components/list/List";
+import {
+    hrefWithSort,
+    parseSort,
+    sortLabels,
+    sortRows,
+    streetSortKey,
+    type SearchParams,
+    type SortColumns,
+} from "@/lib/sorting";
 
 const COLS = "sm:grid-cols-[minmax(0,1.5fr)_minmax(0,2fr)_minmax(0,1fr)_minmax(0,0.7fr)_minmax(0,0.8fr)]";
 
-export default async function Properties({ searchParams }: { searchParams: Promise<{ archived?: string }> }) {
+type PropertyRow = {
+    displayName: string;
+    addressLine1: string;
+    propertyType: string;
+    _count: { units: number; workOrders: number };
+};
+
+const SORTS: SortColumns<PropertyRow, "name" | "address" | "type" | "units" | "open"> = {
+    name: { value: (p) => p.displayName },
+    address: { value: (p) => streetSortKey(p.addressLine1) },
+    type: { value: (p) => PROPERTY_TYPE_LABELS[p.propertyType] },
+    units: { value: (p) => p._count.units, firstDir: "desc" },
+    open: { value: (p) => p._count.workOrders, firstDir: "desc" },
+};
+
+export default async function Properties({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -20,7 +44,10 @@ export default async function Properties({ searchParams }: { searchParams: Promi
         redirect("/setup");
     }
 
-    const showArchived = (await searchParams).archived === "1";
+    const params = await searchParams;
+    const showArchived = params.archived === "1";
+    const sort = parseSort(params, SORTS);
+    const label = sortLabels("/properties", params, SORTS, sort);
 
     const properties = await prisma.property.findMany({
         where: {
@@ -51,7 +78,7 @@ export default async function Properties({ searchParams }: { searchParams: Promi
 
             <div className="-mt-4 mb-4 flex justify-end">
                 <Link
-                    href={showArchived ? "/properties" : "/properties?archived=1"}
+                    href={hrefWithSort("/properties", sort, showArchived ? {} : { archived: "1" })}
                     className="text-sm text-subtle hover:text-foreground"
                 >
                     {showArchived ? "← Show active" : "Show archived"}
@@ -70,8 +97,17 @@ export default async function Properties({ searchParams }: { searchParams: Promi
                 />
             ) : (
                 <List>
-                    <ListHeader cols={COLS} labels={["Name", "Address", "Type", "Units", "Open work"]} />
-                    {properties.map((property) => (
+                    <ListHeader
+                        cols={COLS}
+                        labels={[
+                            label("Name", "name"),
+                            label("Address", "address"),
+                            label("Type", "type"),
+                            label("Units", "units"),
+                            label("Open work", "open"),
+                        ]}
+                    />
+                    {sortRows(properties, SORTS, sort).map((property) => (
                         <ListRow
                             key={property.id}
                             href={`/properties/${property.id}`}

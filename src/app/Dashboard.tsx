@@ -4,12 +4,22 @@ import type { Organization } from "@/generated/prisma/client";
 import Nav from "@/components/Nav";
 import PageHeader from "@/components/list/PageHeader";
 import { WorkOrderList } from "@/components/WorkOrderRow";
-import { WORK_ORDER_FILTERS } from "@/lib/workOrders";
+import { WORK_ORDER_FILTERS, WORK_ORDER_SORTS } from "@/lib/workOrders";
+import { parseSort, sortLabels, sortRows, type SearchParams } from "@/lib/sorting";
 
-const include = { property: true, unit: true } as const;
+const include = { property: true, unit: true, contractor: { select: { firstName: true, lastName: true } } } as const;
 
-export default async function Dashboard({ organization }: { organization: Organization }) {
+export default async function Dashboard({
+    organization,
+    params,
+}: {
+    organization: Organization;
+    params: SearchParams;
+}) {
     const base = { organizationId: organization.id, archived: false };
+    // One sort applies to both lists. Without one, each keeps its own order.
+    const sort = parseSort(params, WORK_ORDER_SORTS);
+    const label = sortLabels("/", params, WORK_ORDER_SORTS, sort);
 
     const [
         draftCount,
@@ -98,7 +108,7 @@ export default async function Dashboard({ organization }: { organization: Organi
                         <p className="-mt-2 mb-3 text-sm text-subtle">
                             Completed work waiting to be closed out, and open work past its due date.
                         </p>
-                        <WorkOrderList workOrders={needsAttention} />
+                        <WorkOrderList workOrders={sortRows(needsAttention, WORK_ORDER_SORTS, sort)} label={label} />
                     </section>
                 )}
 
@@ -109,7 +119,7 @@ export default async function Dashboard({ organization }: { organization: Organi
                             {workOrderCount === 0 ? "No work orders yet." : "Nothing else recently."}
                         </p>
                     ) : (
-                        <WorkOrderList workOrders={recentActivity} />
+                        <WorkOrderList workOrders={sortRows(recentActivity, WORK_ORDER_SORTS, sort)} label={label} />
                     )}
                 </section>
             </main>

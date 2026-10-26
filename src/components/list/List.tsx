@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import type { SortLabel } from "@/lib/sorting";
 
 export function List({ children }: { children: React.ReactNode }) {
     return (
@@ -7,15 +8,35 @@ export function List({ children }: { children: React.ReactNode }) {
     );
 }
 
-export function ListHeader({ cols, labels }: { cols: string; labels: string[] }) {
+export function ListHeader({ cols, labels }: { cols: string; labels: (string | SortLabel)[] }) {
+    const sortable = labels.some((label) => typeof label !== "string");
+
     return (
         <li
-            aria-hidden
+            aria-hidden={sortable ? undefined : true}
             className={`hidden gap-4 bg-surface px-4 py-2 text-xs uppercase tracking-wide text-subtle sm:grid ${cols}`}
         >
-            {labels.map((label, i) => (
-                <span key={i}>{label}</span>
-            ))}
+            {labels.map((label, i) =>
+                typeof label === "string" ? (
+                    <span key={i}>{label}</span>
+                ) : (
+                    <Link
+                        key={i}
+                        href={label.href}
+                        className={`flex min-w-0 items-center gap-1 hover:text-foreground ${label.sorted ? "text-foreground" : ""}`}
+                    >
+                        <span className="truncate">{label.label}</span>
+                        {label.sorted && (
+                            <>
+                                <span aria-hidden>{label.sorted === "asc" ? "▲" : "▼"}</span>
+                                <span className="sr-only">
+                                    , sorted {label.sorted === "asc" ? "ascending" : "descending"}
+                                </span>
+                            </>
+                        )}
+                    </Link>
+                ),
+            )}
         </li>
     );
 }

@@ -2,8 +2,9 @@ import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
 import Dashboard from "./Dashboard";
 import Landing from "./Landing";
+import type { SearchParams } from "@/lib/sorting";
 
-export default async function Home() {
+export default async function Home({ searchParams }: { searchParams: Promise<SearchParams> }) {
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -14,5 +15,5 @@ export default async function Home() {
         redirect("/setup");
     }
 
-    return <Dashboard organization={result.organization} />;
+    return <Dashboard organization={result.organization} params={await searchParams} />;
 }

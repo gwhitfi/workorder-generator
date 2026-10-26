@@ -1,5 +1,58 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatWorkOrderAddress, isOverdue, isWorkOrderFilter } from "./workOrders";
+import { formatWorkOrderAddress, isOverdue, isWorkOrderFilter, WORK_ORDER_SORTS } from "./workOrders";
+import { sortRows } from "./sorting";
+
+describe("WORK_ORDER_SORTS", () => {
+    const workOrder = {
+        title: "Fix sink",
+        status: "SENT" as const,
+        dueDate: null,
+        contractorName: "Marcus Hill",
+        contractor: { firstName: "Marcus", lastName: "Hill" },
+        property: { addressLine1: "12 Oak St" },
+        unit: null,
+    };
+
+    it("sorts statuses in workflow order, not alphabetically", () => {
+        const statuses = ["CANCELLED", "CLOSED", "COMPLETED", "DRAFT", "IN_PROGRESS", "SENT"] as const;
+        const rows = statuses.map((status) => ({ ...workOrder, status }));
+        const sorted = sortRows(rows, WORK_ORDER_SORTS, { key: "status", dir: "asc" });
+        expect(sorted.map((row) => row.status)).toEqual([
+            "DRAFT",
+            "SENT",
+            "IN_PROGRESS",
+            "COMPLETED",
+            "CLOSED",
+            "CANCELLED",
+        ]);
+    });
+
+    it("sorts the property by street, number, then unit", () => {
+        expect(WORK_ORDER_SORTS.property.value(workOrder)).toEqual(["Oak St", 12, null]);
+        expect(WORK_ORDER_SORTS.property.value({ ...workOrder, unit: { name: "Main", isDefault: true } })).toEqual([
+            "Oak St",
+            12,
+            null,
+        ]);
+        expect(WORK_ORDER_SORTS.property.value({ ...workOrder, unit: { name: "2B", isDefault: false } })).toEqual([
+            "Oak St",
+            12,
+            "2B",
+        ]);
+    });
+
+    it("sorts the contractor by last name, falling back to the name on the work order", () => {
+        expect(WORK_ORDER_SORTS.contractor.value(workOrder)).toEqual(["Hill", "Marcus"]);
+        expect(WORK_ORDER_SORTS.contractor.value({ ...workOrder, contractor: null })).toEqual(["Marcus Hill", null]);
+        expect(
+            WORK_ORDER_SORTS.contractor.value({
+                ...workOrder,
+                contractorName: "Acme Plumbing",
+                contractor: { firstName: null, lastName: null },
+            }),
+        ).toEqual(["Acme Plumbing", null]);
+    });
+});
 
 describe("formatWorkOrderAddress", () => {
     const property = { addressLine1: "12 Oak St", city: "Greenville", state: "SC", zipCode: "29601" };
