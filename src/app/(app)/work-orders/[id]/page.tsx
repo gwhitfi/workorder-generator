@@ -12,16 +12,20 @@ import DeleteButton from "@/components/DeleteButton";
 import { deleteWorkOrder } from "../actions";
 import { formatDueDate, formatTimestamp } from "@/lib/dates";
 import { formatPhone } from "@/lib/phone";
+import { getWorkOrderPager, readWorkOrderListView } from "@/lib/workOrderList";
+import type { SearchParams } from "@/lib/sorting";
+import WorkOrderPager from "./WorkOrderPager";
 
 export default async function WorkOrderDetail({
     params,
     searchParams,
 }: {
     params: Promise<{ id: string }>;
-    searchParams: Promise<{ contractorChanged?: string }>;
+    searchParams: Promise<SearchParams>;
 }) {
     const { id } = await params;
-    const { contractorChanged } = await searchParams;
+    const query = await searchParams;
+    const contractorChanged = query.contractorChanged;
     const result = await getCurrentUser();
 
     if (result.state === "signed-out") {
@@ -55,6 +59,8 @@ export default async function WorkOrderDetail({
 
     if (!workOrder) notFound();
 
+    const pager = await getWorkOrderPager(result.organization.id, await readWorkOrderListView(query), workOrder.id);
+
     const lineItems = workOrder.areas.flatMap((area) => area.lineItems);
     const doneCount = lineItems.filter((item) => item.completed).length;
     const finished = workOrder.status === "COMPLETED" || workOrder.status === "CLOSED";
@@ -66,6 +72,7 @@ export default async function WorkOrderDetail({
 
     return (
         <main className="mx-auto max-w-3xl px-4 py-10 text-foreground">
+            {pager && <WorkOrderPager {...pager} />}
             {workOrder.archived && (
                 <div className="mb-6 flex flex-wrap items-center justify-between gap-3 rounded-lg border border-line-strong bg-surface px-4 py-3">
                     <p className="text-sm text-secondary">

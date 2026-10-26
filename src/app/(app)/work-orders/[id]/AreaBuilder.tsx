@@ -110,7 +110,7 @@ export default function AreaBuilder({
                     {readOnly ? "No areas on this work order." : "No areas added yet. Add one above."}
                 </p>
             ) : (
-                <ul className="mt-4 flex flex-col gap-2">
+                <ul className="mt-4 flex flex-col gap-4">
                     {areas.map((area, i) => (
                         <SpaceCard
                             key={area.id}

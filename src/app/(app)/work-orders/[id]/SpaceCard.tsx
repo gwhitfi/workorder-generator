@@ -112,12 +112,12 @@ export default function SpaceCard({
         }
     }
     return (
-        <li className="rounded-md border border-line bg-surface px-4 py-3">
-            <div className="flex items-center justify-between gap-3">
-                <h3 className="flex items-baseline gap-2">
+        <li className="overflow-hidden rounded-md border border-line bg-surface px-4 py-3">
+            <div className="-mx-4 -mt-3 flex items-center justify-between gap-3 border-b border-line bg-surface-hover/40 px-4 py-2.5">
+                <h3 className="flex items-baseline gap-2 font-semibold">
                     {area.name}
                     {area.lineItems.length > 0 && (
-                        <span className="text-xs text-subtle">
+                        <span className="text-xs font-normal text-subtle">
                             {doneCount}/{area.lineItems.length} done
                         </span>
                     )}
@@ -152,9 +152,9 @@ export default function SpaceCard({
                 </div>
             </div>
             {area.lineItems.length > 0 && (
-                <ul className="mt-2 flex flex-col gap-1 text-base text-secondary">
+                <ul className="divide-y divide-line text-base text-secondary">
                     {area.lineItems.map((item, i) => (
-                        <li key={item.id} className="group">
+                        <li key={item.id} className="group py-2.5">
                             <div className="flex items-center gap-2">
                                 <span
                                     aria-label={item.completed ? "Done" : "Not done"}
@@ -195,50 +195,52 @@ export default function SpaceCard({
                                         {item.description}
                                     </span>
                                 )}
-                                {PRIORITY_STYLES[item.priority] && (
-                                    <span
-                                        className={`shrink-0 rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
-                                    >
-                                        {PRIORITY_LABELS[item.priority]}
-                                    </span>
-                                )}
-                                {item.completedAt && (
-                                    <span suppressHydrationWarning className="shrink-0 text-xs text-success">
-                                        Done {new Date(item.completedAt).toLocaleDateString()}
-                                    </span>
-                                )}
-                                {!readOnly && (
-                                    <>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleMoveItem(item.id, "up")}
-                                            disabled={i === 0 || busyItemId === item.id}
-                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
-                                            aria-label={`Move ${item.description} up`}
+                                <div className="ml-auto flex shrink-0 items-center gap-2">
+                                    {PRIORITY_STYLES[item.priority] && (
+                                        <span
+                                            className={`rounded-full border px-2 py-0.5 text-xs cursor-default ${PRIORITY_STYLES[item.priority]}`}
                                         >
-                                            ↑
-                                        </button>
-                                        <button
-                                            type="button"
-                                            onClick={() => handleMoveItem(item.id, "down")}
-                                            disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
-                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
-                                            aria-label={`Move ${item.description} down`}
-                                        >
-                                            ↓
-                                        </button>
+                                            {PRIORITY_LABELS[item.priority]}
+                                        </span>
+                                    )}
+                                    {item.completedAt && (
+                                        <span suppressHydrationWarning className="text-xs text-success">
+                                            Done {new Date(item.completedAt).toLocaleDateString()}
+                                        </span>
+                                    )}
+                                    {!readOnly && (
+                                        <>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveItem(item.id, "up")}
+                                                disabled={i === 0 || busyItemId === item.id}
+                                                className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
+                                                aria-label={`Move ${item.description} up`}
+                                            >
+                                                ↑
+                                            </button>
+                                            <button
+                                                type="button"
+                                                onClick={() => handleMoveItem(item.id, "down")}
+                                                disabled={i === area.lineItems.length - 1 || busyItemId === item.id}
+                                                className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-foreground hover:cursor-pointer disabled:text-line disabled:hover:text-line"
+                                                aria-label={`Move ${item.description} down`}
+                                            >
+                                                ↓
+                                            </button>
 
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveItem(item.id)}
-                                            disabled={busyItemId === item.id}
-                                            className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger hover:cursor-pointer disabled:text-line disabled:hover:text-line"
-                                            aria-label={`Remove ${item.description}`}
-                                        >
-                                            Remove
-                                        </button>
-                                    </>
-                                )}
+                                            <button
+                                                type="button"
+                                                onClick={() => handleRemoveItem(item.id)}
+                                                disabled={busyItemId === item.id}
+                                                className="text-xs text-faint opacity-0 transition-opacity group-hover:opacity-100 hover:text-danger hover:cursor-pointer disabled:text-line disabled:hover:text-line"
+                                                aria-label={`Remove ${item.description}`}
+                                            >
+                                                Remove
+                                            </button>
+                                        </>
+                                    )}
+                                </div>
                             </div>
                             <LineItemPhoto
                                 lineItemId={item.id}

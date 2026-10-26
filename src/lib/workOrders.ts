@@ -1,6 +1,6 @@
 import type { Prisma, WorkOrderStatus } from "@/generated/prisma/client";
 import { todayInAppTimeZone } from "@/lib/dates";
-import { streetSortKey, type SortColumns } from "@/lib/sorting";
+import { hrefWithSort, sortRows, streetSortKey, type SortColumns, type SortState } from "@/lib/sorting";
 
 export const OPEN_STATUSES: WorkOrderStatus[] = ["DRAFT", "SENT", "IN_PROGRESS"];
 
@@ -28,7 +28,7 @@ export const WORK_ORDER_FILTERS = {
 
 export type WorkOrderFilter = keyof typeof WORK_ORDER_FILTERS;
 
-// The "Split view by status" setting on /work-orders, saved per browser: "1" on, "0" off.
+// The "Split view by status" setting on /work-orders, saved per browser: "1" on, "0" off. On when not set.
 export const SPLIT_VIEW_COOKIE = "wo-split-view";
 
 export function isWorkOrderFilter(value: unknown): value is WorkOrderFilter {
@@ -67,6 +67,45 @@ export const WORK_ORDER_SORTS: SortColumns<SortableWorkOrder, WorkOrderSort> = {
                 : [wo.contractorName, null],
     },
 };
+
+// How the work order list is shown: the filter and sort from the URL, and the split view setting.
+export type WorkOrderListView = {
+    filter: WorkOrderFilter | null;
+    sort: SortState<WorkOrderSort> | null;
+    split: boolean;
+};
+
+// Puts work orders in the order the list shows them. Split view groups them by status in workflow order,
+// each group sorted, so the rows read top to bottom across the sections.
+export function orderForView<T extends SortableWorkOrder>(
+    rows: T[],
+    view: Pick<WorkOrderListView, "sort" | "split">,
+): T[] {
+    const sorted = sortRows(rows, WORK_ORDER_SORTS, view.sort);
+    if (!view.split) return sorted;
+    return STATUS_ORDER.flatMap((status) => sorted.filter((row) => row.status === status));
+}
+
+// The view's filter and sort as a query string ("?status=overdue&sort=due&dir=desc", or "" for the default),
+// added to work order links so the work order page knows which list it was opened from.
+export function listQuery(view: Pick<WorkOrderListView, "filter" | "sort">): string {
+    return hrefWithSort("", view.sort, view.filter ? { status: view.filter } : {});
+}
+
+// The work orders before and after `id` in an ordered list, and its position. Null if it isn't in the list.
+export function findNeighbors(
+    ids: string[],
+    id: string,
+): { position: number; total: number; previousId: string | null; nextId: string | null } | null {
+    const index = ids.indexOf(id);
+    if (index === -1) return null;
+    return {
+        position: index + 1,
+        total: ids.length,
+        previousId: ids[index - 1] ?? null,
+        nextId: ids[index + 1] ?? null,
+    };
+}
 
 type AddressProperty = { addressLine1: string; city: string; state: string; zipCode: string };
 type AddressUnit = { name: string; isDefault: boolean } | null;

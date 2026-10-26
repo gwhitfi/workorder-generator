@@ -1,29 +1,19 @@
 import { getCurrentUser } from "@/lib/auth";
 import { redirect } from "next/navigation";
-import { cookies } from "next/headers";
-import prisma from "@/lib/prisma";
 import PageHeader from "@/components/list/PageHeader";
 import EmptyState from "@/components/list/EmptyState";
 import { WorkOrderList, type WorkOrderWithPlace } from "@/components/WorkOrderRow";
 import { WORK_ORDER_STATUS_LABELS } from "@/lib/defaults";
 import {
-    SPLIT_VIEW_COOKIE,
     STATUS_ORDER,
     WORK_ORDER_FILTERS,
     WORK_ORDER_SORTS,
-    isWorkOrderFilter,
+    listQuery,
     type WorkOrderFilter,
     type WorkOrderSort,
 } from "@/lib/workOrders";
-import {
-    hrefWithSort,
-    parseSort,
-    sortLabels,
-    sortRows,
-    type SearchParams,
-    type SortLabel,
-    type SortState,
-} from "@/lib/sorting";
+import { getWorkOrderList, readWorkOrderListView } from "@/lib/workOrderList";
+import { hrefWithSort, sortLabels, type SearchParams, type SortLabel, type SortState } from "@/lib/sorting";
 import FilterMenu, { type FilterOption } from "./FilterMenu";
 import ListSettings from "./ListSettings";
 
@@ -39,27 +29,13 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
     }
 
     const params = await searchParams;
-    const filter = isWorkOrderFilter(params.status) ? params.status : null;
-    const sort = parseSort(params, WORK_ORDER_SORTS);
-    const splitView = (await cookies()).get(SPLIT_VIEW_COOKIE)?.value === "1";
-
-    const workOrders = await prisma.workOrder.findMany({
-        where: {
-            organizationId: result.organization.id,
-            archived: false,
-            ...(filter ? WORK_ORDER_FILTERS[filter].where() : {}),
-        },
-        orderBy: { createdAt: "desc" },
-        include: {
-            property: true,
-            unit: true,
-            contractor: { select: { firstName: true, lastName: true } },
-        },
-    });
+    const view = await readWorkOrderListView(params);
+    const { filter, sort, split: splitView } = view;
+    const workOrders = await getWorkOrderList(result.organization.id, view);
 
     const noun = workOrders.length === 1 ? "work order" : "work orders";
-    const sortedWorkOrders = sortRows(workOrders, WORK_ORDER_SORTS, sort);
     const label = sortLabels("/work-orders", params, WORK_ORDER_SORTS, sort);
+    const linkQuery = listQuery(view);
 
     return (
         <main className="mx-auto max-w-5xl px-4 py-10 text-foreground">
@@ -90,9 +66,9 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
                     />
                 )
             ) : splitView ? (
-                <SplitList workOrders={sortedWorkOrders} label={label} />
+                <SplitList workOrders={workOrders} label={label} linkQuery={linkQuery} />
             ) : (
-                <WorkOrderList workOrders={sortedWorkOrders} label={label} />
+                <WorkOrderList workOrders={workOrders} label={label} linkQuery={linkQuery} />
             )}
         </main>
     );
@@ -102,9 +78,11 @@ export default async function WorkOrder({ searchParams }: { searchParams: Promis
 function SplitList({
     workOrders,
     label,
+    linkQuery,
 }: {
     workOrders: WorkOrderWithPlace[];
     label: (label: string, key: WorkOrderSort) => SortLabel;
+    linkQuery: string;
 }) {
     return (
         <div className="flex flex-col gap-8">
@@ -118,7 +96,7 @@ function SplitList({
                             {WORK_ORDER_STATUS_LABELS[status]}
                             <span className="text-sm font-normal text-subtle">{rows.length}</span>
                         </h2>
-                        <WorkOrderList workOrders={rows} label={label} />
+                        <WorkOrderList workOrders={rows} label={label} linkQuery={linkQuery} />
                     </section>
                 );
             })}

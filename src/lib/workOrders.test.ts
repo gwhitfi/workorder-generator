@@ -1,6 +1,85 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
-import { formatWorkOrderAddress, isOverdue, isWorkOrderFilter, WORK_ORDER_SORTS } from "./workOrders";
+import {
+    findNeighbors,
+    formatWorkOrderAddress,
+    isOverdue,
+    isWorkOrderFilter,
+    listQuery,
+    orderForView,
+    WORK_ORDER_SORTS,
+} from "./workOrders";
 import { sortRows } from "./sorting";
+
+describe("orderForView", () => {
+    const base = {
+        dueDate: null,
+        contractorName: null,
+        property: { addressLine1: "12 Oak St" },
+        unit: null,
+    };
+    // In query order (newest first).
+    const rows = [
+        { ...base, id: "a", title: "Paint", status: "SENT" as const },
+        { ...base, id: "b", title: "Roof", status: "DRAFT" as const },
+        { ...base, id: "c", title: "Deck", status: "SENT" as const },
+        { ...base, id: "d", title: "Gutters", status: "DRAFT" as const },
+    ];
+    const ids = (list: { id: string }[]) => list.map((row) => row.id);
+
+    it("keeps the query order without a sort or split", () => {
+        expect(ids(orderForView(rows, { sort: null, split: false }))).toEqual(["a", "b", "c", "d"]);
+    });
+
+    it("sorts the whole list when not split", () => {
+        expect(ids(orderForView(rows, { sort: { key: "title", dir: "asc" }, split: false }))).toEqual([
+            "c",
+            "d",
+            "a",
+            "b",
+        ]);
+    });
+
+    it("groups by status in workflow order, sorting within each group", () => {
+        expect(ids(orderForView(rows, { sort: null, split: true }))).toEqual(["b", "d", "a", "c"]);
+        expect(ids(orderForView(rows, { sort: { key: "title", dir: "asc" }, split: true }))).toEqual([
+            "d",
+            "b",
+            "c",
+            "a",
+        ]);
+    });
+});
+
+describe("listQuery", () => {
+    it("is empty for the default view", () => {
+        expect(listQuery({ filter: null, sort: null })).toBe("");
+    });
+
+    it("includes the filter and sort", () => {
+        expect(listQuery({ filter: "overdue", sort: null })).toBe("?status=overdue");
+        expect(listQuery({ filter: "overdue", sort: { key: "due", dir: "desc" } })).toBe(
+            "?status=overdue&sort=due&dir=desc",
+        );
+        expect(listQuery({ filter: null, sort: { key: "title", dir: "asc" } })).toBe("?sort=title&dir=asc");
+    });
+});
+
+describe("findNeighbors", () => {
+    const ids = ["a", "b", "c"];
+
+    it("finds the work orders on either side", () => {
+        expect(findNeighbors(ids, "b")).toEqual({ position: 2, total: 3, previousId: "a", nextId: "c" });
+    });
+
+    it("has no previous on the first and no next on the last", () => {
+        expect(findNeighbors(ids, "a")).toEqual({ position: 1, total: 3, previousId: null, nextId: "b" });
+        expect(findNeighbors(ids, "c")).toEqual({ position: 3, total: 3, previousId: "b", nextId: null });
+    });
+
+    it("returns null when the work order isn't in the list", () => {
+        expect(findNeighbors(ids, "z")).toBeNull();
+    });
+});
 
 describe("WORK_ORDER_SORTS", () => {
     const workOrder = {

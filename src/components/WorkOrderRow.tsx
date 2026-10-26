@@ -11,14 +11,17 @@ const COLS = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax
 const COLS_NO_CONTRACTOR = "sm:grid-cols-[minmax(0,2fr)_minmax(0,0.9fr)_minmax(0,0.9fr)_minmax(0,1.8fr)]";
 
 // Pass `label` (from sortLabels) to make the headers sortable; the caller sorts the rows.
+// `linkQuery` (from listQuery) is added to each row's link, for the work order page's arrows.
 export function WorkOrderList({
     workOrders,
     hideContractor = false,
     label,
+    linkQuery = "",
 }: {
     workOrders: WorkOrderWithPlace[];
     hideContractor?: boolean;
     label?: (label: string, key: WorkOrderSort) => SortLabel;
+    linkQuery?: string;
 }) {
     const header = (text: string, key: WorkOrderSort) => (label ? label(text, key) : text);
     const labels = [
@@ -33,7 +36,12 @@ export function WorkOrderList({
         <List>
             <ListHeader cols={hideContractor ? COLS_NO_CONTRACTOR : COLS} labels={labels} />
             {workOrders.map((workOrder) => (
-                <WorkOrderRow key={workOrder.id} workOrder={workOrder} hideContractor={hideContractor} />
+                <WorkOrderRow
+                    key={workOrder.id}
+                    workOrder={workOrder}
+                    hideContractor={hideContractor}
+                    linkQuery={linkQuery}
+                />
             ))}
         </List>
     );
@@ -42,15 +50,17 @@ export function WorkOrderList({
 export default function WorkOrderRow({
     workOrder,
     hideContractor = false,
+    linkQuery = "",
 }: {
     workOrder: WorkOrderWithPlace;
     hideContractor?: boolean;
+    linkQuery?: string;
 }) {
     const overdue = isOverdue(workOrder);
 
     return (
         <ListRow
-            href={`/work-orders/${workOrder.id}`}
+            href={`/work-orders/${workOrder.id}${linkQuery}`}
             label={`View ${workOrder.title ?? "untitled work order"}`}
             cols={hideContractor ? COLS_NO_CONTRACTOR : COLS}
         >

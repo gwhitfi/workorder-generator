@@ -1,5 +1,6 @@
 import Link from "next/link";
 import React from "react";
+import TruncatedText from "./TruncatedText";
 
 export default function InfoCard({
     label,
@@ -21,15 +22,17 @@ export default function InfoCard({
             {href ? (
                 <Link
                     href={href}
-                    className="truncate block font-medium text-foreground before:absolute before:inset-0 before:content-['']"
+                    className="block font-medium text-foreground before:absolute before:inset-0 before:content-['']"
                 >
-                    {title}
+                    <TruncatedText text={title} />
                 </Link>
             ) : (
-                <p className="truncate font-medium text-foreground">{title}</p>
+                <p className="font-medium text-foreground">
+                    <TruncatedText text={title} />
+                </p>
             )}
 
-            <div className="relative z-10 mt-1 text-sm text-muted leading-relaxed">{children}</div>
+            <div className="relative z-10 mt-1 text-sm text-muted leading-relaxed wrap-anywhere">{children}</div>
         </div>
     );
 }
