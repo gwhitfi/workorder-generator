@@ -24,10 +24,15 @@ export default function ContractorSpaceCard({
     token,
     area,
     readOnly,
+    actions = { toggleLineItem, saveLineItemNote },
 }: {
     token: string;
     area: AreaRow;
     readOnly: boolean;
+    actions?: {
+        toggleLineItem: (token: string, id: string) => Promise<unknown>;
+        saveLineItemNote: (token: string, id: string, note: string) => Promise<unknown>;
+    };
 }) {
     const [busyItemId, setBusyItemId] = useState<string | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -39,7 +44,7 @@ export default function ContractorSpaceCard({
     async function handleToggle(item: LineItemRow) {
         setBusyItemId(item.id);
         try {
-            await toggleLineItem(token, item.id);
+            await actions.toggleLineItem(token, item.id);
             setError(null);
         } catch {
             setError("Could not update that item. Try again.");
@@ -61,7 +66,7 @@ export default function ContractorSpaceCard({
 
         setBusyItemId(item.id);
         try {
-            await saveLineItemNote(token, item.id, noteDraft);
+            await actions.saveLineItemNote(token, item.id, noteDraft);
             setNotingId(null);
             setError(null);
         } catch {
@@ -94,6 +99,7 @@ export default function ContractorSpaceCard({
                                 <div className="flex items-start gap-3">
                                     <button
                                         type="button"
+                                        data-demo-guide="check-item"
                                         role="checkbox"
                                         aria-checked={item.completed}
                                         aria-label={`Mark "${item.description}" ${item.completed ? "not done" : "done"}`}
@@ -126,6 +132,7 @@ export default function ContractorSpaceCard({
                                     {!readOnly && notingId !== item.id && !item.contractorNotes && (
                                         <button
                                             type="button"
+                                            data-demo-guide="add-note"
                                             onClick={() => startNote(item)}
                                             className="shrink-0 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                                         >
@@ -156,10 +163,16 @@ export default function ContractorSpaceCard({
                                 {notingId === item.id ? (
                                     <div className="ml-9 mt-2 flex flex-col gap-2">
                                         <textarea
+                                            data-demo-guide="note-input"
                                             value={noteDraft}
                                             onChange={(e) => setNoteDraft(e.target.value)}
                                             onKeyDown={(e) => {
+                                                if (e.nativeEvent.isComposing) return;
                                                 if (e.key === "Escape") setNotingId(null);
+                                                if (e.key === "Enter" && !e.shiftKey) {
+                                                    e.preventDefault();
+                                                    if (!busy && !e.repeat) void handleSaveNote(item);
+                                                }
                                             }}
                                             rows={3}
                                             maxLength={2000}

@@ -31,6 +31,8 @@ export default function SpaceCard({
     onRemove,
     busy,
     readOnly,
+    actions = { addLineItem, removeLineItem, moveLineItem, updateLineItem },
+    showPhotos = true,
 }: {
     area: AreaRow;
     index: number;
@@ -39,6 +41,13 @@ export default function SpaceCard({
     onRemove: (id: string) => void;
     busy: boolean;
     readOnly: boolean;
+    actions?: {
+        addLineItem: (areaId: string, description: string, priority: LineItemPriority) => Promise<unknown>;
+        removeLineItem: (id: string) => Promise<unknown>;
+        moveLineItem: (id: string, direction: "up" | "down") => Promise<unknown>;
+        updateLineItem: (id: string, description: string, priority: LineItemPriority) => Promise<unknown>;
+    };
+    showPhotos?: boolean;
 }) {
     const [adding, setAdding] = useState(false);
     const [description, setDescription] = useState("");
@@ -57,7 +66,7 @@ export default function SpaceCard({
 
         setPending(true);
         try {
-            await addLineItem(area.id, trimmed, priority as LineItemPriority);
+            await actions.addLineItem(area.id, trimmed, priority as LineItemPriority);
             setDescription("");
             setError(null);
         } catch {
@@ -71,7 +80,7 @@ export default function SpaceCard({
     async function handleRemoveItem(lineItemId: string) {
         setBusyItemId(lineItemId);
         try {
-            await removeLineItem(lineItemId);
+            await actions.removeLineItem(lineItemId);
             setError(null);
         } catch {
             setError("Could not remove that item.");
@@ -83,7 +92,7 @@ export default function SpaceCard({
     async function handleMoveItem(lineItemId: string, direction: "up" | "down") {
         setBusyItemId(lineItemId);
         try {
-            await moveLineItem(lineItemId, direction);
+            await actions.moveLineItem(lineItemId, direction);
             setError(null);
         } catch {
             setError("Could not move that item.");
@@ -102,7 +111,7 @@ export default function SpaceCard({
 
         setBusyItemId(item.id);
         try {
-            await updateLineItem(item.id, trimmed, item.priority as LineItemPriority);
+            await actions.updateLineItem(item.id, trimmed, item.priority as LineItemPriority);
             setEditingId(null);
             setError(null);
         } catch {
@@ -242,12 +251,14 @@ export default function SpaceCard({
                                     )}
                                 </div>
                             </div>
-                            <LineItemPhoto
-                                lineItemId={item.id}
-                                description={item.description}
-                                photoId={item.attachments[0]?.id ?? null}
-                                readOnly={readOnly}
-                            />
+                            {showPhotos && (
+                                <LineItemPhoto
+                                    lineItemId={item.id}
+                                    description={item.description}
+                                    photoId={item.attachments[0]?.id ?? null}
+                                    readOnly={readOnly}
+                                />
+                            )}
                             {item.contractorNotes && (
                                 <p className="ml-7 mt-1 whitespace-pre-line border-l-2 border-line-strong pl-2 text-sm text-muted">
                                     <span className="text-subtle">Contractor: </span>
@@ -262,6 +273,7 @@ export default function SpaceCard({
             {!readOnly && !adding && (
                 <button
                     type="button"
+                    data-demo-guide="add-item"
                     onClick={() => setAdding(true)}
                     className="mt-3 text-sm text-subtle hover:text-foreground hover:cursor-pointer"
                 >
@@ -283,6 +295,7 @@ export default function SpaceCard({
                         onKeyDown={(e) => {
                             if (e.key === "Enter") handleAddItem();
                         }}
+                        data-demo-guide="item-input"
                         placeholder="Add work item"
                         autoFocus
                         className={inputClass}

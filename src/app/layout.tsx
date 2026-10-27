@@ -15,7 +15,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-    title: "Work Order Generator",
+    title: "Praedium",
     description: "Generate and track property work orders",
 };
 

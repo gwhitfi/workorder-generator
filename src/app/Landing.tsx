@@ -1,7 +1,7 @@
 import Link from "next/link";
 import Logo from "@/components/Logo";
 import ThemeToggle from "@/components/ThemeToggle";
-import LandingVideo from "@/components/LandingVideo";
+import HowItWorks from "@/components/HowItWorks";
 
 const FEATURES = [
     {
@@ -18,33 +18,6 @@ const FEATURES = [
     },
 ];
 
-const STEPS = [
-    {
-        title: "Create the work order",
-        video: "/landing/step-1.mp4?v=2",
-        poster: "/landing/step-1.webp?v=2",
-        body: "Choose the property and unit. The contractor's and tenant's details fill in for you.",
-    },
-    {
-        title: "Add the work room by room",
-        video: "/landing/step-2.mp4?v=2",
-        poster: "/landing/step-2.webp?v=2",
-        body: "Add areas and line items, set priorities, and attach photos so nothing gets missed.",
-    },
-    {
-        title: "Send the link",
-        video: "/landing/step-3.mp4?v=2",
-        poster: "/landing/step-3.webp?v=2",
-        body: "Your contractor gets an email with a private link that works on any phone.",
-    },
-    {
-        title: "Watch it get done",
-        video: "/landing/step-4.mp4?v=2",
-        poster: "/landing/step-4.webp?v=2",
-        body: "Items get checked off as the work happens. When it's complete, review it and close it out.",
-    },
-];
-
 export default function Landing() {
     return (
         <div className="text-foreground">
@@ -54,6 +27,12 @@ export default function Landing() {
                         <ThemeToggle />
                         <Link href="/sign-in" className="text-sm text-muted hover:text-foreground">
                             Sign in
+                        </Link>
+                        <Link
+                            href="/demo"
+                            className="rounded-md bg-status-closed px-4 py-2 text-sm font-medium text-on-accent hover:brightness-90"
+                        >
+                            Demo
                         </Link>
                         <Link
                             href="/sign-up"
@@ -71,15 +50,16 @@ export default function Landing() {
                     <h1>
                         <Logo className="mx-auto h-12 w-auto sm:h-16" />
                     </h1>
-                    <p className="mt-6 text-sm text-muted">
-                        <i>mandatum</i>, an order <span className="text-faint">+</span> <i>domus</i>, a house
-                    </p>
-                    <p className="mt-2 text-lg font-medium sm:text-xl">Work orders for every property you manage.</p>
+                    <p className="mt-6 text-lg font-medium sm:text-xl">Work orders for every property you manage.</p>
                     <p className="mx-auto mt-6 max-w-xl text-lg text-muted">
                         Build a work order room by room, send your contractor a link, and watch items get checked off as
                         the work gets done. Nothing for them to install.
                     </p>
                 </section>
+
+                <div className="mx-auto max-w-5xl px-4 pb-20">
+                    <HowItWorks />
+                </div>
 
                 {/* Features */}
                 <section className="mx-auto max-w-5xl border-t border-line px-4 py-20">
@@ -92,28 +72,6 @@ export default function Landing() {
                             </div>
                         ))}
                     </div>
-                </section>
-
-                {/* How it works */}
-                <section className="mx-auto max-w-5xl border-t border-line px-4 py-20">
-                    <h2 className="text-center text-2xl font-semibold">How it works</h2>
-                    <ol className="mt-12 space-y-16">
-                        {STEPS.map((step, i) => (
-                            <li
-                                key={step.title}
-                                className={`flex flex-col gap-6 md:items-center md:gap-12 ${i % 2 ? "md:flex-row-reverse" : "md:flex-row"}`}
-                            >
-                                <div className="md:w-2/5">
-                                    <p className="text-sm font-medium text-accent">Step {i + 1}</p>
-                                    <h3 className="mt-1 text-lg font-medium">{step.title}</h3>
-                                    <p className="mt-2 text-sm leading-relaxed text-muted">{step.body}</p>
-                                </div>
-                                <div className="md:w-3/5">
-                                    <LandingVideo src={step.video} poster={step.poster} title={step.title} />
-                                </div>
-                            </li>
-                        ))}
-                    </ol>
                 </section>
 
                 {/* Closing call to action */}
@@ -129,7 +87,7 @@ export default function Landing() {
             </main>
 
             <footer className="mx-auto max-w-5xl border-t border-line px-4 py-8 text-sm text-subtle">
-                <p>&copy; {new Date().getFullYear()} Work Order Generator</p>
+                <p>&copy; {new Date().getFullYear()} Praedium</p>
             </footer>
         </div>
     );

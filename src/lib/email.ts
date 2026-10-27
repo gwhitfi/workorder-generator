@@ -16,10 +16,10 @@ export function getAppUrl() {
 }
 
 export function formatFrom(from: string, name?: string | null) {
-    if (!name) return from;
     const address = from.match(/<([^>]+)>/)?.[1] ?? from;
+    if (!name) return `"Praedium" <${address}>`;
     const displayName = name.replace(/["\\<>\r\n]/g, "");
-    return `"${displayName} via Work Order Generator" <${address}>`;
+    return `"${displayName} via Praedium" <${address}>`;
 }
 
 export async function sendEmail({
