@@ -5,16 +5,16 @@ import HowItWorks from "@/components/HowItWorks";
 
 const FEATURES = [
     {
-        title: "Dedicated contractor links",
-        body: "They open the link on their phone, check off items as completed, and leave notes. No account or app needed.",
+        title: "Keep track of your properties and contractors",
+        body: "Add all your properties and contractors, and manage them on their own pages.",
     },
     {
-        title: "Organized room by room",
-        body: "Group line items by area, set priorities, attach photos, and keep property and unit details in one place.",
+        title: "Work orders update live",
+        body: "When a contractor marks a line item as complete, it will show up on the office's work order view, allowing you to track the progress in real time.",
     },
     {
-        title: "Completion confirmation",
-        body: "Get an email when the job is marked complete, then review it, and close it out. Work orders stay in your archives for easy review later.",
+        title: "Receive notifications",
+        body: "Contractor receives an email when they are assigned a new work order, and the office receives an email when the contractor completes the work order.",
     },
 ];
 
@@ -63,7 +63,7 @@ export default function Landing() {
 
                 {/* Features */}
                 <section className="mx-auto max-w-5xl border-t border-line px-4 py-20">
-                    <h2 className="text-center text-2xl font-semibold">Everything you need to get the work done</h2>
+                    <h2 className="text-center text-2xl font-semibold">Make tracking work orders easy</h2>
                     <div className="mt-12 grid gap-10 sm:grid-cols-3">
                         {FEATURES.map((feature) => (
                             <div key={feature.title}>
@@ -76,7 +76,7 @@ export default function Landing() {
 
                 {/* Closing call to action */}
                 <section className="mx-auto max-w-3xl border-t border-line px-4 py-20 text-center">
-                    <h2 className="text-2xl font-semibold">Send your next work order in minutes</h2>
+                    <h2 className="text-2xl font-semibold">Try sending your first work order now!</h2>
                     <Link
                         href="/sign-up"
                         className="mt-8 inline-block rounded-md bg-accent px-6 py-3 text-sm font-medium text-on-accent hover:bg-accent-hover"

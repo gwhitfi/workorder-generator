@@ -4,12 +4,12 @@ import { useEffect, useRef, useState } from "react";
 
 const STEPS = [
     {
-        title: "Add your property",
+        title: "Add a property",
         description: "Save the address and property details so everything is ready when a repair comes up.",
         video: "add-property",
     },
     {
-        title: "Add your contractor",
+        title: "Add a contractor",
         description: "Keep your contractor’s contact details and preferences in one place, ready for the next job.",
         video: "add-contractor",
     },
@@ -27,7 +27,7 @@ const STEPS = [
     },
 ];
 
-const PLAYBACK_SPEED = 4;
+const PLAYBACK_SPEED = 1.75;
 
 function applyPlaybackSpeed(video: HTMLVideoElement) {
     video.defaultPlaybackRate = PLAYBACK_SPEED;
