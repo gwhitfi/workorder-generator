@@ -74,67 +74,69 @@ export default function HowItWorks() {
             <h2 id="how-it-works-title" className="text-center text-4xl font-semibold sm:text-5xl">
                 How it Works
             </h2>
-            <div className="mt-5 grid grid-cols-[2.75rem_minmax(0,1fr)_2.75rem] items-center gap-1 sm:gap-4">
-                <button
-                    type="button"
-                    onClick={() => changeStep(-1)}
-                    aria-label="Previous video"
-                    aria-controls="how-it-works-slide"
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-line-hover hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
-                >
-                    <Arrow direction="left" />
-                </button>
-                <div
-                    id="how-it-works-slide"
-                    role="group"
-                    aria-roledescription="slide"
-                    aria-label={`${index + 1} of ${STEPS.length}`}
-                    className="min-w-0"
-                >
-                    <div className="mb-5 text-center" aria-live="polite" aria-atomic="true">
-                        <p className="text-xs font-medium uppercase tracking-wider text-subtle">
+            <div
+                id="how-it-works-slide"
+                role="group"
+                aria-roledescription="slide"
+                aria-label={`${index + 1} of ${STEPS.length}`}
+                className="mt-5"
+            >
+                <div className="mb-5 text-center">
+                    <div className="flex items-center justify-center gap-4">
+                        <button
+                            type="button"
+                            onClick={() => changeStep(-1)}
+                            aria-label="Previous video"
+                            aria-controls="how-it-works-slide"
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-line-hover hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                        >
+                            <Arrow direction="left" />
+                        </button>
+                        <p className="text-xs font-medium uppercase tracking-wider text-subtle" aria-live="polite">
                             Step {index + 1} of {STEPS.length}
                         </p>
+                        <button
+                            type="button"
+                            onClick={() => changeStep(1)}
+                            aria-label="Next video"
+                            aria-controls="how-it-works-slide"
+                            className="flex h-8 w-8 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-line-hover hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                        >
+                            <Arrow direction="right" />
+                        </button>
+                    </div>
+                    <div aria-live="polite" aria-atomic="true">
                         <h3 className="mt-2 text-xl font-semibold text-accent sm:text-2xl">{step.title}</h3>
                         <p className="mx-auto mt-2 max-w-xl text-sm leading-relaxed text-muted">{step.description}</p>
                     </div>
-                    <video
-                        key={step.video}
-                        ref={videoRef}
-                        autoPlay
-                        muted
-                        controls
-                        playsInline
-                        preload="auto"
-                        onLoadedMetadata={(event) => {
-                            applyPlaybackSpeed(event.currentTarget);
-                        }}
-                        onEnded={scheduleAdvance}
-                        onPlay={(event) => {
-                            cancelAdvance();
-                            applyPlaybackSpeed(event.currentTarget);
-                        }}
-                        onSeeking={cancelAdvance}
-                        poster={`/how-it-works/${step.video}.webp`}
-                        aria-label={step.title}
-                        width={1280}
-                        height={800}
-                        className="aspect-[8/5] w-full rounded-lg border border-line bg-black"
-                    >
-                        <source src={`/how-it-works/${step.video}.mp4`} type="video/mp4" />
-                        Your browser does not support video playback.{" "}
-                        <a href={`/how-it-works/${step.video}.mp4`}>Download the video.</a>
-                    </video>
                 </div>
-                <button
-                    type="button"
-                    onClick={() => changeStep(1)}
-                    aria-label="Next video"
-                    aria-controls="how-it-works-slide"
-                    className="flex h-11 w-11 items-center justify-center rounded-full border border-line text-muted transition-colors hover:border-line-hover hover:bg-surface hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-accent"
+                <video
+                    key={step.video}
+                    ref={videoRef}
+                    autoPlay
+                    muted
+                    controls
+                    playsInline
+                    preload="auto"
+                    onLoadedMetadata={(event) => {
+                        applyPlaybackSpeed(event.currentTarget);
+                    }}
+                    onEnded={scheduleAdvance}
+                    onPlay={(event) => {
+                        cancelAdvance();
+                        applyPlaybackSpeed(event.currentTarget);
+                    }}
+                    onSeeking={cancelAdvance}
+                    poster={`/how-it-works/${step.video}.webp`}
+                    aria-label={step.title}
+                    width={1280}
+                    height={800}
+                    className="aspect-[8/5] w-full rounded-lg border border-line bg-black"
                 >
-                    <Arrow direction="right" />
-                </button>
+                    <source src={`/how-it-works/${step.video}.mp4`} type="video/mp4" />
+                    Your browser does not support video playback.{" "}
+                    <a href={`/how-it-works/${step.video}.mp4`}>Download the video.</a>
+                </video>
             </div>
         </section>
     );

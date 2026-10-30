@@ -28,12 +28,7 @@ export default function Landing() {
                         <Link href="/sign-in" className="text-sm text-muted hover:text-foreground">
                             Sign in
                         </Link>
-                        <Link
-                            href="/demo"
-                            className="rounded-md bg-status-closed px-4 py-2 text-sm font-medium text-on-accent hover:brightness-90"
-                        >
-                            Demo
-                        </Link>
+
                         <Link
                             href="/sign-up"
                             className="rounded-md bg-accent px-4 py-2 text-sm font-medium text-on-accent hover:bg-accent-hover"
@@ -46,7 +41,7 @@ export default function Landing() {
 
             <main>
                 {/* Hero */}
-                <section className="mx-auto max-w-3xl px-4 py-24 text-center">
+                <section className="mx-auto max-w-3xl px-4 pt-24 text-center">
                     <h1>
                         <Logo className="mx-auto h-12 w-auto sm:h-16" />
                     </h1>
@@ -55,8 +50,16 @@ export default function Landing() {
                         Build a work order room by room, send your contractor a link, and watch items get checked off as
                         the work gets done. Nothing for them to install.
                     </p>
+                    <div className="mt-10">
+                        <h2 className="text-lg font-medium">Give it a shot</h2>
+                        <Link
+                            href="/demo"
+                            className="mt-4 inline-block rounded-md bg-status-closed px-6 py-3 text-sm font-medium text-on-accent hover:brightness-90"
+                        >
+                            Demo
+                        </Link>
+                    </div>
                 </section>
-
                 <div className="mx-auto max-w-5xl px-4 pb-20">
                     <HowItWorks />
                 </div>
